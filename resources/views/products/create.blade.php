@@ -23,7 +23,12 @@
         </div>
 
         <div class="form-group">
-            <label for="price">Price</label>
+            <label for="price">Cost Price</label>
+            <input type="number" class="form-control" id="cost_price" name="cost_price" placeholder="eg. RS 456" value="{{ old('cost_price') }}" step="0.01" min="0" required>
+        </div>
+
+        <div class="form-group">
+            <label for="price">Sell Price</label>
             <input type="number" class="form-control" id="price" name="price" placeholder="eg. RS 456" value="{{ old('price') }}" step="0.01" min="0" required>
         </div>
 

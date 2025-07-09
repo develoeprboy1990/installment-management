@@ -14,7 +14,8 @@
                 <th>Company</th>
                 <th>Model</th>
                 <th>Serial No</th>
-                <th>Price</th>
+                <th>Cost Price</th>
+                <th>Sell Price</th>
                 <th>Actions</th>
             </tr>
         </thead>
@@ -25,6 +26,7 @@
                     <td>{{ $product->company }}</td>
                     <td>{{ $product->model }}</td>
                     <td>{{ $product->serial_no }}</td>
+                    <td>{{ number_format($product->cost_price, 2) }}</td>
                     <td>{{ number_format($product->price, 2) }}</td>
                     <td>
                         <a href="{{ route('products.edit', $product->id) }}" class="btn btn-warning btn-sm"><i class="fa fa-edit"></i></a>

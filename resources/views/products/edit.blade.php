@@ -25,7 +25,12 @@
         </div>
 
         <div class="form-group">
-            <label for="price">Price</label>
+            <label for="price">Cost Price</label>
+            <input type="number" class="form-control" id="cost_price" name="cost_price" value="{{ old('cost_price', $product->cost_price) }}" step="0.01" min="0" required>
+        </div>
+
+        <div class="form-group">
+            <label for="price">Sell Price</label>
             <input type="number" class="form-control" id="price" name="price" value="{{ old('price', $product->price) }}" step="0.01" min="0" required>
         </div>
 

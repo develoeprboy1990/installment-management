@@ -32,25 +32,25 @@ class DashboardController extends Controller
             'completed_customers' => 0,
             'monthly_collections' => collect([])
         ];
-        
+
         try {
             // Customer Statistics
             $data['customers_count'] = Customer::count();
             $data['new_customers_this_month'] = Customer::whereMonth('created_at', now()->month)
                 ->whereYear('created_at', now()->year)
                 ->count();
-            
+
             // Purchase Statistics
             $data['active_purchases'] = Purchase::where('status', 'active')->count();
             $data['completed_purchases'] = Purchase::where('status', 'completed')->count();
-            
+
             // Revenue Statistics
             $data['total_revenue'] = Purchase::sum('total_price') ?? 0;
             $data['collected_this_month'] = Installment::where('status', 'paid')
                 ->whereMonth('date', now()->month)
                 ->whereYear('date', now()->year)
                 ->sum('installment_amount') ?? 0;
-            
+
             // Defaulter Statistics
             $data['defaulters_count'] = Customer::where('is_defaulter', true)->count();
             $data['defaulters_amount'] = 0; // Since status 'overdue' might not exist yet
@@ -60,21 +60,21 @@ class DashboardController extends Controller
             } catch (\Exception $e) {
                 // Keep default value of 0 if there's an error
             }
-            
+
             // Recent Payments (last 5)
             $data['recent_payments'] = Installment::where('status', 'paid')
                 ->with('customer')
                 ->orderBy('date', 'desc')
                 ->limit(5)
                 ->get();
-            
+
             // Due Today
             $data['due_today'] = Installment::whereDate('due_date', today())
                 ->with('customer')
                 ->orderBy('due_date')
                 ->limit(5)
                 ->get();
-            
+
             // Top Products
             $data['top_products'] = Product::select('products.*')
                 ->selectRaw('COUNT(purchases.id) as sales_count')
@@ -84,16 +84,16 @@ class DashboardController extends Controller
                 ->orderBy('sales_count', 'desc')
                 ->limit(5)
                 ->get();
-            
+
             // Customer Distribution
             $data['active_customers'] = Customer::whereHas('purchases', function($query) {
                 $query->where('status', 'active');
             })->count();
-            
+
             $data['completed_customers'] = Customer::whereDoesntHave('purchases', function($query) {
                 $query->where('status', 'active');
             })->where('is_defaulter', false)->count();
-            
+
             // Monthly Collections for chart (last 6 months)
             $data['monthly_collections'] = Installment::where('status', 'paid')
                 ->where('date', '>=', now()->subMonths(6))
@@ -102,13 +102,47 @@ class DashboardController extends Controller
                 ->groupBy('month')
                 ->orderBy('month')
                 ->pluck('total', 'month');
-                
+
+            $data['total_profit'] = Installment::where('status', 'paid')
+                ->with('purchase.product')
+                ->get()
+                ->reduce(function($carry, $inst) {
+                    $purchase = $inst->purchase;
+                    $product  = $purchase->product;
+
+                    // total profit for this purchase
+                    $totalProfit     = $product->price - $product->cost_price;
+                    $installmentsQty = $purchase->installment_months ?: 1;
+
+                    // profit per paid installment
+                    $profitPerInst = $totalProfit / $installmentsQty;
+
+                    return $carry + $profitPerInst;
+                }, 0);
+
+            $data['last_month_profit'] = Installment::where('status','paid')
+                ->whereYear('date', now()->subMonth()->year)
+                ->whereMonth('date', now()->subMonth()->month)
+                ->with('purchase.product')
+                ->get()
+                ->reduce(function($carry, $inst) {
+                    $purchase = $inst->purchase;
+                    $product  = $purchase->product;
+
+                    $totalProfit     = $product->price - $product->cost_price;
+                    $installmentsQty = $purchase->installment_months ?: 1;
+
+                    $profitPerInst = $totalProfit / $installmentsQty;
+
+                    return $carry + $profitPerInst;
+                }, 0);
+
         } catch (\Exception $e) {
             // Log the error and return default values
             \Log::error('Dashboard Error: ' . $e->getMessage());
             // Data is already initialized with default values
         }
-        
+
         return view('report', compact('data'));
     }
 
