@@ -182,7 +182,7 @@
 
         <!-- Footer -->
         <div class="footer">
-            <div class="text-bold" style="font-weight: 600;">
+            <div class="text-bold" style="font-weight: 600;"> 
                 <strong>ضروری نوٹ</strong><br>
                 <strong>
                   قسط ہر ماہ کے 5 <strong> تاریخ تک لازمی جمع کروائیں۔ ادارہ کی رسید کے بغیر لین دین نہ کریں، ادارہ کسی بھی غیر قانونی استعمال کا ذمہ دار نہ ہوگا۔</strong>
