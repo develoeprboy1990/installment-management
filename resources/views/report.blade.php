@@ -53,11 +53,16 @@
             <div class="ibox">
                 <div class="ibox-title"><h5>Total Profit</h5></div>
                 <div class="ibox-content">
-                <h1 class="no-margins">Rs. {{ number_format($data['total_profit'],2) }}</h1>
-                <small>Last Month Profit: Rs. {{ number_format($data['last_month_profit'],2) }}</small>
+                    <h1 class="no-margins">
+                        Rs. {{ number_format($data['total_profit'] ?? 0, 2) }}
+                    </h1>
+                    <small>
+                        Last Month Profit: Rs. {{ number_format($data['last_month_profit'] ?? 0, 2) }}
+                    </small>
                 </div>
             </div>
         </div>
+
 
         <div class="col-lg-3">
             <div class="ibox">
