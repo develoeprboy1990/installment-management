@@ -48,14 +48,15 @@ Route::group(['prefix' => 'admin', 'middleware' => ['role:Admin']], function () 
     Route::resource('purchases', PurchaseController::class);
     Route::post('purchases/{purchase}/process-payment', [PurchaseController::class, 'processPayment'])->name('purchases.process-payment');
     Route::get('purchases/installment/{installmentId}/details', [PurchaseController::class, 'getInstallmentDetails'])->name('purchases.installment-details');
-    
+    Route::put('/installments/{id}', [PurchaseController::class, 'updateInstallStatus'])->name('installments.update');
+
 
     //installments
     Route::get('installments', [InstallmentController::class, 'index'])->name('installments.index');
     Route::get('installments/{installment}/edit', [InstallmentController::class, 'edit'])->name('installments.edit');
     Route::put('installments/{installment}', [InstallmentController::class, 'update'])->name('installments.update');
     Route::delete('installments/{installment}', [InstallmentController::class, 'destroy'])->name('installments.destroy');
-    
+
     // Additional installment routes
     Route::get('installments/overdue', [InstallmentController::class, 'overdueReport'])->name('installments.overdue');
     Route::get('installments/officer/{officerId}', [InstallmentController::class, 'officerInstallments'])->name('installments.officer');
@@ -64,9 +65,9 @@ Route::group(['prefix' => 'admin', 'middleware' => ['role:Admin']], function () 
     Route::get('installments/{installmentId}/receipt', [PurchaseController::class, 'printReceipt'])->name('installments.receipt');
 
 
-    
+
     Route::get('/customer/{id}/installment-info', [InstallmentController::class, 'getCustomerInstallmentInfo']);
-    
+
     Route::prefix('users')->group(function () {
         Route::get('/', [UserController::class, 'index'])->name('admin.users');
         Route::post('/store', [UserController::class, 'store'])->name('user.store');

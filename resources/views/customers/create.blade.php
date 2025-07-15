@@ -8,9 +8,14 @@
         @csrf
 
         <div class="row">
-            <div class="col-md-6">
+            {{-- <div class="col-md-6">
                 <label for="account_no">Account No <span class="text-danger">*</span></label>
                 <input type="text" class="form-control" id="account_no" name="account_no" required>
+            </div> --}}
+            <div class="col-md-6">
+                <label for="account_no">Account No <span class="text-danger">*</span></label>
+                <!-- Display dynamically generated account number, make it read-only -->
+                <input type="text" class="form-control" id="account_no" name="account_no" value="{{ old('account_no', $account_no) }}" required readonly>
             </div>
 
             <div class="col-md-6">

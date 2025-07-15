@@ -15,7 +15,7 @@ class CustomerController extends Controller
     {
         if ($request->ajax()) {
             $customers = Customer::with(['purchases', 'installments'])->select('customers.*');
-            
+
             return DataTables::of($customers)
                 ->addColumn('photo', function ($customer) {
                     if ($customer->image) {
@@ -65,7 +65,7 @@ class CustomerController extends Controller
                     $totalPaid = $totalAdvance + $customer->installments()->where('status', 'paid')->sum('installment_amount');
                     $remainingBalance = $totalAmount - $totalPaid;
                     $isDefaulter = $customer->installments()->where('status', 'pending')->where('due_date', '<', now())->exists();
-                    
+
                     if ($totalPurchases == 0) {
                         return '<span class="badge badge-secondary">No Purchases</span>';
                     } elseif ($remainingBalance == 0) {
@@ -78,7 +78,7 @@ class CustomerController extends Controller
                 })
                 ->addColumn('actions', function ($customer) {
                     $totalPurchases = $customer->purchases->count();
-                    
+
                     return '
                         <div class="btn-group" role="group">
                             <a href="' . route('customers.statement', $customer->id) . '" class="btn btn-sm btn-info" title="View Statement">
@@ -96,14 +96,19 @@ class CustomerController extends Controller
                 ->rawColumns(['photo', 'name_with_father', 'mobile_numbers', 'purchases_count', 'status', 'actions'])
                 ->make(true);
         }
-        
+
         return view('customers.index');
     }
 
     // Show create form
     public function create()
     {
-        return view('customers.create');
+        $account_no = 'ACCT-' . strtoupper(uniqid());
+        while (\App\Models\Customer::where('account_no', $account_no)->exists()) {
+            $account_no = 'ACCT-' . strtoupper(uniqid());
+        }
+
+        return view('customers.create', compact('account_no'));
     }
 
     // Store customer data
@@ -184,7 +189,7 @@ class CustomerController extends Controller
             ->where('status', 'pending')
             ->where('due_date', '<', now())
             ->exists();
-        
+
         $customer->update(['is_defaulter' => $isDefaulter]);
 
         return redirect()->route('customers.index')->with('success', 'Customer updated successfully.');
@@ -195,12 +200,12 @@ class CustomerController extends Controller
     {
         try {
             \DB::beginTransaction();
-            
+
             // Delete customer image if exists
             if ($customer->image && file_exists(public_path('backend/img/customers/' . $customer->image))) {
                 unlink(public_path('backend/img/customers/' . $customer->image));
             }
-            
+
             // Delete guarantor images and guarantors
             foreach ($customer->guarantors as $guarantor) {
                 if ($guarantor->image && file_exists(public_path($guarantor->image))) {
@@ -208,18 +213,18 @@ class CustomerController extends Controller
                 }
             }
             $customer->guarantors()->delete();
-            
+
             // Delete all installments for this customer
             $customer->installments()->delete();
-            
+
             // Delete all purchases for this customer
             $customer->purchases()->delete();
-            
+
             // Finally delete the customer
             $customer->delete();
-            
+
             \DB::commit();
-            
+
             // Check if request is AJAX
             if (request()->ajax()) {
                 return response()->json([
@@ -227,13 +232,13 @@ class CustomerController extends Controller
                     'message' => 'Customer and all related data deleted successfully.'
                 ]);
             }
-            
+
             return redirect()->route('customers.index')
                 ->with('success', 'Customer and all related data deleted successfully.');
-                
+
         } catch (\Exception $e) {
             \DB::rollback();
-            
+
             // Check if request is AJAX
             if (request()->ajax()) {
                 return response()->json([
@@ -241,7 +246,7 @@ class CustomerController extends Controller
                     'message' => 'Error deleting customer: ' . $e->getMessage()
                 ], 500);
             }
-            
+
             return redirect()->route('customers.index')
                 ->with('error', 'Error deleting customer: ' . $e->getMessage());
         }
@@ -277,7 +282,7 @@ class CustomerController extends Controller
 
         // Mark defaulters
         Customer::whereIn('id', $defaulterIds)->update(['is_defaulter' => true]);
-        
+
         // Clear non-defaulters
         Customer::whereNotIn('id', $defaulterIds)->update(['is_defaulter' => false]);
 

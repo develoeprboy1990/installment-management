@@ -331,12 +331,25 @@ class PurchaseController extends Controller
     public function printReceipt($installmentId)
     {
         $installment = Installment::with(['customer', 'purchase.product', 'officer'])->findOrFail($installmentId);
-        
+
         // Check if installment is paid
         if ($installment->status !== 'paid') {
             return redirect()->back()->with('error', 'Receipt can only be printed for paid installments.');
         }
-        
+
         return view('purchases.receipt', compact('installment'));
+    }
+
+    public function updateInstallStatus(Request $request, $id)
+    {
+        $request->validate([
+            'status' => 'required|in:paid,pending',
+        ]);
+
+        $installment = Installment::findOrFail($id);
+        $installment->status = $request->status;
+        $installment->save();
+
+        return redirect($request->redirect_back ?? url()->previous())->with('success', 'Installment status updated successfully.');
     }
 }

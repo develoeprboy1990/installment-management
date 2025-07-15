@@ -8,18 +8,18 @@
             @php
                 $paidInstallments = $purchase->installments()->where('status', 'paid')->count();
             @endphp
-            
+
             <!-- Edit Button -->
             <a href="{{ route('purchases.edit', $purchase) }}" class="btn btn-warning">
                 <i class="fa fa-edit"></i> Edit Purchase
             </a>
-      
-            
+
+
             <!-- Delete Button -->
             <button onclick="confirmDelete()" class="btn btn-danger">
                 <i class="fa fa-trash"></i> Delete Purchase
             </button>
-            
+
             <a href="{{ route('purchases.index') }}" class="btn btn-default">
                 <i class="fa fa-arrow-left"></i> Back to List
             </a>
@@ -112,7 +112,7 @@
                         $totalInstallments = $purchase->installments()->count();
                         $paidInstallmentCount = $purchase->installments()->where('status', 'paid')->count();
                     @endphp
-                    
+
                     <table class="table table-condensed">
                         <tr>
                             <th width="40%">Total Paid:</th>
@@ -131,7 +131,7 @@
                             <td>
                                 <div class="progress" style="margin-bottom: 5px;">
                                     @php $percentage = $totalPaid > 0 ? ($totalPaid / $purchase->total_price) * 100 : 0; @endphp
-                                    <div class="progress-bar progress-bar-{{ $percentage == 100 ? 'success' : 'info' }}" 
+                                    <div class="progress-bar progress-bar-{{ $percentage == 100 ? 'success' : 'info' }}"
                                          style="width: {{ $percentage }}%">
                                         {{ number_format($percentage, 1) }}%
                                     </div>
@@ -232,7 +232,7 @@
                             <td>{{ $installment->officer?->name ?? $installment->recovery_officer ?? '-' }}</td>
                             <td>
                                 @if($installment->status == 'pending')
-                                    <button class="btn btn-sm btn-success process-payment-btn" 
+                                    <button class="btn btn-sm btn-success process-payment-btn"
                                         data-installment-id="{{ $installment->id }}">
                                         <i class="fa fa-credit-card"></i> Pay
                                     </button>
@@ -241,13 +241,21 @@
                                         <span class="text-success">
                                             <i class="fa fa-check"></i> Paid
                                         </span>
-                                        <a href="{{ route('installments.receipt', $installment->id) }}" 
-                                        class="btn btn-sm btn-info" 
-                                        target="_blank" 
+                                        <a href="{{ route('installments.receipt', $installment->id) }}"
+                                        class="btn btn-sm btn-info"
+                                        target="_blank"
                                         title="Print Receipt">
                                             <i class="fa fa-print"></i> Print
                                         </a>
                                     </div>
+                                         {{-- New Edit button to trigger modal --}}
+                                    <button class="btn btn-sm btn-warning mt-1 edit-status-btn"
+                                         data-id="{{ $installment->id }}"
+                                         data-status="{{ $installment->status }}"
+                                         data-toggle="modal"
+                                         data-target="#editStatusModal">
+                                         <i class="fa fa-edit"></i> Edit
+                                    </button>
                                 @endif
                             </td>
                         </tr>
@@ -256,6 +264,37 @@
                 </table>
             </div>
         </div>
+    </div>
+</div>
+
+<!-- Edit Installment Status Modal -->
+<div class="modal fade" id="editStatusModal" tabindex="-1" role="dialog" aria-labelledby="editStatusModalLabel">
+    <div class="modal-dialog" role="document">
+        <form method="POST" id="statusEditForm">
+            @csrf
+            @method('PUT')
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title" id="editStatusModalLabel">Edit Installment Status</h4>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="installment_id" id="modalInstallmentId">
+
+                    <div class="form-group">
+                        <label for="installmentStatus">Select Status</label>
+                        <select class="form-control" name="status" id="installmentStatus" required>
+                            <option value="pending">Pending</option>
+                            <option value="paid">Paid</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Update Status</button>
+                </div>
+            </div>
+        </form>
     </div>
 </div>
 
@@ -364,14 +403,14 @@ $(document).ready(function() {
     // Handle process payment button click
     $('.process-payment-btn').on('click', function() {
         var installmentId = $(this).data('installment-id');
-        
+
         // Show loading state
         $('#paymentModal').modal('show');
         $('#receipt_no').val('Loading...');
         $('#payment_amount').val('Loading...');
         $('#recovery_officer_id').html('<option value="">Loading...</option>');
         $('#remarks').val('Loading...');
-        
+
         // Fetch installment details
         $.ajax({
             url: '{{ url("admin/purchases/installment") }}/' + installmentId + '/details',
@@ -382,7 +421,7 @@ $(document).ready(function() {
                 $('#receipt_no').val(response.receipt_no);
                 $('#payment_amount').val(response.installment_amount);
                 $('#remarks').val(response.remarks);
-                
+
                 // Populate recovery officers dropdown
                 populateRecoveryOfficers(response.recovery_officer_id);
             },
@@ -392,22 +431,22 @@ $(document).ready(function() {
             }
         });
     });
-    
+
     function populateRecoveryOfficers(selectedOfficerId) {
         var options = '<option value="">Select Recovery Officer</option>';
-        
+
         @php
         $activeOfficers = \App\Models\RecoveryOfficer::active()->get();
         @endphp
-        
+
         var officersData = @json($activeOfficers);
-        
+
         $.each(officersData, function(index, officer) {
             var selected = (officer.id == selectedOfficerId) ? 'selected' : '';
-            options += '<option value="' + officer.id + '" ' + selected + '>' + 
+            options += '<option value="' + officer.id + '" ' + selected + '>' +
                       officer.name + ' (' + officer.employee_id + ')</option>';
         });
-        
+
         $('#recovery_officer_id').html(options);
     }
 });
@@ -419,7 +458,7 @@ function confirmDelete() {
 $('#confirmDeleteBtn').on('click', function() {
     // Show loading state
     $(this).html('<i class="fa fa-spinner fa-spin"></i> Deleting...').prop('disabled', true);
-    
+
     $.ajax({
         url: '{{ route("purchases.destroy", $purchase) }}',
         type: 'DELETE',
@@ -444,6 +483,24 @@ $('#confirmDeleteBtn').on('click', function() {
         }
     });
 });
+
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const editButtons = document.querySelectorAll('.edit-status-btn');
+        const statusSelect = document.getElementById('installmentStatus');
+        const form = document.getElementById('statusEditForm');
+
+        editButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const installmentId = button.dataset.id;
+                const status = button.dataset.status;
+
+                // Fix: Use a string for the form action
+                form.action = `/admin/installments/${installmentId}`;
+                statusSelect.value = status;
+            });
+        });
+    });
 </script>
 @endpush
 @endsection
