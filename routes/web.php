@@ -31,7 +31,7 @@ Route::group(['prefix' => 'admin', 'middleware' => ['role:Admin']], function () 
     //customers
     Route::resource('customers', CustomerController::class);
     Route::get('customers/{customer}/statement', [CustomerController::class, 'statement'])->name('customers.statement');
-  
+
 
     //guarantors
     Route::resource('guarantors', GuarantorController::class);
@@ -43,6 +43,7 @@ Route::group(['prefix' => 'admin', 'middleware' => ['role:Admin']], function () 
 
     // recovery-officers
     Route::resource('recovery-officers', RecoveryOfficerController::class);
+    Route::put('/recovery-officers/{recoveryOfficer}', [RecoveryOfficerController::class, 'update'])->name('recoveryOfficer.update');
 
     //purchases
     Route::resource('purchases', PurchaseController::class);
