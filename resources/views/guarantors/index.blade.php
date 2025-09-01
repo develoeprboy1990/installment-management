@@ -37,10 +37,10 @@
                                 <td>{{ $loop->iteration }}</td>
                                 <td>
                                     @if ($guarantor->image)
-                                        <img src="{{ asset($guarantor->image) }}" alt="Guarantor Image" 
+                                        <img src="{{ asset($guarantor->image) }}" alt="Guarantor Image"
                                              width="50" height="50" class="rounded-circle object-fit-cover">
                                     @else
-                                        <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center" 
+                                        <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center"
                                              style="width: 50px; height: 50px; font-size: 14px;">
                                             {{ strtoupper(substr($guarantor->name, 0, 2)) }}
                                         </div>
@@ -114,13 +114,13 @@
                         @endforelse
                     </tbody>
                 </table>
-                
+
                 <!-- Pagination -->
-                @if ($guarantors->hasPages())
+                {{-- @if ($guarantors->hasPages())
                     <div class="d-flex justify-content-center mt-3">
                         {{ $guarantors->links() }}
                     </div>
-                @endif
+                @endif --}}
             </div>
         </div>
     </div>

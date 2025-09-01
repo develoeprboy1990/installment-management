@@ -11,7 +11,7 @@ class GuarantorController extends Controller
 {
     public function index()
     {
-        $guarantors = Guarantor::with('customer')->orderBy('customer_id')->orderBy('guarantor_no')->paginate(6);
+        $guarantors = Guarantor::with('customer')->orderBy('customer_id')->orderBy('guarantor_no')->get();
         return view('guarantors.index', compact('guarantors'));
     }
 
@@ -98,7 +98,7 @@ class GuarantorController extends Controller
             if ($guarantor->image && file_exists(public_path($guarantor->image))) {
                 unlink(public_path($guarantor->image));
             }
-            
+
             $image = $request->file('image');
             $filename = time() . '_' . $image->getClientOriginalName();
             $image->move(public_path('backend/img/guarantors'), $filename);

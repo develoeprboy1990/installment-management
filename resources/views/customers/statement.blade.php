@@ -252,13 +252,13 @@
                                     <th>Disc</th>
                                     <th>Balance</th>
                                     <th>Fine</th>
-                                    <th>F-Type</th>
+                                    {{-- <th>F-Type</th> --}}
                                     <th>Recovery Officer</th>
                                     <th>Remarks</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach($customer->installments()->orderBy('due_date')->take(10)->get() as $index => $installment)
+                                @foreach($customer->installments()->where('status' , 'paid')->orderBy('due_date')->take(10)->get() as $index => $installment)
                                 <tr>
                                     <td>{{ $index + 1 }}</td>
                                     <td>{{ $installment->date ? $installment->date->format('d/m/Y') : $installment->due_date->format('d/m/Y') }}</td>
@@ -268,9 +268,9 @@
                                     <td>{{ $installment->discount ?? 0 }}</td>
                                     <td>{{ number_format($installment->balance, 0) }}</td>
                                     <td>{{ $installment->fine_amount ?? 0 }}</td>
-                                    <td>{{ $installment->status == 'paid' ? 'Nothing' : 'Pending' }}</td>
+                                    {{-- <td>{{ $installment->status == 'paid' ? 'Nothing' : 'Pending' }}</td> --}}
                                     <td>{{ $installment->officer?->name ?? 'N/A' }}</td>
-                                    <td>{{ $installment->status == 'paid' ? 'C' : 'P' }}</td>
+                                    <td>{{ $installment->status == 'paid' ? 'Paid' : 'P' }}</td>
                                 </tr>
                                 @endforeach
                             </tbody>
