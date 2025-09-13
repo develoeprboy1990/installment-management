@@ -48,7 +48,11 @@
         <div class="col-md-3">
             <div class="panel panel-success">
                 <div class="panel-body text-center">
+                    @if(getUserSetting('show_total_revenue') == '1')
                     <h4>Rs. {{ number_format($installments->where('status', 'paid')->sum('installment_amount'), 2) }}</h4>
+                    @else
+                    <h4>Rs. ****</h4>
+                    @endif
                     <p>Total Collected</p>
                 </div>
             </div>
@@ -79,6 +83,26 @@
                         @endforeach
                     </select>
                 </div>
+
+                {{-- Start Date --}}
+            <div class="form-group mr-3">
+                <label for="start_date">Start Date:</label>
+                <input type="date"
+                       name="start_date"
+                       id="start_date"
+                       class="form-control ml-2"
+                       value="{{ request('start_date') }}">
+            </div>
+
+            {{-- End Date --}}
+            <div class="form-group mr-3">
+                <label for="end_date">End Date:</label>
+                <input type="date"
+                       name="end_date"
+                       id="end_date"
+                       class="form-control ml-2"
+                       value="{{ request('end_date') }}">
+            </div>
                 <button type="submit" class="btn btn-primary">Filter</button>
                 <a href="{{ route('installments.index') }}" class="btn btn-default ml-2">Clear</a>
             </form>

@@ -27,6 +27,8 @@ Route::group(['prefix' => 'admin', 'middleware' => ['role:Admin']], function () 
 
     //Dashboard
     Route::get('report', [DashboardController::class, 'report'])->name('admin.report');
+    // NEW: AJAX metrics endpoint
+    Route::get('report/metrics', [DashboardController::class, 'metrics'])->name('admin.report.metrics');
 
     //customers
     Route::resource('customers', CustomerController::class);
@@ -99,6 +101,7 @@ Route::group(['prefix' => 'admin', 'middleware' => ['role:Admin']], function () 
     Route::get('/roles-list', [UserController::class, 'getRolesList'])->name('admin.roles-list');
     Route::get('/settings', [SettingController::class, 'index'])->name('admin.settings');
     Route::post('/settings', [SettingController::class, 'store'])->name('store.settings');
+    Route::post('/settings/toggle', [SettingController::class, 'toggle'])->name('settings.toggle');
 
 });
 

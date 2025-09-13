@@ -46,7 +46,11 @@
         <div class="col-md-3">
             <div class="panel panel-info">
                 <div class="panel-body text-center">
+                    @if(getUserSetting('show_total_revenue') == '1')
                     <h4>Rs. {{ number_format($purchases->sum('total_price'), 0) }}</h4>
+                    @else
+                    <h4>Rs. ****</h4>
+                    @endif
                     <p>Total Value</p>
                 </div>
             </div>
@@ -105,24 +109,24 @@
                             <td>
                                 <div class="btn-group" role="group">
                                     <!-- View Button -->
-                                    <a href="{{ route('purchases.show', $purchase) }}" 
+                                    <a href="{{ route('purchases.show', $purchase) }}"
                                        class="btn btn-sm btn-info" title="View Details">
                                         <i class="fa fa-eye"></i>
                                     </a>
-                                    
+
                                     <!-- Edit Button -->
-                                    <a href="{{ route('purchases.edit', $purchase) }}" 
+                                    <a href="{{ route('purchases.edit', $purchase) }}"
                                         class="btn btn-sm btn-warning" title="Edit Purchase">
                                         <i class="fa fa-edit"></i>
                                     </a>
-                                    
-                                    
+
+
                                     <!-- Delete Button -->
-                                    <button onclick="confirmDelete({{ $purchase->id }}, '{{ addslashes($purchase->customer->name) }}', '{{ addslashes($purchase->product->company . ' ' . $purchase->product->model) }}', {{ $paidInstallments }})" 
+                                    <button onclick="confirmDelete({{ $purchase->id }}, '{{ addslashes($purchase->customer->name) }}', '{{ addslashes($purchase->product->company . ' ' . $purchase->product->model) }}', {{ $paidInstallments }})"
                                             class="btn btn-sm btn-danger" title="Delete Purchase">
                                         <i class="fa fa-trash"></i>
                                     </button>
-                                    
+
                                 </div>
                             </td>
                         </tr>
@@ -165,7 +169,9 @@
 $(document).ready(function() {
     $('#purchasesTable').DataTable({
         responsive: true,
-        order: [[1, 'desc']], // Sort by purchase date descending
+        pageLength: 200,
+        lengthMenu: [[10, 25, 50, 100,300,500], [10, 25, 50, 100,300,500]],
+        // order: [[1, 'desc']], // Sort by purchase date descending
         columnDefs: [
             { targets: [9], orderable: false }, // Disable sorting for Actions column
         ]
@@ -173,7 +179,7 @@ $(document).ready(function() {
 });
 
 function confirmDelete(purchaseId, customerName, productName, paidInstallments) {
-    
+
     $('#purchase-details').html(`
         <table class="table table-sm">
             <tr><th>Customer:</th><td>${customerName}</td></tr>
@@ -181,18 +187,18 @@ function confirmDelete(purchaseId, customerName, productName, paidInstallments) 
             <tr><th>Paid Installments:</th><td>${paidInstallments}</td></tr>
         </table>
     `);
-    
+
     $('#confirmDeleteBtn').off('click').on('click', function() {
         deletePurchase(purchaseId);
     });
-    
+
     $('#deleteModal').modal('show');
 }
 
 function deletePurchase(purchaseId) {
     // Show loading state
     $('#confirmDeleteBtn').html('<i class="fa fa-spinner fa-spin"></i> Deleting...').prop('disabled', true);
-    
+
     $.ajax({
         url: '/admin/purchases/' + purchaseId,
         type: 'DELETE',
@@ -202,12 +208,12 @@ function deletePurchase(purchaseId) {
         success: function(response) {
             if (response.success) {
                 $('#deleteModal').modal('hide');
-                
+
                 // Show success message
                 $('<div class="alert alert-success alert-dismissible">' +
                   '<button type="button" class="close" data-dismiss="alert">&times;</button>' +
                   response.message + '</div>').prependTo('.container-fluid');
-                
+
                 // Reload page to refresh data
                 setTimeout(function() {
                     location.reload();

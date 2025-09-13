@@ -261,17 +261,17 @@ $(document).ready(function() {
             { data: 'status', name: 'status', orderable: false, searchable: false },
             { data: 'actions', name: 'actions', orderable: false, searchable: false }
         ],
-        pageLength: 25,
-        lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
+        pageLength: 200,
+        lengthMenu: [[10, 25, 50, 100,300,500], [10, 25, 50, 100,300,500]],
         order: [[1, 'desc']]
     });
 });
 
 function confirmDelete(customerId, customerName, totalPurchases) {
-    let message = totalPurchases > 0 
+    let message = totalPurchases > 0
         ? `⚠️ WARNING! This will delete customer "${customerName}" and all ${totalPurchases} purchases. Continue?`
         : `Delete customer "${customerName}"?`;
-    
+
     if (confirm(message)) {
         fetch(`/admin/customers/${customerId}`, {
             method: 'DELETE',

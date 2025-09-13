@@ -29,6 +29,8 @@
     <link href="{{ asset('backend/css/style.css') }}" rel="stylesheet">
     <link href="{{ asset('backend/css/plugins/dataTables/datatables.min.css') }}" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+     <!-- Toastr CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
 
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
@@ -224,6 +226,14 @@
 
     </div>
 
+
+
+    <!-- jQuery (required for toastr) -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <!-- Toastr JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+
     <!-- Mainly scripts -->
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="{{ asset('backend/js/bootstrap.min.js') }}"></script>
@@ -251,7 +261,7 @@
                 { label: "Data 1", data: d1, color: '#17a084'},
                 { label: "Data 2", data: d2, color: '#127e68' }
             ];
-            
+
             // Only plot if the element exists
             if ($("#flot-chart1").length) {
                 $.plot($("#flot-chart1"), data1, {
@@ -318,7 +328,7 @@
             }
         });
     </script>
-    
+
     <script>
         //logout
         function triggerLogout() {
@@ -329,8 +339,24 @@
                 console.error('Logout form not found!');
             }
         }
-    </script>
+        </script>
+    <script>
+        @if(session('success'))
+            toastr.success("{{ session('success') }}");
+        @endif
 
+        @if(session('error'))
+            toastr.error("{{ session('error') }}");
+        @endif
+
+        @if(session('warning'))
+            toastr.warning("{{ session('warning') }}");
+        @endif
+
+        @if(session('info'))
+            toastr.info("{{ session('info') }}");
+        @endif
+    </script>
     @stack('script')
 </body>
 </html>

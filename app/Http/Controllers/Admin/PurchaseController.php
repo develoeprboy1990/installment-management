@@ -350,6 +350,6 @@ class PurchaseController extends Controller
         $installment->status = $request->status;
         $installment->save();
 
-        return redirect($request->redirect_back ?? url()->previous())->with('success', 'Installment status updated successfully.');
+        return redirect()->back()->with('success', 'Installment status updated successfully.');
     }
 }
