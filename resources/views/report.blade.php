@@ -120,7 +120,7 @@
                 </div>
             </div>
 
-            {{-- <!-- Summary Cards -->
+             <!-- Summary Cards -->
             <div class="col-lg-3">
                 <div class="ibox">
                     <div class="ibox-title">
@@ -206,7 +206,7 @@
                         <small>Total amount due</small>
                     </div>
                 </div>
-            </div> --}}
+            </div> 
         </div>
 
         {{-- <div class="row">
