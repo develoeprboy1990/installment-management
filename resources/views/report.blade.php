@@ -191,23 +191,22 @@
             </div>
 
 
-            <div class="col-lg-3">
-                <div class="ibox">
-                    <div class="ibox-title">
-                        <h5>Defaulters</h5>
-                        <div class="ibox-tools">
-                            <span class="label label-danger pull-right">{{ $data['defaulters_count'] ?? 0 }}</span>
-                        </div>
-                    </div>
-                    <div class="ibox-content">
-                        <h1 class="no-margins">{{ $data['defaulters_count'] ?? 0 }}</h1>
-                        <div class="stat-percent font-bold text-danger">
-                            {{ number_format($data['defaulters_amount'] ?? 0, 2) }} <i class="fa fa-level-down"></i></div>
-                        <small>Total amount due</small>
+        <div class="col-lg-3">
+            <div class="ibox">
+                <div class="ibox-title">
+                    <h5>Defaulters</h5>
+                    <div class="ibox-tools">
+                        <span class="label label-danger pull-right">{{ $data['defaulters_count'] ?? 0 }}</span>
                     </div>
                 </div>
-            </div> --}}
+                <div class="ibox-content">
+                    <h1 class="no-margins">{{ $data['defaulters_count'] ?? 0 }}</h1>
+                    <div class="stat-percent font-bold text-danger">{{ number_format($data['defaulters_amount'] ?? 0, 2) }} <i class="fa fa-level-down"></i></div>
+                    <small>Total amount due</small>
+                </div>
+            </div>
         </div>
+    </div>
 
         {{-- <div class="row">
             <!-- Payment Collection Chart -->
