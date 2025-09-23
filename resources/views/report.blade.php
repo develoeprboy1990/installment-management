@@ -53,7 +53,11 @@
                              <span class="label label-primary pull-left" style="font-size: 13px;">Paid Installment</span>
                         </div>
                         <div class="ibox-content">
+                            @if (getUserSetting('show_total_revenue') == '1')
                             <h1 class="no-margins" id="kpiPaidInst">0</h1>
+                            @else
+                            <h1 class="no-margins">****</h1>
+                            @endif
                             <small>Installments paid in range</small>
                         </div>
                     </div>
@@ -65,7 +69,11 @@
                             <span class="label label-primary pull-left" style="font-size: 13px;">Collected</span>
                         </div>
                         <div class="ibox-content">
+                            @if (getUserSetting('show_total_revenue') == '1')
                             <h1 class="no-margins" id="kpiCollected">Rs. 0</h1>
+                            @else
+                            <h1 class="no-margins">Rs. ****</h1>
+                            @endif
                             <small>Amount received</small>
                         </div>
                     </div>
@@ -77,7 +85,11 @@
                             <span class="label label-primary pull-left" style="font-size: 13px;">Pending Amount</span>
                         </div>
                         <div class="ibox-content">
+                            @if (getUserSetting('show_total_revenue') == '1')
                             <h1 class="no-margins" id="kpiPendingRange">Rs. 0</h1>
+                            @else
+                            <h1 class="no-margins">Rs. ****</h1>
+                            @endif
                             <small>Due within range (all shown on hover)</small>
                         </div>
                     </div>
@@ -89,7 +101,11 @@
                             <span class="label label-primary pull-left" style="font-size: 13px;">Total Revenue</span>
                         </div>
                         <div class="ibox-content">
+                            @if (getUserSetting('show_total_revenue') == '1')
                             <h1 class="no-margins" id="kpiRevenue">Rs. 0</h1>
+                            @else
+                            <h1 class="no-margins">Rs. ****</h1>
+                            @endif
                             <small>Purchases in range</small>
                         </div>
                     </div>
@@ -101,7 +117,11 @@
                             <span class="label label-primary pull-left" style="font-size: 13px;">Total Profit</span>
                         </div>
                         <div class="ibox-content">
+                            @if (getUserSetting('show_total_revenue') == '1')
                             <h1 class="no-margins" id="kpiProfit">Rs. 0</h1>
+                            @else
+                            <h1 class="no-margins">Rs. ****</h1>
+                            @endif
                             <small>Per-installment profit sum</small>
                         </div>
                     </div>
@@ -113,8 +133,27 @@
                             <span class="label label-primary pull-left" style="font-size: 13px;">New Customers</span>
                         </div>
                         <div class="ibox-content">
+                            @if (getUserSetting('show_total_revenue') == '1')
                             <h1 class="no-margins" id="kpiNewCustomers">0</h1>
+                            @else
+                            <h1 class="no-margins">****</h1>
+                            @endif
                             <small>Joined in range</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-4 col-sm-6 m-b-sm"">
+                    <div class="ibox">
+                        <div class="ibox-title">
+                            <span class="label label-primary pull-left" style="font-size: 13px;">Defaulters</span>
+                            <div class="ibox-tools">
+                                <span class="label label-danger pull-right">{{ $data['defaulters_count'] ?? 0 }}</span>
+                            </div>
+                        </div>
+                        <div class="ibox-content">
+                            <h1 class="no-margins">{{ $data['defaulters_count'] ?? 0 }}</h1>
+                            <div class="stat-percent font-bold text-danger">{{ number_format($data['defaulters_amount'] ?? 0, 2) }} <i class="fa fa-level-down"></i></div>
+                            <small>Total amount due</small>
                         </div>
                     </div>
                 </div>
