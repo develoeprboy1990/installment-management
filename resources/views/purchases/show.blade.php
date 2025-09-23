@@ -47,8 +47,20 @@
                             <td>{{ $purchase->purchase_date->format('d/m/Y') }}</td>
                         </tr>
                         <tr>
+                            <th>Account Number:</th>
+                            <td>{{ $purchase->customer->account_no }}</td>
+                        </tr>
+                        <tr>
                             <th>Customer:</th>
                             <td>{{ $purchase->customer->name }} ({{ $purchase->customer->account_no }})</td>
+                        </tr>
+                        <tr>
+                            <th>Father Name:</th>
+                            <td>{{ $purchase->customer->father_name }}</td>
+                        </tr>
+                         <tr>
+                            <th>Address:</th>
+                            <td>{{ $purchase->customer->office_address }}</td>
                         </tr>
                         <tr>
                             <th>Product:</th>

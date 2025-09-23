@@ -36,9 +36,10 @@
                             $customerStatus = 'NO PURCHASES';
                         } elseif ($currentBalance <= 0) {
                             $customerStatus = 'COMPLETED';
-                        } elseif ($overdueInstallments > 0) {
-                            $customerStatus = 'DEFAULTER';
                         }
+                        // elseif ($overdueInstallments > 0) {
+                        //     $customerStatus = 'DEFAULTER';
+                        // }
                     @endphp
 
                     <!-- Header with Company Info -->
