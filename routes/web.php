@@ -108,7 +108,7 @@ Route::group(['middleware' => ['role:Admin|Customer']], function () {
 
 
 Route::get('admin/dashboard', function () {
-    return view('report');
+    return view('dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
