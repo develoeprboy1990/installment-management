@@ -22,7 +22,7 @@ class SettingController extends Controller
     {
         //return $request;
         foreach ($request->input('settings', []) as $key => $value) {
- 
+
             Setting::updateOrCreate(
                 [
                     'key' => $key,
@@ -38,7 +38,28 @@ class SettingController extends Controller
             'icon' => 'success',
             'message' => 'Settings saved successfully!'
         ]);
-        
+
 
     }
+
+    public function toggle(Request $request)
+    {
+        $request->validate([
+            'key' => 'required|string',
+            'value' => 'required|boolean',
+        ]);
+
+        Setting::updateOrCreate(
+            [
+                'key' => $request->key,
+                'user_id' => auth()->id(),
+            ],
+            [
+                'value' => $request->value ? '1' : '0',
+            ]
+        );
+
+        return response()->json(['success' => true]);
+    }
+
 }

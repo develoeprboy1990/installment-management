@@ -146,4 +146,175 @@ class DashboardController extends Controller
         return view('report', compact('data'));
     }
 
+    public function metrics(Request $request)
+{
+    $range     = $request->input('range', 'month'); // day|week|month|six_months|year|all|custom
+    $startDate = $request->input('start_date');
+    $endDate   = $request->input('end_date');
+
+    // --- Resolve start/end for the chosen range ---
+    [$start, $end, $groupBy] = $this->resolveRange($range, $startDate, $endDate);
+
+    // Paid installments (count + sum)
+    $paidBase = Installment::where('status', 'paid');
+    if ($start && $end) {
+        $paidBase->whereBetween('date', [$start, $end]);
+    }
+    $paid_installments_count = (clone $paidBase)->count();
+    $collected_amount        = (clone $paidBase)->sum('installment_amount') ?? 0;
+
+    // Pending revenue (due in range) and all-time pending
+    $pendingInRange = Installment::where('status', 'pending');
+    if ($start && $end) {
+        $pendingInRange->whereBetween('due_date', [$start, $end]);
+    }
+    $pending_revenue_in_range = $pendingInRange->sum('installment_amount') ?? 0;
+    $pending_revenue_all      = Installment::where('status','pending')->sum('installment_amount') ?? 0;
+
+    // Customers (new in range) + total customers (all time)
+    $customers_count_in_range = Customer::when($start && $end, fn($q) => $q->whereBetween('created_at', [$start, $end]))->count();
+    $total_customers          = Customer::count();
+
+    // Total revenue (purchases in range) — using purchase_date if present, fallback to created_at
+    $revenueBase = Purchase::query();
+    if ($start && $end) {
+        $revenueBase->where(function ($q) use ($start, $end) {
+            $q->whereBetween('purchase_date', [$start, $end])
+              ->orWhere(function ($qq) use ($start, $end) {
+                  $qq->whereNull('purchase_date')->whereBetween('created_at', [$start, $end]);
+              });
+        });
+    }
+    $total_revenue_in_range = $revenueBase->sum('total_price') ?? 0;
+
+    // Total profit (range) — SQL sum of per-installment profit
+    $profitQuery = Installment::query()
+        ->join('purchases', 'installments.purchase_id', '=', 'purchases.id')
+        ->join('products', 'products.id', '=', 'purchases.product_id')
+        ->where('installments.status', 'paid');
+
+    if ($start && $end) {
+        $profitQuery->whereBetween('installments.date', [$start, $end]);
+    }
+
+    $total_profit_in_range = (float) $profitQuery->value(DB::raw(
+        'SUM( (products.price - products.cost_price) / IFNULL(NULLIF(purchases.installment_months,0),1) )'
+    )) ?? 0.0;// sum over (price - cost_price) / installment_months (default 1 if null/0)
+        $total_profit_in_range = (float) $profitQuery
+    ->selectRaw('
+        SUM(
+            (COALESCE(products.price, 0) - COALESCE(products.cost_price, 0))
+            / NULLIF(COALESCE(purchases.installment_months, 1), 0)
+        ) AS profit_total
+    ')
+    ->value('profit_total') ?? 0.0;
+
+    // Time-series for chart (collections by day/month depending on range)
+    $series = $this->collectionsSeries($start, $end, $groupBy);
+
+    return response()->json([
+        'meta' => [
+            'range' => $range,
+            'start' => $start ? $start->toDateTimeString() : null,
+            'end'   => $end ? $end->toDateTimeString() : null,
+            'group' => $groupBy, // day|month
+        ],
+        'kpis' => [
+            'paid_installments_count' => (int) $paid_installments_count,
+            'customers_new'           => (int) $customers_count_in_range,
+            'customers_total'         => (int) $total_customers,
+            'collected'               => (float) $collected_amount,
+            'pending_in_range'        => (float) $pending_revenue_in_range,
+            'pending_all'             => (float) $pending_revenue_all,
+            'total_revenue'           => (float) $total_revenue_in_range,
+           'total_profit'             => $total_profit_in_range,
+        ],
+        'series' => [
+            'collections' => $series, // [["2025-09-01", 12345], ...]
+        ],
+    ]);
+}
+
+/**
+ * Resolve date range and grouping unit for charts
+ */
+private function resolveRange(string $range, $startDate = null, $endDate = null): array
+{
+    $now = now();
+    $start = $end = null;
+    $groupBy = 'day';
+
+    switch ($range) {
+        case 'day':
+            $start = $now->copy()->startOfDay();
+            $end   = $now->copy()->endOfDay();
+            $groupBy = 'day';
+            break;
+        case 'week':
+            $start = $now->copy()->startOfWeek(); // Mon by default
+            $end   = $now->copy()->endOfWeek();
+            $groupBy = 'day';
+            break;
+        case 'month':
+            $start = $now->copy()->startOfMonth();
+            $end   = $now->copy()->endOfMonth();
+            $groupBy = 'day';
+            break;
+        case 'six_months':
+            $start = $now->copy()->subMonths(6)->startOfDay();
+            $end   = $now->copy()->endOfDay();
+            $groupBy = 'month';
+            break;
+        case 'year':
+            $start = $now->copy()->startOfYear();
+            $end   = $now->copy()->endOfYear();
+            $groupBy = 'month';
+            break;
+        case 'custom':
+            if ($startDate && $endDate) {
+                $start = Carbon::parse($startDate)->startOfDay();
+                $end   = Carbon::parse($endDate)->endOfDay();
+                // choose grouping based on span
+                $groupBy = $start->diffInDays($end) > 92 ? 'month' : 'day';
+            }
+            break;
+        case 'all':
+        default:
+            // no start/end => whole history
+            $start = null;
+            $end   = null;
+            $groupBy = 'month';
+            break;
+    }
+    return [$start, $end, $groupBy];
+}
+
+/**
+ * Build collection time-series for the chart
+ */
+private function collectionsSeries(?Carbon $start, ?Carbon $end, string $groupBy): array
+{
+    $q = Installment::where('status', 'paid');
+
+    if ($start && $end) {
+        $q->whereBetween('date', [$start, $end]);
+    }
+
+    if ($groupBy === 'day') {
+        $rows = $q->selectRaw('DATE(date) as d, COALESCE(SUM(installment_amount),0) as total')
+                  ->groupBy('d')
+                  ->orderBy('d')
+                  ->get();
+        return $rows->map(fn($r) => [ (string)$r->d, (float)$r->total ])->all();
+    }
+
+    // month grouping
+    $rows = $q->selectRaw('DATE_FORMAT(date, "%Y-%m") as m, COALESCE(SUM(installment_amount),0) as total')
+              ->groupBy('m')
+              ->orderBy('m')
+              ->get();
+
+    return $rows->map(fn($r) => [ (string)$r->m, (float)$r->total ])->all();
+}
+
 }

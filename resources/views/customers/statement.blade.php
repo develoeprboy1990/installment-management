@@ -44,11 +44,9 @@
                     <!-- Header with Company Info -->
                     <div class="statement-header">
                         <div class="company-info">
-                            <h6>Customer Account Information Detail</h6>
+                            <h3> <strong>Talal & Niazi Electronics</strong></h3>
                             <div class="print-info">
-                                <div>Print Date: {{ date('d-M-Y') }}</div>
-                                <div>Print Time: {{ date('H:i:s A') }}</div>
-                                <div>Page 1 of 1</div>
+                                <div>Print Date: {{ now()->format('M j ,Y & h:i A') ?? 'N/A' }}</div>
                             </div>
                         </div>
                     </div>

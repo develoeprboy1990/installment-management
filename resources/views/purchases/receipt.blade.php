@@ -1,207 +1,184 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Payment Receipt</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 20px; }
-        .receipt-container { max-width: 1000px; margin: 0 auto; border: 1px solid #ddd; padding: 20px; }
-        .header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px; }
-        .company-name { font-size: 18px; font-weight: bold; margin-bottom: 5px; }
-        .receipt-title { font-size: 16px; font-weight: bold; }
-        .info-row { display: flex; justify-content: space-between; margin-bottom: 8px; }
-        .info-label { font-weight: bold; }
-        .divider { border-top: 1px dashed #000; margin: 15px 0; }
-        .amount-section { background-color: #f5f5f5; padding: 10px; margin: 15px 0; }
-        .total-amount { font-size: 18px; font-weight: bold; text-align: center; }
-        .footer { text-align: center; margin-top: 20px; font-size: 12px; }
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Installment Receipt</title>
 
-        /* Add styling for grid layout */
-        .row {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
+    {{-- Bootstrap 5 --}}
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"/>
+
+    <style>
+        body { background-color: #f8f9fa; }
+        .receipt-container {
+            width: 1000px;
+            background: #fff;
+            border: 1px solid #000;
+            padding: 20px 30px;
+            margin: 30px auto;
+            box-shadow: 0 0 10px rgba(0,0,0,.1);
         }
-        .col-md-6 {
-            flex: 0 0 48%; /* 6 columns */
-            max-width: 48%;
+        .receipt-header {
+            border-bottom: 2px solid #000;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
         }
-        .col-md-12 {
-            flex: 0 0 100%; /* 12 columns */
-            max-width: 100%;
+        .receipt-title {
+            font-size: 1.5rem;
+            font-weight: 700;
         }
+        .table th { width: 25%; }
+        .table td { width: 25%; }
 
         @media print {
-            body { margin: 0; }
-            .no-print { display: none; }
+            body { background: none; margin: 0; }
+            .receipt-container { box-shadow: none; margin: 0; border: none; width: 100%; }
+            .no-print { display: none !important; }
         }
     </style>
 </head>
 <body>
-    <div class="receipt-container">
-        <!-- Header -->
-        <div class="header">
-            <div class="company-name">Talal & Niazi Electronics</div>
-            <div class="d-flex" style="display: flex; justify-content: space-between;">
-            <div> <div class="receipt-title">PAYMENT RECEIPT</div>
-            </div>
-        <div>
-    <div class="company-name">Contact: 03008183092</div>
+
+<div class="receipt-container">
+    {{-- Header --}}
+    <div class="receipt-header text-center">
+        <div class="receipt-title">Talal & Niazi Electronics</div>
+        <div class="d-flex justify-content-between">
+        <div class="mt-1 text-end"><small>PAYMENT RECEIPT</small></div>
+        <div class="mt-1 text-end"><small>{{ now()->format('M j ,Y & h:i A') ?? 'N/A' }}</small></div>
+        <div class="mt-1 text-start"><small>Contact: 03008183092</small></div>
+        </div>
 
     </div>
-        </div>
-    </div>
-
-        <!-- Receipt Info (First row of 6 columns each) -->
-        <div class="row">
-            <div class="col-md-6">
-                <div class="info-row">
-                    <span class="info-label">Receipt No:</span>
-                    <span>{{ $installment->receipt_no }}</span>
-                </div>
-            </div>
-            <div class="col-md-6">
-                <div class="info-row">
-                    <span class="info-label">Date:</span>
-                    <span>{{ $installment->date->format('d/m/Y') }}</span>
-                </div>
-            </div>
-            <div class="col-md-6">
-                <div class="info-row">
-                    <span class="info-label">Time:</span>
-                    <span>{{ $installment->date->format('h:i A') }}</span>
-                </div>
-            </div>
-            <div class="col-md-6">
-                <div class="info-row">
-                    <span class="info-label">Customer:</span>
-                    <span>{{ $installment->customer->name }}</span>
-                </div>
-            </div>
-            <div class="col-md-6">
-                <div class="info-row">
-                    <span class="info-label">Account No:</span>
-                    <span>{{ $installment->customer->account_no }}</span>
-                </div>
-            </div>
-            <div class="col-md-6">
-                <div class="info-row">
-                    <span class="info-label">Phone:</span>
-                    <span>{{ $installment->customer->mobile_1 }}</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Second row of 6 columns each -->
-        <div class="row">
-            <div class="col-md-6">
-                <div class="info-row">
-                    <span class="info-label">Paid Installment:</span>
-                    <span>
-                        #{{ $installment->purchase->installments()->where('id', '<=', $installment->id)->where('status', 'paid')->count() }}
-                        of {{ $installment->purchase->installment_months }}
-                    </span>
-                </div>
-            </div>
-            <div class="col-md-6">
-                <div class="info-row">
-                    <span class="info-label">Product:</span>
-                    <span>{{ $installment->purchase->product->company }} {{ $installment->purchase->product->model }}</span>
-                </div>
-            </div>
-            <div class="col-md-6">
-                <div class="info-row">
-                    <span class="info-label">Serial No:</span>
-                    <span>{{ $installment->purchase->product->serial_no }}</span>
-                </div>
-            </div>
-            <div class="col-md-6">
-                <div class="info-row">
-                    <span class="info-label">Total Price:</span>
-                    <span>{{ ucfirst($installment->purchase->total_price) }}</span>
-                </div>
-            </div>
-            <div class="col-md-6">
-                <div class="info-row">
-                    <span class="info-label">Payment Method:</span>
-                    <span>{{ ucfirst($installment->payment_method) }}</span>
-                </div>
-            </div>
-            <div class="col-md-6">
-                <div class="info-row">
-                    <span class="info-label">Previous Balance:</span>
-                    <span>Rs. {{ number_format($installment->pre_balance, 2) }}</span>
-                </div>
-            </div>
-        </div>
 
 
-        <!-- Third row of 6 columns each -->
-        <div class="row">
-            <div class="col-md-6">
-                <div class="info-row">
-                    <span class="info-label">Payment Amount:</span>
-                    <span>Rs. {{ number_format($installment->installment_amount, 2) }}</span>
-                </div>
-            </div>
-            @if($installment->discount > 0)
-            <div class="col-md-6">
-                <div class="info-row">
-                    <span class="info-label">Discount:</span>
-                    <span>Rs. {{ number_format($installment->discount, 2) }}</span>
-                </div>
-            </div>
+    {{-- Financial Details --}}
+    <table class="table table-bordered table-sm">
+        <tbody>
+            <tr>
+                <th>Account No:</th>
+                <td class="text-end">
+                    {{ $installment->customer->account_no ?? 'N/A' }}
+                </td>
+                <th>Purchase Date:</th>
+                <td class="text-end">
+                    @php
+                    $purchaseDate = optional($installment->purchase)->purchase_date
+                        ?? optional($installment->purchase)->created_at
+                        ?? $installment->date;
+                    @endphp
+                    {{ optional($purchaseDate)->format('M j ,Y & h:iA') ?? 'N/A' }}
+                </td>
+            </tr>
+             <tr>
+                <th>Customer Name:</th>
+                <td class="text-end">
+                     {{ $installment->customer->name ?? 'N/A' }}
+                </td>
+                <th>Father Name:</th>
+                <td class="text-end">
+                    {{ $installment->customer->father_name ?? 'N/A' }}
+                </td>
+            </tr>
+            <tr>
+                <th>Installment date:</th>
+                <td class="text-end">
+                     <span class="text-end">{{ $installment->date->format('M j ,Y') ?? 'N/A' }}</span>
+                </td>
+                <th>Customer Phone:</th>
+                <td class="text-end">
+                     {{ $installment->customer->mobile_1 ?? 'N/A' }}
+                </td>
+            </tr>
+            <tr>
+                <th>Product Name</th>
+                <td class="text-end">
+                    {{ optional(optional($installment->purchase)->product)->company }}
+                    {{ optional(optional($installment->purchase)->product)->model }}
+                </td>
+                <th>Total Price</th>
+                <td class="text-end">
+                    Rs.{{ number_format((float)($installment->purchase->total_price ?? 0), 2) }}
+                </td>
+            </tr>
+            <tr>
+                <th>Previous Balance</th>
+                <td class="text-end">{{ 'Rs. ' . number_format((float)($installment->pre_balance ?? 0), 2) }}</td>
+                <th>Remaining Balance</th>
+                <td class="text-end">{{ 'Rs. ' . number_format((float)($installment->balance ?? 0), 2) }}</td>
+            </tr>
+            <tr>
+                <th>Serial No</th>
+                <td class="text-end">{{ optional(optional($installment->purchase)->product)->serial_no ?? 'N/A' }}</td>
+                <th>Payment Method</th>
+                <td class="text-end">{{ isset($installment->payment_method) ? ucfirst($installment->payment_method) : 'N/A' }}</td>
+            </tr>
+            <tr>
+                <th>Total Paid</th>
+                <td class="text-end">Rs.{{ number_format((float)($installment->installment_amount ?? 0), 2) }}</td>
+                <th>Total Installments</th>
+                <td class="text-end">{{ $installment->purchase->installment_months ?? 'N/A' }}</td>
+            </tr>
+
+            @php
+                $receivedCount = optional($installment->purchase)
+                    ? $installment->purchase->installments()
+                        ->where('id', '<=', $installment->id)
+                        ->where('status', 'paid')
+                        ->count()
+                    : null;
+            @endphp
+            <tr>
+                <th>Received Installments</th>
+                <td class="text-end">
+                    @if(!is_null($receivedCount) && !empty($installment->purchase->installment_months))
+                        {{ $receivedCount }}
+                    @elseif(!is_null($receivedCount))
+                        #{{ $receivedCount }}
+                    @else
+                        N/A
+                    @endif
+                </td>
+                <th>Received By</th>
+                <td class="text-end">{{ $installment->officer->name ?? 'N/A' }}</td>
+            </tr>
+
+            @if(($installment->discount ?? 0) > 0 || ($installment->fine_amount ?? 0) > 0)
+                <tr>
+                    @if(($installment->discount ?? 0) > 0)
+                        <th>Discount</th>
+                        <td>{{ 'Rs. ' . number_format((float)$installment->discount, 2) }}</td>
+                    @else
+                        <th>Discount</th><td>Rs. 0.00</td>
+                    @endif
+
+                    @if(($installment->fine_amount ?? 0) > 0)
+                        <th>Fine Amount</th>
+                        <td>{{ 'Rs. ' . number_format((float)$installment->fine_amount, 2) }}</td>
+                    @else
+                        <th>Fine Amount</th><td>Rs. 0.00</td>
+                    @endif
+                </tr>
             @endif
-            @if($installment->fine_amount > 0)
-            <div class="col-md-6">
-                <div class="info-row">
-                    <span class="info-label">Fine Amount:</span>
-                    <span>Rs. {{ number_format($installment->fine_amount, 2) }}</span>
-                </div>
-            </div>
-            @endif
-            <div class="col-md-6">
-                <div class="info-row">
-                    <span class="info-label">Remaining Balance:</span>
-                    <span>Rs. {{ number_format($installment->balance, 2) }}</span>
-                </div>
-            </div>
-            <div class="col-md-6">
-                <div class="info-row">
-                    <span class="info-label">TOTAL PAID: Rs.</span>
-                     {{ number_format($installment->installment_amount, 2) }}
-                </div>
-            </div>
-            <div class="col-md-6">
-                <div class="info-row">
-                    <span class="info-label">Received By:</span>
-                    <span>{{ $installment->officer->name ?? 'N/A' }}</span>
-                </div>
-            </div>
+        </tbody>
+    </table>
 
-        </div>
-
-        <!-- Footer -->
-        <div class="footer">
-            <div class="text-bold" style="font-weight: 600;"> 
-                <strong>ضروری نوٹ</strong><br>
-                <strong>
-                  قسط ہر ماہ کے 5 <strong> تاریخ تک لازمی جمع کروائیں۔ ادارہ کی رسید کے بغیر لین دین نہ کریں، ادارہ کسی بھی غیر قانونی استعمال کا ذمہ دار نہ ہوگا۔</strong>
-                  ادارہ کا کوئی بھی سٹاف رسید پرنٹ کیے بغیر کسی قسم کی تصدیق نہیں دے سکتا۔
-                </strong>
-              </div>
-
-        </div>
+    {{-- Urdu Note --}}
+    <div class="text-center mt-4">
+        <small style="font-weight:800;">
+            ضروری نوٹ! قسط ہر ماہ کے 5 تاریخ تک لازمی جمع کروائیں۔ ادارہ کی رسید کے بغیر لین دین نہ کریں،
+            ادارہ کسی بھی غیر قانونی استعمال کا ذمہ دار نہ ہوگا۔ ادارہ کا کوئی بھی سٹاف رسید پرنٹ کیے
+            بغیر کسی قسم کی تصدیق نہیں دے سکتا۔
+        </small>
     </div>
+    <div class="receipt-header"></div>
+</div>
 
-    <!-- Print Button -->
-    <div class="no-print" style="text-align: center; margin-top: 20px;">
-        <button onclick="window.print()" class="btn btn-primary" style="padding: 10px 20px; font-size: 16px;">
-            Print Receipt
-        </button>
-        <button onclick="window.close()" class="btn btn-default" style="padding: 10px 20px; font-size: 16px; margin-left: 10px;">
-            Close
-        </button>
-    </div>
+{{-- Actions --}}
+<div class="no-print text-center my-3">
+    <button onclick="window.print()" class="btn btn-primary px-4">Print Receipt</button>
+    <button onclick="window.close()" class="btn btn-outline-secondary px-4 ms-2">Close</button>
+</div>
 
-    <script>
-        // Auto print when page loads
+</body>
+</html>

@@ -7,38 +7,96 @@ use App\Models\Customer;
 use App\Models\RecoveryOfficer;
 use App\Models\Installment;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 
 class InstallmentController extends Controller
 {
+    // public function index(Request $request)
+    // {
+    //     $query = Installment::with(['customer', 'purchase.product', 'officer']);
+
+    //     // Apply filters
+    //     if ($request->filled('status')) {
+    //         if ($request->status == 'overdue') {
+    //             $query->where('status', 'pending')
+    //                   ->where('due_date', '<', now());
+    //         } else {
+    //             $query->where('status', $request->status);
+    //         }
+    //     }
+
+    //     if ($request->filled('customer_id')) {
+    //         $query->where('customer_id', $request->customer_id);
+    //     }
+
+    //     // Order by: 1) Overdue first, 2) Then by due date ascending
+    //     $installments = $query->orderByRaw("CASE
+    //                              WHEN status = 'pending' AND due_date < NOW() THEN 1
+    //                              WHEN status = 'pending' THEN 2
+    //                              ELSE 3
+    //                            END")
+    //                          ->orderBy('due_date', 'asc')
+    //                          ->orderBy('id', 'asc')
+    //                          ->paginate(200);
+
+    //     return view('installments.index', compact('installments'));
+    // }
+
     public function index(Request $request)
-    {
-        $query = Installment::with(['customer', 'purchase.product', 'officer']);
+{
+    $query = Installment::with(['customer', 'purchase.product', 'officer']);
 
-        // Apply filters
-        if ($request->filled('status')) {
-            if ($request->status == 'overdue') {
-                $query->where('status', 'pending')
-                      ->where('due_date', '<', now());
-            } else {
-                $query->where('status', $request->status);
-            }
+    // --- Optional: tiny input validation (safe defaults) ---
+    $request->validate([
+        'status'      => 'nullable|in:paid,pending,overdue',
+        'customer_id' => 'nullable|exists:customers,id',
+        'date_type'   => 'nullable|in:due_date,date', // 'date' = payment date column
+        'start_date'  => 'nullable|date',
+        'end_date'    => 'nullable|date|after_or_equal:start_date',
+    ]);
+
+    // Apply filters: status
+    if ($request->filled('status')) {
+        if ($request->status === 'overdue') {
+            $query->where('status', 'pending')
+                  ->where('due_date', '<', now());
+        } else {
+            $query->where('status', $request->status);
         }
+    }
 
-        if ($request->filled('customer_id')) {
-            $query->where('customer_id', $request->customer_id);
+    // Apply filters: customer
+    if ($request->filled('customer_id')) {
+        $query->where('customer_id', $request->customer_id);
+    }
+
+    // Apply filters: date range (on either due_date or payment date column)
+    // date_type defaults to 'due_date' if not provided
+    $dateType = $request->input('date_type', 'due_date'); // 'due_date' or 'date' (payment date)
+    $start    = $request->filled('start_date') ? Carbon::parse($request->start_date)->startOfDay() : null;
+    $end      = $request->filled('end_date')   ? Carbon::parse($request->end_date)->endOfDay()   : null;
+
+    if ($start || $end) {
+        if ($start && $end) {
+            $query->whereBetween($dateType, [$start, $end]);
+        } elseif ($start) {
+            $query->where($dateType, '>=', $start);
+        } elseif ($end) {
+            $query->where($dateType, '<=', $end);
         }
+    }
 
-        // Order by: 1) Overdue first, 2) Then by due date ascending
-        $installments = $query->orderByRaw("CASE
-                                 WHEN status = 'pending' AND due_date < NOW() THEN 1
-                                 WHEN status = 'pending' THEN 2
-                                 ELSE 3
-                               END")
-                             ->orderBy('due_date', 'asc')
-                             ->orderBy('id', 'asc')
-                             ->paginate(50);
+    // Order by: 1) Overdue first, 2) Then by due date asc, 3) id asc
+    $installments = $query->orderByRaw("CASE
+                             WHEN status = 'pending' AND due_date < NOW() THEN 1
+                             WHEN status = 'pending' THEN 2
+                             ELSE 3
+                           END")
+                         ->orderBy('due_date', 'asc')
+                         ->orderBy('id', 'asc')
+                         ->paginate(300);
 
-        return view('installments.index', compact('installments'));
+    return view('installments.index', compact('installments'));
     }
 
     public function getCustomerInstallmentInfo($id)
