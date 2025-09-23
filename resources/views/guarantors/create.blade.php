@@ -1,5 +1,4 @@
 @extends('layouts.master')
-
 @section('content')
 <div class="container-fluid">
     <h2>Create Guarantor</h2>
@@ -8,11 +7,11 @@
 
         <div class="mb-3">
             <label for="customer_id">Customer</label>
-            <select name="customer_id" class="form-control" required>
+            <select name="customer_id" id="customerSelect" class="form-control" required>
                 <option value="">Select Customer</option>
                 @foreach($customers as $customer)
                     <option value="{{ $customer->id }}" {{ old('customer_id') == $customer->id ? 'selected' : '' }}>
-                       ({{ $customer->account_no }})  Customer: {{ $customer->name }} | Father Name: {{ $customer->father_name }}
+                        ({{ $customer->account_no }}) Customer: {{ $customer->name }} | Father Name: {{ $customer->father_name }}
                     </option>
                 @endforeach
             </select>
@@ -21,7 +20,7 @@
             @enderror
         </div>
 
-        <div class="mb-3">
+        <div class="mb-3" style="margin-top: 10px;">
             <label>Guarantor Number</label>
             <div class="mb-2">
                 <div class="form-check form-check-inline">
@@ -145,8 +144,24 @@
                 <small class="text-danger">{{ $message }}</small>
             @enderror
         </div>
-        <button type="submit" class="btn btn-success">Save</button>
-        <a href="{{ route('guarantors.index') }}" class="btn btn-secondary">Cancel</a>
+       <div style="margin-top: 10px; align-items: center;text-align: center;">
+             <button type="submit" class="btn btn-success">Save</button>
+             <a href="{{ route('guarantors.index') }}" class="btn btn-info">Cancel</a>
+       </div>
+
     </form>
 </div>
 @endsection
+@push('script')
+
+<script>
+    $(document).ready(function() {
+        $('#customerSelect').select2({
+            placeholder: "Select a customer",
+            allowClear: true,
+            width: '100%'
+        });
+    });
+</script>
+@endpush
+
