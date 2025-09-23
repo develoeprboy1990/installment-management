@@ -1,7 +1,6 @@
 <?php
 
 use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\Admin\HomeController as AdminHomeController;
 use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Admin\RoleAssignmentController;
 use App\Http\Controllers\Admin\UserController;
@@ -17,14 +16,8 @@ use App\Http\Controllers\Admin\InstallmentController;
 use App\Http\Controllers\Admin\DashboardController;
 
 
-
-
-
-
 Route::group(['prefix' => 'admin', 'middleware' => ['role:Admin']], function () {
-
     Route::get('/admin', [HomeController::class, 'index'])->name('admin.dashboard');
-
     //Dashboard
     Route::get('report', [DashboardController::class, 'report'])->name('admin.report');
     // NEW: AJAX metrics endpoint
@@ -115,7 +108,7 @@ Route::group(['middleware' => ['role:Admin|Customer']], function () {
 
 
 Route::get('admin/dashboard', function () {
-    return view('dashboard');
+    return view('report');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
