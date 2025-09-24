@@ -41,7 +41,7 @@
                                              width="50" height="50" class="rounded-circle object-fit-cover">
                                     @else
                                         <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center"
-                                             style="width: 50px; height: 50px; font-size: 14px;">
+                                             style="font-weight:700;width: 50px;height: 50px;font-size: 14px;background: darkgrey;border-radius: 27px;text-align: center;line-height: 50px;">
                                             {{ strtoupper(substr($guarantor->name, 0, 2)) }}
                                         </div>
                                     @endif

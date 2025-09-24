@@ -16,7 +16,7 @@ use App\Http\Controllers\Admin\InstallmentController;
 use App\Http\Controllers\Admin\DashboardController;
 
 
-Route::group(['prefix' => 'admin', 'middleware' => ['role:Admin']], function () {
+Route::group(['prefix' => 'admin', 'middleware' => ['auth.redirect','role:Admin']], function () {
     Route::get('/admin', [HomeController::class, 'index'])->name('admin.dashboard');
     //Dashboard
     Route::get('report', [DashboardController::class, 'report'])->name('admin.report');
