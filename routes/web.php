@@ -107,9 +107,9 @@ Route::group(['middleware' => ['role:Admin|Customer']], function () {
 });
 
 
-Route::get('admin/dashboard', function () {
-    return view('dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+Route::get('admin/dashboard', [DashboardController::class, 'report'])
+    ->middleware(['auth.redirect', 'role:Admin'])
+    ->name('dashboard');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
