@@ -62,7 +62,7 @@
                                     <strong>Account No:</strong> {{ $customer->account_no }}
                                 </div>
                                 <div class="info-item">
-                                    <strong>Date:</strong> {{ $purchaseDate ? $purchaseDate->format('d-M-Y') : 'N/A' }}
+                                    <strong>Purchase Date:</strong> {{ $purchaseDate ? $purchaseDate->format('d-M-Y') : 'N/A' }}
                                 </div>
                             </div>
                             <div class="info-row">
