@@ -4,10 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Traits\LogsActivity;
 
 class RecoveryOfficer extends Model
 {
-    use HasFactory;
+    use HasFactory, LogsActivity;
 
     protected $fillable = [
         'name',
@@ -46,7 +47,7 @@ class RecoveryOfficer extends Model
             ->where('status', 'paid')
             ->sum('installment_amount');
     }
-    
+
     public function scopeActive($query)
     {
         return $query->where('is_active', true);

@@ -14,9 +14,15 @@ use App\Http\Controllers\Admin\RecoveryOfficerController;
 use App\Http\Controllers\Admin\PurchaseController;
 use App\Http\Controllers\Admin\InstallmentController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\ActivityController;
 
 
 Route::group(['prefix' => 'admin', 'middleware' => ['auth.redirect','role:Admin']], function () {
+    // activities
+    Route::get('activities', [ActivityController::class, 'index'])->name('activities.index');
+    Route::post('activities/mark-all-read', [ActivityController::class, 'markAllRead'])->name('activities.mark-all-read');
+    Route::post('activities/{activity}/mark-read', [ActivityController::class, 'markRead'])->name('activities.mark-read');
+    Route::post('activities/{activity}/mark-unread', [ActivityController::class, 'markUnread'])->name('activities.mark-unread');
     Route::get('/admin', [HomeController::class, 'index'])->name('admin.dashboard');
     //Dashboard
     Route::get('report', [DashboardController::class, 'report'])->name('admin.report');
@@ -44,7 +50,7 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth.redirect','role:Admin'
     Route::resource('purchases', PurchaseController::class);
     Route::post('purchases/{purchase}/process-payment', [PurchaseController::class, 'processPayment'])->name('purchases.process-payment');
     Route::get('purchases/installment/{installmentId}/details', [PurchaseController::class, 'getInstallmentDetails'])->name('purchases.installment-details');
-    Route::put('/installments/{id}', [PurchaseController::class, 'updateInstallStatus'])->name('installments.update');
+    Route::put('/installments/{id}/status', [PurchaseController::class, 'updateInstallStatus'])->name('installments.status');
 
 
     //installments

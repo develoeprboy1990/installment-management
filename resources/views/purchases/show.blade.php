@@ -2,7 +2,7 @@
 
 @section('content')
 <div class="container-fluid">
-    <div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-4" style="margin-bottom: 30px;">
         <h1>Purchase Details</h1>
         <div class="btn-group">
             @php
@@ -25,14 +25,6 @@
             </a>
         </div>
     </div>
-
-    @if(session('success'))
-        <div class="alert alert-success">{{ session('success') }}</div>
-    @endif
-
-    @if(session('error'))
-        <div class="alert alert-danger">{{ session('error') }}</div>
-    @endif
 
     <div class="row">
         <div class="col-md-6">
@@ -507,8 +499,8 @@ $('#confirmDeleteBtn').on('click', function() {
                 const installmentId = button.dataset.id;
                 const status = button.dataset.status;
 
-                // Fix: Use a string for the form action
-                form.action = `/admin/installments/${installmentId}`;
+                // Post to the dedicated status route
+                form.action = `{{ url('admin/installments') }}/${installmentId}/status`;
                 statusSelect.value = status;
             });
         });

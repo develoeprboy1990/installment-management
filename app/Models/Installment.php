@@ -6,10 +6,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Carbon\Carbon;
 use App\Models\RecoveryOfficer; // Add this import
+use App\Traits\LogsActivity;
 
 class Installment extends Model
 {
-    use HasFactory;
+    use HasFactory, LogsActivity;
 
     protected $fillable = [
         'customer_id',
@@ -34,6 +35,23 @@ class Installment extends Model
         'due_date' => 'date',
     ];
 
+    /**
+     * Attributes that should trigger activity logs on update.
+     */
+    public static function activityWatchedAttributes(): array
+    {
+        return [
+            'status',
+            'date',
+            'receipt_no',
+            'discount',
+            'payment_method',
+            'remarks',
+            'fine_amount',
+            'recovery_officer_id',
+        ];
+    }
+
     public function customer()
     {
         return $this->belongsTo(Customer::class);
@@ -56,12 +74,12 @@ class Installment extends Model
         if ($this->status == 'paid') {
             return false;
         }
-        
+
         // Check if due_date is in the past
         if ($this->due_date) {
             return Carbon::parse($this->due_date)->isPast();
         }
-        
+
         return false;
     }
 
@@ -82,12 +100,12 @@ class Installment extends Model
         if ($this->officer) {
             return $this->officer->name;
         }
-        
+
         // Fall back to the old recovery_officer field if it exists
         if (isset($this->attributes['recovery_officer'])) {
             return $this->attributes['recovery_officer'];
         }
-        
+
         return null;
     }
 

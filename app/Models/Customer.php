@@ -4,10 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Traits\LogsActivity;
 
 class Customer extends Model
 {
-    use HasFactory;
+    use HasFactory, LogsActivity;
 
     protected $fillable = [
         'account_no',
@@ -35,14 +36,14 @@ class Customer extends Model
     {
         return $this->hasMany(Installment::class);
     }
-    
+
     public function purchases()
     {
         return $this->hasMany(Purchase::class);
     }
 
     // ===== CALCULATED PROPERTIES =====
-    
+
     /**
      * Get total amount of all purchases
      */
@@ -64,7 +65,7 @@ class Customer extends Model
      */
     public function getTotalBalanceAttribute()
     {
-        return $this->purchases()->sum('remaining_balance') - 
+        return $this->purchases()->sum('remaining_balance') -
                $this->installments()->where('status', 'paid')->sum('installment_amount');
     }
 
@@ -91,7 +92,7 @@ class Customer extends Model
      */
     public function getTotalPaidAmountAttribute()
     {
-        return $this->getTotalAdvanceAttribute() + 
+        return $this->getTotalAdvanceAttribute() +
                $this->installments()->where('status', 'paid')->sum('installment_amount');
     }
 

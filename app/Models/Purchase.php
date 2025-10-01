@@ -5,10 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Carbon\Carbon;
+use App\Traits\LogsActivity;
 
 class Purchase extends Model
 {
-    use HasFactory;
+    use HasFactory, LogsActivity;
 
     protected $fillable = [
         'customer_id',
@@ -29,6 +30,19 @@ class Purchase extends Model
         'first_installment_date' => 'date',
         'last_installment_date' => 'date',
     ];
+
+    /**
+     * Attributes that should trigger activity logs on update.
+     */
+    public static function activityWatchedAttributes(): array
+    {
+        return [
+            'status',
+            'remaining_balance',
+            'advance_payment',
+            'monthly_installment',
+        ];
+    }
 
     public function customer()
     {
@@ -67,7 +81,7 @@ class Purchase extends Model
             ->where('status', '!=', 'paid')
             ->where('due_date', '<', now())
             ->exists();
-        
+
         return $overdueInstallments;
     }
 }

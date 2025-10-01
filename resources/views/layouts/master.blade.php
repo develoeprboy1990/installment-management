@@ -40,7 +40,6 @@
 
 <body>
     <div id="wrapper">
-
         <nav class="navbar-default navbar-static-side" role="navigation">
             <div class="sidebar-collapse">
                 <ul class="nav metismenu" id="side-menu">
@@ -150,39 +149,33 @@
                         </li>
 
                         <li class="dropdown">
-                            <a class="dropdown-toggle count-info" data-toggle="dropdown" href="#"> <i class="fa fa-bell"></i> <span class="label label-primary">8</span> </a>
-                            <ul class="dropdown-menu dropdown-alerts">
+                            <a class="dropdown-toggle count-info" data-toggle="dropdown" href="#">
+                                <i class="fa fa-bell"></i>
+                                <span class="label label-primary">{{ $activityUnreadCount ?? 0 }}</span>
+                            </a>
+                            <ul class="dropdown-menu dropdown-alerts" style="margin-left: 0px;">
+                                @forelse(($latestActivities ?? []) as $activity)
                                 <li>
-                                    <a href="mailbox.html">
+                                    <a href="{{ route('activities.index') }}" class="clearfix">
                                         <div>
-                                            <i class="fa fa-envelope fa-fw"></i> You have 16 messages
-                                            <span class="pull-right text-muted small">4 minutes ago</span>
+                                            <i class="fa fa-info-circle fa-fw"></i>
+                                            {{ $activity->message }}
+                                            <span class="pull-right text-muted small">{{ $activity->created_at->diffForHumans() }}</span>
                                         </div>
                                     </a>
                                 </li>
                                 <li class="divider"></li>
+                                @empty
                                 <li>
-                                    <a href="profile.html">
-                                        <div>
-                                            <i class="fa fa-twitter fa-fw"></i> 3 New Followers
-                                            <span class="pull-right text-muted small">12 minutes ago</span>
-                                        </div>
-                                    </a>
+                                    <div class="text-center p-xs">
+                                        <em>No recent activities</em>
+                                    </div>
                                 </li>
-                                <li class="divider"></li>
-                                <li>
-                                    <a href="grid_options.html">
-                                        <div>
-                                            <i class="fa fa-upload fa-fw"></i> Server Rebooted
-                                            <span class="pull-right text-muted small">4 minutes ago</span>
-                                        </div>
-                                    </a>
-                                </li>
-                                <li class="divider"></li>
+                                @endforelse
                                 <li>
                                     <div class="text-center link-block">
-                                        <a href="notifications.html">
-                                            <strong>See All Alerts</strong>
+                                        <a href="{{ route('activities.index') }}">
+                                            <strong>See All Activities</strong>
                                             <i class="fa fa-angle-right"></i>
                                         </a>
                                     </div>

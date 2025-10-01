@@ -2,38 +2,122 @@
 
 @section('content')
 <div class="container-fluid">
-    <h1 class="mb-4">Add New Product</h1>
+    <div class="row m-b-md">
+        <div class="col-sm-8">
+            <h1 class="m-b-none">Add New Product</h1>
+            <small class="text-muted">Create a product with company, model, serial and prices.</small>
+        </div>
+        <div class="col-sm-4 text-right">
+            <a href="{{ route('products.index') }}" class="btn btn-default"><i class="fa fa-arrow-left"></i> Back to Products</a>
+        </div>
+    </div>
 
-    <form action="{{ route('products.store') }}" method="POST">
-        @csrf
+    @if ($errors->any())
+        <div class="alert alert-danger">
+            <strong><i class="fa fa-exclamation-circle"></i> Please fix the following errors:</strong>
+            <ul class="m-t-xs m-b-none">
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
 
-        <div class="form-group">
-            <label for="company">Company</label>
-            <input type="text" class="form-control" id="company" name="company" placeholder="eg. Vivo, Samsung , PEL" value="{{ old('company') }}" required>
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="ibox">
+                <div class="ibox-title">
+                    <h5>Product Information</h5>
+                </div>
+                <div class="ibox-content">
+                    <form action="{{ route('products.store') }}" method="POST" novalidate>
+                        @csrf
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group {{ $errors->has('company') ? 'has-error' : '' }}">
+                                    <label for="company">Company <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="company" name="company" placeholder="e.g., Samsung, LG, Haier" value="{{ old('company') }}" required>
+                                    @if ($errors->has('company'))
+                                        <span class="help-block">{{ $errors->first('company') }}</span>
+                                    @endif
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group {{ $errors->has('model') ? 'has-error' : '' }}">
+                                    <label for="model">Model <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="model" name="model" placeholder="e.g., Galaxy A14" value="{{ old('model') }}" required>
+                                    @if ($errors->has('model'))
+                                        <span class="help-block">{{ $errors->first('model') }}</span>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group {{ $errors->has('serial_no') ? 'has-error' : '' }}">
+                                    <label for="serial_no">Serial No <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="serial_no" name="serial_no" placeholder="e.g., SN-123456789" value="{{ old('serial_no') }}" required>
+                                    @if ($errors->has('serial_no'))
+                                        <span class="help-block">{{ $errors->first('serial_no') }}</span>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group {{ $errors->has('cost_price') ? 'has-error' : '' }}">
+                                    <label for="cost_price">Cost Price <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <span class="input-group-addon">Rs.</span>
+                                        <input type="number" class="form-control" id="cost_price" name="cost_price" value="{{ old('cost_price') }}" step="0.01" min="0" required>
+                                    </div>
+                                    <small class="text-muted">Internal procurement or base cost.</small>
+                                    @if ($errors->has('cost_price'))
+                                        <span class="help-block">{{ $errors->first('cost_price') }}</span>
+                                    @endif
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group {{ $errors->has('price') ? 'has-error' : '' }}">
+                                    <label for="price">Sell Price <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <span class="input-group-addon">Rs.</span>
+                                        <input type="number" class="form-control" id="price" name="price" value="{{ old('price') }}" step="0.01" min="0" required>
+                                    </div>
+                                    <small class="text-muted">Displayed / invoiced price to customers.</small>
+                                    @if ($errors->has('price'))
+                                        <span class="help-block">{{ $errors->first('price') }}</span>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="m-t-sm">
+                            <button type="submit" class="btn btn-primary"><i class="fa fa-save"></i> Save Product</button>
+                            <a href="{{ route('products.index') }}" class="btn btn-default">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
         </div>
 
-        <div class="form-group">
-            <label for="model">Model</label>
-            <input type="text" class="form-control" id="model" name="model" placeholder="eg. Vivo y36" value="{{ old('model') }}" required>
+        <div class="col-lg-4">
+            <div class="ibox">
+                <div class="ibox-title">
+                    <h5>Tips</h5>
+                </div>
+                <div class="ibox-content">
+                    <ul class="m-b-none">
+                        <li>Use unique serial numbers to avoid duplicates.</li>
+                        <li>Ensure sell price is higher than cost where applicable.</li>
+                        <li>Company and model help identify items in reports.</li>
+                    </ul>
+                </div>
+            </div>
         </div>
-
-        <div class="form-group">
-            <label for="serial_no">Serial No</label>
-            <input type="text" class="form-control" id="serial_no" name="serial_no" placeholder="eg, 12345" value="{{ old('serial_no') }}" required>
-        </div>
-
-        <div class="form-group">
-            <label for="price">Cost Price</label>
-            <input type="number" class="form-control" id="cost_price" name="cost_price" placeholder="eg. RS 456" value="{{ old('cost_price') }}" step="0.01" min="0" required>
-        </div>
-
-        <div class="form-group">
-            <label for="price">Sell Price</label>
-            <input type="number" class="form-control" id="price" name="price" placeholder="eg. RS 456" value="{{ old('price') }}" step="0.01" min="0" required>
-        </div>
-
-        <button type="submit" class="btn btn-primary">Save</button>
-        <a href="{{ route('products.index') }}" class="btn btn-default">Cancel</a>
-    </form>
+    </div>
 </div>
 @endsection
