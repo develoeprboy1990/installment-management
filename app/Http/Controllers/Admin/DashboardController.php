@@ -65,7 +65,7 @@ class DashboardController extends Controller
             $data['recent_payments'] = Installment::where('status', 'paid')
                 ->with('customer')
                 ->orderBy('date', 'desc')
-                ->limit(5)
+                ->limit(100)
                 ->get();
 
             // Due Today

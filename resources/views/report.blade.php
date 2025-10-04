@@ -284,7 +284,7 @@
                             </a>
                         </div>
                     </div>
-                    <div class="ibox-content">
+                    <!-- <div class="ibox-content">
                         <div class="table-responsive">
                             <table class="table table-striped">
                                 <thead>
@@ -315,7 +315,51 @@
                                 </tbody>
                             </table>
                         </div>
+                    </div> -->
+                    <div class="ibox-content">
+                    <!-- Date Filter -->
+                    <div class="row mb-3">
+                        <div class="col-md-3">
+                            <label for="filter_date">Filter by Date:</label>
+                            <input type="date" id="filter_date" class="form-control" />
+                        </div>
+                        <div class="col-md-2">
+                            <label>&nbsp;</label>
+                            <button type="button" id="clear_filter" class="btn btn-default btn-block">Clear</button>
+                        </div>
                     </div>
+
+                    <!-- Scrollable Table Container -->
+                    <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                        <table class="table table-striped" id="payments_table">
+                            <thead style="position: sticky; top: 0; background-color: #fff; z-index: 10;">
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Customer</th>
+                                    <th>Amount</th>
+                                    <th>Receipt</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (isset($data['recent_payments']) && $data['recent_payments']->count() > 0)
+                                    @foreach ($data['recent_payments'] as $payment)
+                                        <tr data-date="{{ $payment->date ? Carbon\Carbon::parse($payment->date)->format('Y-m-d') : '' }}">
+                                            <td>{{ $payment->date ? Carbon\Carbon::parse($payment->date)->format('d/m/Y') : '-' }}</td>
+                                            <td>{{ $payment->customer->name ?? '-' }}</td>
+                                            <td class="text-left">{{ number_format($payment->installment_amount ?? 0, 2) }}</td>
+                                            <td>{{ $payment->receipt_no ?? '-' }}</td>
+                                        </tr>
+                                    @endforeach
+                                @else
+                                    <tr>
+                                        <td colspan="4" class="text-center">No recent payments</td>
+                                    </tr>
+                                @endif
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
                 </div>
             </div>
 
@@ -716,5 +760,30 @@
                 });
             });
         });
-    </script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const filterDate = document.getElementById('filter_date');
+            const clearFilter = document.getElementById('clear_filter');
+            const tableRows = document.querySelectorAll('#payments_table tbody tr[data-date]');
+
+            filterDate.addEventListener('change', function() {
+                const selectedDate = this.value;
+                
+                tableRows.forEach(row => {
+                    const rowDate = row.getAttribute('data-date');
+                    if (selectedDate === '' || rowDate === selectedDate) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+            });
+
+            clearFilter.addEventListener('click', function() {
+                filterDate.value = '';
+                tableRows.forEach(row => {
+                    row.style.display = '';
+                });
+            });
+        });
+</script>
 @endpush
