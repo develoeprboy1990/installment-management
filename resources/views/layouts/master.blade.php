@@ -44,7 +44,7 @@
             <div class="sidebar-collapse">
                 <ul class="nav metismenu" id="side-menu">
                     <li class="nav-header">
-                        <div class="dropdown profile-element">
+                        <div class="dropdown profile-element" style="text-align: center;">
                             <span>
                                 <img alt="image" class="img-circle" src="{{ asset('backend/img/profile_small.jpg') }}" />
                             </span>

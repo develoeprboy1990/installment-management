@@ -73,6 +73,9 @@ class PurchaseController extends Controller
 
     public function show(Purchase $purchase)
     {
+        // Ensure installments reflect fully-paid state if applicable
+        $this->reconcileIfFullyPaid($purchase);
+
         $purchase->load(['customer', 'product', 'installments' => function($query) {
             $query->with('officer');
         }]);
@@ -292,11 +295,8 @@ class PurchaseController extends Controller
         // Update subsequent installments' pre_balance
         $this->updateSubsequentInstallments($purchase, $installment, $newBalance);
 
-        // Check if all installments are paid
-        $remainingInstallments = $purchase->installments()->where('status', 'pending')->count();
-        if ($remainingInstallments == 0) {
-            $purchase->update(['status' => 'completed']);
-        }
+        // Reconcile if the purchase is now fully paid
+        $this->reconcileIfFullyPaid($purchase);
 
         // Update customer defaulter status
         $customer = $purchase->customer;
@@ -325,6 +325,53 @@ class PurchaseController extends Controller
         foreach ($subsequentInstallments as $installment) {
             $installment->update(['pre_balance' => $currentBalance]);
             $currentBalance = max(0, $currentBalance - $installment->installment_amount);
+        }
+    }
+
+    /**
+     * If total paid (advance + paid installments) covers total price,
+     * mark all remaining installments as paid and complete the purchase.
+     */
+    private function reconcileIfFullyPaid(Purchase $purchase): void
+    {
+        // Fresh sums to avoid stale relations
+        $totalPaid = (float) ($purchase->advance_payment
+            + $purchase->installments()->where('status', 'paid')->sum('installment_amount'));
+
+        if ($totalPaid + 0.0001 >= (float) $purchase->total_price) { // small epsilon for floats
+            // Mark all non-paid installments as paid with zero balance
+            $pendingOrOverdue = $purchase->installments()
+                ->where('status', '!=', 'paid')
+                ->get();
+
+            foreach ($pendingOrOverdue as $inst) {
+                $inst->update([
+                    'status' => 'paid',
+                    'date' => $inst->date ?? now(),
+                    'fine_amount' => 0,
+                    'discount' => $inst->discount ?? 0,
+                    'balance' => 0,
+                    // Set amount to 0 for reconciled installments so Total Paid doesn't exceed Total Price
+                    'installment_amount' => 0,
+                    'pre_balance' => 0,
+                ]);
+            }
+
+            // Update purchase status and remaining balance
+            $purchase->update([
+                'status' => 'completed',
+                'remaining_balance' => 0,
+            ]);
+
+            // Update customer's defaulter status
+            $customer = $purchase->customer;
+            if ($customer) {
+                $isDefaulter = $customer->installments()
+                    ->where('status', '!=', 'paid')
+                    ->where('due_date', '<', now())
+                    ->exists();
+                $customer->update(['is_defaulter' => $isDefaulter]);
+            }
         }
     }
 

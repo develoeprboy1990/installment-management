@@ -110,7 +110,9 @@
                 </div>
                 <div class="panel-body">
                     @php
-                        $totalPaid = $purchase->advance_payment + $purchase->installments()->where('status', 'paid')->sum('installment_amount');
+                        $totalPaidRaw = $purchase->advance_payment + $purchase->installments()->where('status', 'paid')->sum('installment_amount');
+                        // Cap display paid to total price to avoid showing overpayment as progress > 100%
+                        $totalPaid = min($totalPaidRaw, $purchase->total_price);
                         $remainingBalance = $purchase->getRemainingBalance();
                         $overdueInstallments = $purchase->installments()->where('due_date', '<', now())->where('status', '!=', 'paid')->count();
                         $totalInstallments = $purchase->installments()->count();
@@ -134,8 +136,8 @@
                             <th>Progress:</th>
                             <td>
                                 <div class="progress" style="margin-bottom: 5px;">
-                                    @php $percentage = $totalPaid > 0 ? ($totalPaid / $purchase->total_price) * 100 : 0; @endphp
-                                    <div class="progress-bar progress-bar-{{ $percentage == 100 ? 'success' : 'info' }}"
+                                    @php $percentage = $totalPaid > 0 ? min(100, ($totalPaid / $purchase->total_price) * 100) : 0; @endphp
+                                    <div class="progress-bar progress-bar-{{ $percentage >= 100 ? 'success' : 'info' }}"
                                          style="width: {{ $percentage }}%">
                                         {{ number_format($percentage, 1) }}%
                                     </div>

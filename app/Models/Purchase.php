@@ -70,7 +70,8 @@ class Purchase extends Model
     public function getRemainingBalance()
     {
         $totalPaid = $this->installments()->where('status', 'paid')->sum('installment_amount') + $this->advance_payment;
-        return $this->total_price - $totalPaid;
+        // Never return negative remaining due to overpayments or reconciliation
+        return max(0, $this->total_price - $totalPaid);
     }
 
     // Check if purchase is defaulted (missed payments)

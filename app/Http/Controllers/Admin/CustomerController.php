@@ -21,7 +21,7 @@ class CustomerController extends Controller
                     if ($customer->image) {
                         return '<img src="' . asset('backend/img/customers/' . $customer->image) . '" alt="Customer Photo" width="50" height="50" style="object-fit: cover; border-radius: 50%;">';
                     } else {
-                        return '<div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px; font-size: 1rem; font-weight: 500;">' . strtoupper(substr($customer->name, 0, 2)) . '</div>';
+                        return '<div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px; font:size:25px; font-weight: 700; background:gray;border-radius:50px;line-height:50px;text-align:center;">' . strtoupper(substr($customer->name, 0, 2)) . '</div>';
                     }
                 })
                 ->addColumn('name_with_father', function ($customer) {
