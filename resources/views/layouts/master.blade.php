@@ -13,18 +13,13 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-
     <title>{{ (getUserSetting('project_name') ?? config('app.name')) . ' - ' . (getUserSetting('project_tagline') ?? '') }}</title>
-
     <link href="{{ asset('backend/css/bootstrap.min.css') }}" rel="stylesheet">
     <link href="{{ asset('backend/font-awesome/css/font-awesome.css') }}" rel="stylesheet">
-
     <!-- Toastr style -->
     <link href="{{ asset('backend/css/plugins/toastr/toastr.min.css') }}" rel="stylesheet">
-
     <!-- Gritter -->
     <link href="{{ asset('backend/js/plugins/gritter/jquery.gritter.css') }}" rel="stylesheet">
-
     <link href="{{ asset('backend/css/animate.css') }}" rel="stylesheet">
     <link href="{{ asset('backend/css/style.css') }}" rel="stylesheet">
     <link href="{{ asset('backend/css/plugins/dataTables/datatables.min.css') }}" rel="stylesheet">
@@ -32,12 +27,9 @@
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
      <!-- Toastr CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
-
     <meta name="csrf-token" content="{{ csrf_token() }}">
-
     @stack('styles')
 </head>
-
 <body>
     <div id="wrapper">
         <nav class="navbar-default navbar-static-side" role="navigation">
@@ -46,7 +38,7 @@
                     <li class="nav-header">
                         <div class="dropdown profile-element" style="text-align: center;">
                             <span>
-                                <img alt="image" class="img-circle" src="{{ asset('backend/img/profile_small.jpg') }}" />
+                                <img alt="image" class="img-circle" src="{{ asset('storage/' . Auth::user()->avatar) }}" style="width: 60px; height: 60px; border-radius: 50%;" />
                             </span>
                             <a data-toggle="dropdown" class="dropdown-toggle" href="#">
                                 <span class="clear">

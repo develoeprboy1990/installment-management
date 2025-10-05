@@ -2,34 +2,41 @@
 @extends('layouts.master')
 
 @section('content')
-    {{-- <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-            {{ __('Profile') }}
-        </h2>
-    </x-slot> --}}
-
-
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
-            <div class="p-4 sm:p-8 bg-white dark:bg-gray-800 shadow sm:rounded-lg">
-                <div class="max-w-xl">
+<div class="container-fluid" style="margin-top: 20px;">
+    <div class="row">
+        <div class="col-md-8 col-lg-6">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title"><i class="fa fa-user"></i> {{ __('Profile Information') }}</h3>
+                </div>
+                <div class="panel-body">
                     @include('profile.partials.update-profile-information-form')
                 </div>
             </div>
+        </div>
 
-            <div class="p-4 sm:p-8 bg-white dark:bg-gray-800 shadow sm:rounded-lg">
-                <div class="max-w-xl">
+        <div class="col-md-8 col-lg-6">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title"><i class="fa fa-lock"></i> {{ __('Update Password') }}</h3>
+                </div>
+                <div class="panel-body">
                     @include('profile.partials.update-password-form')
                 </div>
             </div>
+
             @can('delete_account')
-            <div class="p-4 sm:p-8 bg-white dark:bg-gray-800 shadow sm:rounded-lg">
-                <div class="max-w-xl">
+            <div class="panel panel-danger">
+                <div class="panel-heading">
+                    <h3 class="panel-title"><i class="fa fa-exclamation-triangle"></i> {{ __('Delete Account') }}</h3>
+                </div>
+                <div class="panel-body">
                     @include('profile.partials.delete-user-form')
                 </div>
             </div>
             @endcan
         </div>
     </div>
+</div>
 @endsection
 {{-- </x-app-layout> --}}

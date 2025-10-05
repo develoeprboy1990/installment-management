@@ -7,7 +7,7 @@
             <h2 class="m-b-none">Products</h2>
             <small class="text-muted">Manage your catalog of products available for purchases.</small>
         </div>
-        <div class="col-sm-4 text-right">
+        <div class="col-sm-4 text-right" style="margin-top: 30px;">
             <a href="{{ route('products.create') }}" class="btn btn-primary"><i class="fa fa-plus"></i> Add New Product</a>
         </div>
     </div>

@@ -57,7 +57,9 @@
 						@endforeach
 						</tbody>
 					</table>
-					{{ $activities->links() }}
+					<div class="text-right">
+						{!! $activities->links('vendor.pagination.bootstrap-3') !!}
+					</div>									
 				</div>
 			</div>
 		</div>

@@ -13,7 +13,7 @@
         @csrf
     </form>
 
-    <form method="post" action="{{ route('profile.update') }}" class="mt-6 space-y-6">
+    <form method="post" action="{{ route('profile.update') }}" class="mt-6 space-y-6" enctype="multipart/form-data">
         @csrf
         @method('patch')
 
@@ -21,6 +21,23 @@
             <x-input-label for="name" :value="__('Name')" />
             <x-text-input id="name" name="name" type="text" class="mt-1 block w-full" :value="old('name', $user->name)" required autofocus autocomplete="name" />
             <x-input-error class="mt-2" :messages="$errors->get('name')" />
+        </div>
+
+        <!-- Avatar Upload -->
+        <div>
+            <x-input-label for="avatar" :value="__('Profile Image')" />
+            <div class="mt-2 flex items-center gap-4">
+                @if(!empty($user->avatar))
+                    <img src="{{ asset('storage/'.$user->avatar) }}" alt="Avatar" style="width:72px;height:72px;object-fit:cover;border-radius:8px;border:1px solid #e5e7eb;" />
+                @else
+                    <div style="width:72px;height:72px;border-radius:8px;background:#f3f4f6;display:flex;align-items:center;justify-content:center;color:#6b7280;border:1px solid #e5e7eb;">
+                        <i class="fa fa-user" aria-hidden="true"></i>
+                    </div>
+                @endif
+                <input id="avatar" name="avatar" type="file" accept="image/jpeg,image/png,image/webp" class="block" />
+            </div>
+            <small class="text-gray-500">JPEG/PNG/WEBP up to 2 MB.</small>
+            <x-input-error class="mt-2" :messages="$errors->get('avatar')" />
         </div>
 
         <div>
