@@ -4,7 +4,7 @@
 <div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1>Installments Management</h1>
-        <div class="btn-group">
+        <div class="btn-group" style="margin-bottom: 10px;">
             <a href="{{ route('purchases.index') }}" class="btn btn-primary">
                 <i class="fa fa-shopping-cart"></i> View Purchases
             </a>
