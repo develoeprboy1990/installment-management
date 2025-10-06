@@ -534,7 +534,7 @@
                 @endif
             ];
 
-            if (data1.length > 0) {
+            if (data1.length > 0 && typeof $.plot === 'function') {
                 $.plot($("#flot-line-chart"), [{
                     data: data1,
                     label: "Monthly Collections",
@@ -546,17 +546,10 @@
                             lineWidth: 2,
                             fill: true,
                             fillColor: {
-                                colors: [{
-                                    opacity: 0.0
-                                }, {
-                                    opacity: 0.2
-                                }]
+                                colors: [{ opacity: 0.0 }, { opacity: 0.2 }]
                             }
                         },
-                        points: {
-                            radius: 4,
-                            show: true
-                        }
+                        points: { radius: 4, show: true }
                     },
                     grid: {
                         borderWidth: 0,
@@ -567,20 +560,14 @@
                         mouseActiveRadius: 6
                     },
                     xaxis: {
-                        ticks: data1.map(function(item, index) {
-                            return [index, item[0]];
-                        }),
+                        ticks: data1.map(function(item, index) { return [index, item[0]]; }),
                         color: "transparent"
                     },
                     yaxis: {
                         color: "transparent",
-                        tickFormatter: function(val) {
-                            return "Rs. " + val.toFixed(0);
-                        }
+                        tickFormatter: function(val) { return "Rs. " + val.toFixed(0); }
                     },
-                    legend: {
-                        show: false
-                    }
+                    legend: { show: false }
                 });
             }
 
@@ -604,12 +591,70 @@
                 }
             };
 
-            var ctx = document.getElementById("doughnutChart").getContext("2d");
-            new Chart(ctx, {
-                type: 'doughnut',
-                data: doughnutData,
-                options: doughnutOptions
-            });
+            function isChartV3() {
+                try { return parseInt((Chart.version || '3').split('.')[0]) >= 3; } catch(e) { return true; }
+            }
+
+            function initReportCharts() {
+                var doughnutEl = document.getElementById("doughnutChart");
+                if (doughnutEl) {
+                    var ctx = doughnutEl.getContext("2d");
+                    var doughnutOpts = isChartV3() ? {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } }
+                    } : {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        legend: { display: false }
+                    };
+                    new Chart(ctx, {
+                        type: 'doughnut',
+                        data: doughnutData,
+                        options: doughnutOpts
+                    });
+                }
+
+                // 4-slice Active Data Pie (if present)
+                var activePieCanvas = document.getElementById('activePie');
+                if (activePieCanvas) {
+                    var activePieCtx = activePieCanvas.getContext('2d');
+                    var a = {{ (int)($data['active_customers'] ?? 0) }};
+                    var c = {{ (int)($data['completed_customers'] ?? 0) }};
+                    var d = {{ (int)($data['defaulters_count'] ?? 0) }};
+                    var n = {{ (int)($data['new_customers_this_month'] ?? 0) }};
+                    var sum = a + c + d + n;
+                    if (sum <= 0) {
+                        // Avoid rendering empty pie; show a friendly message
+                        activePieCanvas.insertAdjacentHTML('afterend', '<div class="text-center text-muted" style="padding-top:10px;">No data to display</div>');
+                        return;
+                    }
+                    var pieData = {
+                        labels: ['Active', 'Completed', 'Defaulters', 'New'],
+                        datasets: [{
+                            data: [a, c, d, n],
+                            backgroundColor: ['#1ab394', '#23c6c8', '#f8ac59', '#ed5565']
+                        }]
+                    };
+                    var pieOpts = isChartV3() ? {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { position: 'bottom' } }
+                    } : {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        legend: { position: 'bottom' }
+                    };
+                    new Chart(activePieCtx, {
+                        type: 'pie',
+                        data: pieData,
+                        options: pieOpts
+                    });
+                }
+            }
+
+            // Kickoff (Chart.js loaded from master layout)
+            if (window.Chart) { initReportCharts(); } else { console.error('Chart.js not found. Ensure it is included in master layout.'); }
         });
     </script>
 @endpush
@@ -651,7 +696,7 @@
         }
 
         function plotCollections(series) {
-            if (!series || !series.length) {
+            if (!series || !series.length || typeof $.plot !== 'function') {
                 $("#flot-line-chart").empty();
                 return;
             }
@@ -724,7 +769,60 @@
 
                 // Chart
                 plotCollections(resp.series.collections);
+
+                // Update the Range Pie chart (4 segments)
+                updateRangePie(resp.kpis);
             });
+        }
+
+        // ---- Range Pie (4 segments) using KPIs per selected range ----
+        var rangePieInstance = null;
+        function updateRangePie(kpis) {
+            var canvas = document.getElementById('rangePie');
+            if (!canvas || !window.Chart) return;
+
+            var ctx = canvas.getContext('2d');
+            var labels = ['Collected', 'Pending (Range)', 'Revenue', 'Profit'];
+            var values = [
+                Number(kpis.collected || 0),
+                Number(kpis.pending_in_range || 0),
+                Number(kpis.total_revenue || 0),
+                Number(kpis.total_profit || 0)
+            ];
+
+            // If all zeros, show message once
+            if (values.reduce((a,b)=>a+b,0) <= 0) {
+                if (!canvas.dataset.msgShown) {
+                    canvas.insertAdjacentHTML('afterend', '<div class="text-center text-muted" style="padding-top:10px;">No data to display for selected range</div>');
+                    canvas.dataset.msgShown = '1';
+                }
+                if (rangePieInstance) { rangePieInstance.destroy(); rangePieInstance = null; }
+                return;
+            }
+
+            var data = {
+                labels: labels,
+                datasets: [{
+                    data: values,
+                    backgroundColor: ['#1ab394', '#f8ac59', '#23c6c8', '#ed5565']
+                }]
+            };
+
+            var opts = (function(){
+                var v = (window.Chart && Chart.version) ? parseInt(Chart.version.split('.')[0]) : 3;
+                if (v >= 3) {
+                    return { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } };
+                }
+                return { responsive: true, maintainAspectRatio: false, legend: { position: 'bottom' } };
+            })();
+
+            if (rangePieInstance) {
+                rangePieInstance.data = data;
+                rangePieInstance.options = opts;
+                rangePieInstance.update();
+            } else {
+                rangePieInstance = new Chart(ctx, { type: 'pie', data: data, options: opts });
+            }
         }
 
         $(document).ready(function() {

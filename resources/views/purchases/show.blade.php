@@ -32,6 +32,9 @@
                 <div class="panel-heading">
                     <h3 class="panel-title">Purchase Information</h3>
                 </div>
+                @php
+                    $remainingBalance = $purchase->getRemainingBalance();
+                @endphp
                 <div class="panel-body">
                     <table class="table table-condensed">
                         <tr>
@@ -72,7 +75,7 @@
                         </tr>
                         <tr>
                             <th>Remaining Balance:</th>
-                            <td><strong>Rs. {{ number_format($purchase->remaining_balance, 2) }}</strong></td>
+                            <td><strong>Rs. {{ number_format($remainingBalance, 2) }}</strong></td>
                         </tr>
                         <tr>
                             <th>Monthly Installment:</th>
@@ -93,8 +96,11 @@
                         <tr>
                             <th>Status:</th>
                             <td>
-                                <span class="label label-{{ $purchase->status == 'completed' ? 'success' : 'warning' }}">
-                                    {{ ucfirst($purchase->status) }}
+                                @php
+                                    $derivedStatus = ($remainingBalance <= 0) ? 'completed' : 'active';
+                                @endphp
+                                <span class="label label-{{ $derivedStatus == 'completed' ? 'success' : 'warning' }}">
+                                    {{ ucfirst($derivedStatus) }}
                                 </span>
                             </td>
                         </tr>
@@ -363,6 +369,7 @@
                         <label>Payment Amount <span class="text-danger">*</span></label>
                         <input type="number" class="form-control" name="payment_amount" id="payment_amount" step="0.01" required>
                         <small class="text-muted">Pre-filled with scheduled installment amount</small>
+                        <div id="payment_amount_error" class="text-danger" style="display:none; margin-top:5px;"></div>
                     </div>
 
                     <div class="form-group">
@@ -427,6 +434,8 @@ $(document).ready(function() {
                 $('#receipt_no').val(response.receipt_no);
                 $('#payment_amount').val(response.installment_amount);
                 $('#remarks').val(response.remarks);
+                // Validate initial value against remaining
+                validatePaymentAmountAgainstRemaining();
 
                 // Populate recovery officers dropdown
                 populateRecoveryOfficers(response.recovery_officer_id);
@@ -455,6 +464,50 @@ $(document).ready(function() {
 
         $('#recovery_officer_id').html(options);
     }
+
+    // ---- Runtime validation against remaining balance ----
+    const remainingBalanceForValidation = parseFloat('{{ number_format($purchase->getRemainingBalance(), 2, '.', '') }}') || 0;
+
+    function setPayError(msg) {
+        if (msg) {
+            $('#payment_amount_error').text(msg).show();
+        } else {
+            $('#payment_amount_error').hide().text('');
+        }
+    }
+
+    function validatePaymentAmountAgainstRemaining() {
+        const val = parseFloat($('#payment_amount').val());
+        const $submit = $('#paymentModal form button[type="submit"]');
+        let error = '';
+
+        if (!isNaN(val) && val > remainingBalanceForValidation + 0.0001) {
+            error = `Remaining balance is Rs. ${remainingBalanceForValidation.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}. You entered Rs. ${val.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}, which exceeds the remaining amount.`;
+        }
+
+        if (error) {
+            setPayError(error);
+            $submit.prop('disabled', true);
+            return false;
+        } else {
+            setPayError('');
+            $submit.prop('disabled', false);
+            return true;
+        }
+    }
+
+    // Validate on input
+    $(document).on('input', '#payment_amount', function() {
+        validatePaymentAmountAgainstRemaining();
+    });
+
+    // Validate on submit
+    $('#paymentModal form').on('submit', function(e) {
+        const ok = validatePaymentAmountAgainstRemaining();
+        if (!ok) {
+            e.preventDefault();
+        }
+    });
 });
 
 function confirmDelete() {

@@ -236,6 +236,7 @@
 
     {{-- select items --}}
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="{{ asset('backend/js/plugins/chartJs/Chart.min.js')  }}"></script>
 
     <!-- Rest of your scripts -->
     <script src="{{ asset('backend/js/inspinia.js') }}"></script>
