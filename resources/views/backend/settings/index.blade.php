@@ -80,6 +80,28 @@ input:checked + .slider:before {
                                     </div>
                                 </div>
 
+                                <div class="form-group">
+                                    <label class="col-sm-2 control-label">Favicon</label>
+                                    <div class="col-sm-10">
+                                        <div class="row">
+                                            <div class="col-sm-6">
+                                                <input type="file" name="favicon" accept="image/png,image/x-icon,image/svg+xml,image/jpeg,image/webp" class="form-control" />
+                                                <p class="help-block">PNG/ICO/SVG/JPG/WEBP up to 1 MB. Recommended size 64x64 or 32x32.</p>
+                                            </div>
+                                            <div class="col-sm-6">
+                                                @if(!empty($settings['favicon']))
+                                                    <div style="display:flex;align-items:center;gap:12px;">
+                                                        <img src="{{ asset('storage/' . $settings['favicon']) }}" alt="Favicon" style="width:32px;height:32px;object-fit:contain;border:1px solid #e5e7eb;border-radius:4px;background:#fff;" />
+                                                        <code style="background:#f7f7f7;padding:2px 6px;border-radius:4px;">{{ $settings['favicon'] }}</code>
+                                                    </div>
+                                                @else
+                                                    <span class="text-muted">No favicon uploaded.</span>
+                                                @endif
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <hr>
 
                                 {{-- Boolean Toggles --}}

@@ -14,6 +14,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <title>{{ (getUserSetting('project_name') ?? config('app.name')) . ' - ' . (getUserSetting('project_tagline') ?? '') }}</title>
+    @if(getUserSetting('favicon'))
+        <link rel="icon" href="{{ asset('storage/' . getUserSetting('favicon')) }}">
+        <link rel="shortcut icon" href="{{ asset('storage/' . getUserSetting('favicon')) }}">
+    @endif
     <link href="{{ asset('backend/css/bootstrap.min.css') }}" rel="stylesheet">
     <link href="{{ asset('backend/font-awesome/css/font-awesome.css') }}" rel="stylesheet">
     <!-- Toastr style -->
@@ -38,7 +42,7 @@
                     <li class="nav-header">
                         <div class="dropdown profile-element" style="text-align: center;">
                             <span>
-                                <img alt="image" class="img-circle" src="{{ asset('storage/' . Auth::user()->avatar) }}" style="width: 60px; height: 60px; border-radius: 50%;" />
+                                <img alt="image" class="img-circle" src="{{ Auth::user()->avatar ? asset('storage/' . Auth::user()->avatar) : asset('backend/img/profile_small.jpg') }}" style="width: 60px; height: 60px; border-radius: 50%;" />
                             </span>
                             <a data-toggle="dropdown" class="dropdown-toggle" href="#">
                                 <span class="clear">
@@ -178,7 +182,7 @@
                         <li>
                             <a href="#" onclick="event.preventDefault(); triggerLogout();"> <i class="fa fa-sign-out"></i> Log out </a>
                         </li>
-                        <li class="dropdown">
+                        {{-- <li class="dropdown">
                             <a class="right-sidebar-toggle dropdown-toggle count-info" data-toggle="dropdown" href="#">
                                 <i class="fa fa-tasks"></i>
                             </a>
@@ -192,7 +196,7 @@
                                     </a>
                                 </li>
                             </ul>
-                        </li>
+                        </li> --}}
                     </ul>
                 </nav>
             </div>

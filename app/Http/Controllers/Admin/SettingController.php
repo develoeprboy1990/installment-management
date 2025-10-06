@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 class SettingController extends Controller
 {
     private $view_path = "backend.settings";
@@ -20,16 +21,44 @@ class SettingController extends Controller
 
     public function store(Request $request)
     {
-        //return $request;
+        // Save simple key/value settings
         foreach ($request->input('settings', []) as $key => $value) {
 
             Setting::updateOrCreate(
                 [
                     'key' => $key,
-                    'user_id' => auth()->id(),
+                    'user_id' => Auth::id(),
                 ],
                 [
                     'value' => $value,
+                ]
+            );
+        }
+
+        // Handle favicon upload (optional)
+        if ($request->hasFile('favicon')) {
+            $request->validate([
+                'favicon' => 'nullable|image|mimes:png,ico,svg,gif,jpg,jpeg,webp|max:1024',
+            ]);
+
+            // Delete old favicon if exists
+            $old = Setting::where('user_id', Auth::id())
+                ->where('key', 'favicon')
+                ->value('value');
+
+            $path = $request->file('favicon')->store('settings', 'public');
+
+            if (!empty($old) && Storage::disk('public')->exists($old)) {
+                Storage::disk('public')->delete($old);
+            }
+
+            Setting::updateOrCreate(
+                [
+                    'key' => 'favicon',
+                    'user_id' => Auth::id(),
+                ],
+                [
+                    'value' => $path,
                 ]
             );
         }
