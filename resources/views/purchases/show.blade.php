@@ -12,13 +12,13 @@
             <!-- Edit Button -->
             {{-- <a href="{{ route('purchases.edit', $purchase) }}" class="btn btn-warning">
                 <i class="fa fa-edit"></i> Edit Purchase
-            </a>
+            </a>--}}
 
 
             <!-- Delete Button -->
             <button onclick="confirmDelete()" class="btn btn-danger">
                 <i class="fa fa-trash"></i> Delete Purchase
-            </button> --}}
+            </button>
 
             <a href="{{ route('purchases.index') }}" class="btn btn-default">
                 <i class="fa fa-arrow-left"></i> Back to List
