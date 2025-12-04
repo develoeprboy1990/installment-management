@@ -40,6 +40,8 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth.redirect','role:Admin'
 
     //products
     Route::resource('products', ProductController::class);
+    Route::get('products/{product}/customers', [ProductController::class, 'getCustomers'])->name('products.customers');
+
 
 
     // recovery-officers

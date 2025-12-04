@@ -12,14 +12,24 @@ class UserSeeder extends Seeder
     public function run(): void
     {
         // Create Admin User
-        $admin = User::firstOrCreate(
-            ['email' => 'admin@gmail.com'],
+        // $admin = User::firstOrCreate(
+        //     ['email' => 'admin@gmail.com'],
+        //     [
+        //         'name' => 'Admin User', 
+        //         'password' => bcrypt('admin123')
+        //     ]
+        // );
+        // $admin->assignRole('Admin');
+
+        // Create Regular User (with limited permissions)
+        $user = User::firstOrCreate(
+            ['email' => 'user@gmail.com'],
             [
-                'name' => 'Admin User', 
-                'password' => bcrypt('admin123')
+                'name' => 'Regular User', 
+                'password' => bcrypt('user123')
             ]
         );
-        $admin->assignRole('Admin');
+        $user->assignRole('User');
 
         // Create Customer User
         $customer = User::firstOrCreate(
@@ -47,5 +57,10 @@ class UserSeeder extends Seeder
             );
             $user->assignRole('Customer');
         }
+
+        echo "✅ Users seeded successfully!\n";
+        echo "   - Admin: admin@gmail.com / admin123\n";
+        echo "   - User: user@gmail.com / user123\n";
+        echo "   - Customer: customer@gmail.com / customer123\n";
     }
 }

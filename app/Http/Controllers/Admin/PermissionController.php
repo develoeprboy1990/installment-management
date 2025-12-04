@@ -22,10 +22,7 @@ class PermissionController extends Controller
         ]);
         Permission::create(['name' => $request->name]);
 
-        return redirect()->route('permissions')->with('status', [
-            'icon' => 'success',
-            'message' => 'Permission added successfully!'
-        ]);
+        return redirect()->route('permissions')->with('success', 'Permission added successfully!');
     }
     function update(Request $request, $roleId){
 
@@ -37,9 +34,6 @@ class PermissionController extends Controller
         if ($request->has('permissions')) {
             $role->permissions()->attach($request->permissions);
         }
-        return redirect()->back()->with('status', [
-            'icon' => 'success',
-            'message' => 'Permission updated successfully!'
-        ]);
+        return redirect()->back()->with('success', 'Permission updated successfully!');
     }
 }

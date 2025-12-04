@@ -1,186 +1,248 @@
 @extends('layouts.master')
 
 @section('content')
-<div class="container-fluid">
-    <div class="d-flex justify-content-between align-items-center mb-4" style="margin-bottom: 10px;">
-        <h1>Purchases</h1>
-        <a href="{{ route('purchases.create') }}" class="btn btn-primary">
-            <i class="fa fa-plus"></i> New Purchase
-        </a>
+    <div class="container-fluid">
+        <div class="d-flex justify-content-between align-items-center mb-4" style="margin-bottom: 10px;">
+            <h1>Purchases</h1>
+            @can('create-purchases')
+                <a href="{{ route('purchases.create') }}" class="btn btn-primary">
+                    <i class="fa fa-plus"></i> New Purchase
+                </a>
+            @endcan
+        </div>
+
+        @if (session('success'))
+            <div class="alert alert-success">{{ session('success') }}</div>
+        @endif
+
+        @if (session('error'))
+            <div class="alert alert-danger">{{ session('error') }}</div>
+        @endif
+
+        <!-- Summary Cards -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="panel panel-primary">
+                    <div class="panel-body text-center">
+                        <h4>{{ $purchases->count() }}</h4>
+                        <p>Total Purchases</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="panel panel-success">
+                    <div class="panel-body text-center">
+                        <h4>{{ $purchases->where('status', 'completed')->count() }}</h4>
+                        <p>Completed</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="panel panel-warning">
+                    <div class="panel-body text-center">
+                        <h4>{{ $purchases->where('status', 'active')->count() }}</h4>
+                        <p>Active</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="panel panel-info">
+                    <div class="panel-body text-center">
+                        @if (getUserSetting('show_total_revenue') == '1')
+                            <h4>Rs. {{ number_format($purchases->sum('total_price'), 0) }}</h4>
+                        @else
+                            <h4>Rs. ****</h4>
+                        @endif
+                        <p>Total Value</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="panel panel-default">
+            <div class="panel-body">
+                <form method="GET" action="{{ route('purchases.index') }}" class="form-inline">
+                    <div class="form-group mr-3">
+                        <label for="status">Status:</label>
+                        <select name="status" id="status" class="form-control ml-2">
+                            <option value="">All Status</option>
+                            <option value="completed" {{ request('status') == 'completed' ? 'selected' : '' }}>Completed
+                            </option>
+                            <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>Active</option>
+                            <option value="defaulted" {{ request('status') == 'defaulted' ? 'selected' : '' }}>Defaulted
+                            </option>
+                        </select>
+                    </div>
+                    <div class="form-group mr-3">
+                        <label for="customer">Customer:</label>
+                        <select name="customer_id" id="customer" class="form-control ml-2">
+                            <option value="">All Customers</option>
+                            @foreach (\App\Models\Customer::orderBy('name')->get() as $customer)
+                                <option value="{{ $customer->id }}"
+                                    {{ request('customer_id') == $customer->id ? 'selected' : '' }}>
+                                    {{ $customer->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    {{-- Start Date --}}
+                    <div class="form-group mr-3">
+                        <label for="start_date">Start Date:</label>
+                        <input type="date" name="start_date" id="start_date" class="form-control ml-2"
+                            value="{{ request('start_date') }}">
+                    </div>
+
+                    {{-- End Date --}}
+                    <div class="form-group mr-3">
+                        <label for="end_date">End Date:</label>
+                        <input type="date" name="end_date" id="end_date" class="form-control ml-2"
+                            value="{{ request('end_date') }}">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Filter</button>
+                    <a href="{{ route('purchases.index') }}" class="btn btn-default ml-2">Clear</a>
+                </form>
+            </div>
+        </div>
+
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">All Purchases</h3>
+            </div>
+            <div class="panel-body">
+                <div class="table-responsive">
+                    <table class="table table-striped table-bordered" id="purchasesTable">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Purchase Date</th>
+                                <th>Customer</th>
+                                <th>Product</th>
+                                <th>Total Price</th>
+                                <th>Advance</th>
+                                <th>Balance</th>
+                                <th>Monthly</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach ($purchases as $purchase)
+                                @php
+                                    $paidInstallments = $purchase->installments()->where('status', 'paid')->count();
+                                @endphp
+                                <tr>
+                                    <td>{{ $loop->iteration }}</td>
+                                    <td>{{ $purchase->purchase_date->format('d/m/Y') }}</td>
+                                    <td>
+                                        <strong>{{ $purchase->customer->name }}</strong><br>
+                                        <small class="text-muted">{{ $purchase->customer->account_no }}</small>
+                                    </td>
+                                    <td>
+                                        <strong>{{ $purchase->product->company }}
+                                            {{ $purchase->product->model }}</strong><br>
+                                        <small class="text-muted">{{ $purchase->product->serial_no }}</small>
+                                    </td>
+                                    <td>Rs. {{ number_format($purchase->total_price, 2) }}</td>
+                                    <td>Rs. {{ number_format($purchase->advance_payment, 2) }}</td>
+                                    <td>Rs. {{ number_format($purchase->getRemainingBalance(), 2) }}</td>
+                                    <td>Rs. {{ number_format($purchase->monthly_installment, 2) }}</td>
+                                    <td>
+                                        <span
+                                            class="label label-{{ $purchase->status == 'completed' ? 'success' : 'warning' }}">
+                                            {{ ucfirst($purchase->status) }}
+                                        </span>
+                                        @if ($paidInstallments > 0)
+                                            <br><small class="text-info">{{ $paidInstallments }} paid</small>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <!-- View Button -->
+                                            @can('view-purchases')
+                                                <a href="{{ route('purchases.show', $purchase) }}" class="btn btn-sm btn-info"
+                                                    title="View Details">
+                                                    <i class="fa fa-eye"></i>
+                                                </a>
+                                            @endcan
+
+                                            <!-- Edit Button -->
+                                            @can('edit-purchases')
+                                                <a href="{{ route('purchases.edit', $purchase) }}"
+                                                    class="btn btn-sm btn-warning" title="Edit Purchase">
+                                                    <i class="fa fa-edit"></i>
+                                                </a>
+                                            @endcan
+
+                                            <!-- Delete Button -->
+                                            @can('delete-purchases')
+                                                <button
+                                                    onclick="confirmDelete({{ $purchase->id }}, '{{ addslashes($purchase->customer->name) }}', '{{ addslashes($purchase->product->company . ' ' . $purchase->product->model) }}', {{ $paidInstallments }})"
+                                                    class="btn btn-sm btn-danger" title="Delete Purchase">
+                                                    <i class="fa fa-trash"></i>
+                                                </button>
+                                            @endcan
+
+                                        </div>
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
     </div>
 
-    @if(session('success'))
-        <div class="alert alert-success">{{ session('success') }}</div>
-    @endif
-
-    @if(session('error'))
-        <div class="alert alert-danger">{{ session('error') }}</div>
-    @endif
-
-    <!-- Summary Cards -->
-    <div class="row mb-4">
-        <div class="col-md-3">
-            <div class="panel panel-primary">
-                <div class="panel-body text-center">
-                    <h4>{{ $purchases->count() }}</h4>
-                    <p>Total Purchases</p>
+    <!-- Delete Confirmation Modal -->
+    <div class="modal fade" id="deleteModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">Confirm Delete</h4>
                 </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="panel panel-success">
-                <div class="panel-body text-center">
-                    <h4>{{ $purchases->where('status', 'completed')->count() }}</h4>
-                    <p>Completed</p>
+                <div class="modal-body">
+                    <div class="alert alert-danger">
+                        <i class="fa fa-exclamation-triangle"></i>
+                        <strong>Warning!</strong> This action cannot be undone.
+                    </div>
+                    <p>Are you sure you want to delete this purchase?</p>
+                    <div id="purchase-details"></div>
                 </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="panel panel-warning">
-                <div class="panel-body text-center">
-                    <h4>{{ $purchases->where('status', 'active')->count() }}</h4>
-                    <p>Active</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="panel panel-info">
-                <div class="panel-body text-center">
-                    @if(getUserSetting('show_total_revenue') == '1')
-                    <h4>Rs. {{ number_format($purchases->sum('total_price'), 0) }}</h4>
-                    @else
-                    <h4>Rs. ****</h4>
-                    @endif
-                    <p>Total Value</p>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+                        <i class="fa fa-trash"></i> Delete Purchase
+                    </button>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="panel panel-default">
-        <div class="panel-heading">
-            <h3 class="panel-title">All Purchases</h3>
-        </div>
-        <div class="panel-body">
-            <div class="table-responsive">
-                <table class="table table-striped table-bordered" id="purchasesTable">
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>Purchase Date</th>
-                            <th>Customer</th>
-                            <th>Product</th>
-                            <th>Total Price</th>
-                            <th>Advance</th>
-                            <th>Balance</th>
-                            <th>Monthly</th>
-                            <th>Status</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach($purchases as $purchase)
-                        @php
-                            $paidInstallments = $purchase->installments()->where('status', 'paid')->count();
-                        @endphp
-                        <tr>
-                            <td>{{ $loop->iteration }}</td>
-                            <td>{{ $purchase->purchase_date->format('d/m/Y') }}</td>
-                            <td>
-                                <strong>{{ $purchase->customer->name }}</strong><br>
-                                <small class="text-muted">{{ $purchase->customer->account_no }}</small>
-                            </td>
-                            <td>
-                                <strong>{{ $purchase->product->company }} {{ $purchase->product->model }}</strong><br>
-                                <small class="text-muted">{{ $purchase->product->serial_no }}</small>
-                            </td>
-                            <td>Rs. {{ number_format($purchase->total_price, 2) }}</td>
-                            <td>Rs. {{ number_format($purchase->advance_payment, 2) }}</td>
-                            <td>Rs. {{ number_format($purchase->getRemainingBalance(), 2) }}</td>
-                            <td>Rs. {{ number_format($purchase->monthly_installment, 2) }}</td>
-                            <td>
-                                <span class="label label-{{ $purchase->status == 'completed' ? 'success' : 'warning' }}">
-                                    {{ ucfirst($purchase->status) }}
-                                </span>
-                                @if($paidInstallments > 0)
-                                    <br><small class="text-info">{{ $paidInstallments }} paid</small>
-                                @endif
-                            </td>
-                            <td>
-                                <div class="btn-group" role="group">
-                                    <!-- View Button -->
-                                    <a href="{{ route('purchases.show', $purchase) }}"
-                                       class="btn btn-sm btn-info" title="View Details">
-                                        <i class="fa fa-eye"></i>
-                                    </a>
+    @push('script')
+        <script>
+            $(document).ready(function() {
+                $('#purchasesTable').DataTable({
+                    responsive: true,
+                    pageLength: 200,
+                    lengthMenu: [
+                        [10, 25, 50, 100, 300, 500],
+                        [10, 25, 50, 100, 300, 500]
+                    ],
+                    // order: [[1, 'desc']], // Sort by purchase date descending
+                    columnDefs: [{
+                            targets: [9],
+                            orderable: false
+                        }, // Disable sorting for Actions column
+                    ]
+                });
+            });
 
-                                    <!-- Edit Button -->
-                                    <a href="{{ route('purchases.edit', $purchase) }}"
-                                        class="btn btn-sm btn-warning" title="Edit Purchase">
-                                        <i class="fa fa-edit"></i>
-                                    </a>
+            function confirmDelete(purchaseId, customerName, productName, paidInstallments) {
 
-
-                                    <!-- Delete Button -->
-                                    <button onclick="confirmDelete({{ $purchase->id }}, '{{ addslashes($purchase->customer->name) }}', '{{ addslashes($purchase->product->company . ' ' . $purchase->product->model) }}', {{ $paidInstallments }})"
-                                            class="btn btn-sm btn-danger" title="Delete Purchase">
-                                        <i class="fa fa-trash"></i>
-                                    </button>
-
-                                </div>
-                            </td>
-                        </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Delete Confirmation Modal -->
-<div class="modal fade" id="deleteModal" tabindex="-1" role="dialog">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal">&times;</button>
-                <h4 class="modal-title">Confirm Delete</h4>
-            </div>
-            <div class="modal-body">
-                <div class="alert alert-danger">
-                    <i class="fa fa-exclamation-triangle"></i>
-                    <strong>Warning!</strong> This action cannot be undone.
-                </div>
-                <p>Are you sure you want to delete this purchase?</p>
-                <div id="purchase-details"></div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
-                    <i class="fa fa-trash"></i> Delete Purchase
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
-@push('script')
-<script>
-$(document).ready(function() {
-    $('#purchasesTable').DataTable({
-        responsive: true,
-        pageLength: 200,
-        lengthMenu: [[10, 25, 50, 100,300,500], [10, 25, 50, 100,300,500]],
-        // order: [[1, 'desc']], // Sort by purchase date descending
-        columnDefs: [
-            { targets: [9], orderable: false }, // Disable sorting for Actions column
-        ]
-    });
-});
-
-function confirmDelete(purchaseId, customerName, productName, paidInstallments) {
-
-    $('#purchase-details').html(`
+                $('#purchase-details').html(`
         <table class="table table-sm">
             <tr><th>Customer:</th><td>${customerName}</td></tr>
             <tr><th>Product:</th><td>${productName}</td></tr>
@@ -188,51 +250,53 @@ function confirmDelete(purchaseId, customerName, productName, paidInstallments) 
         </table>
     `);
 
-    $('#confirmDeleteBtn').off('click').on('click', function() {
-        deletePurchase(purchaseId);
-    });
+                $('#confirmDeleteBtn').off('click').on('click', function() {
+                    deletePurchase(purchaseId);
+                });
 
-    $('#deleteModal').modal('show');
-}
-
-function deletePurchase(purchaseId) {
-    // Show loading state
-    $('#confirmDeleteBtn').html('<i class="fa fa-spinner fa-spin"></i> Deleting...').prop('disabled', true);
-
-    $.ajax({
-        url: '/admin/purchases/' + purchaseId,
-        type: 'DELETE',
-        data: {
-            _token: '{{ csrf_token() }}'
-        },
-        success: function(response) {
-            if (response.success) {
-                $('#deleteModal').modal('hide');
-
-                // Show success message
-                $('<div class="alert alert-success alert-dismissible">' +
-                  '<button type="button" class="close" data-dismiss="alert">&times;</button>' +
-                  response.message + '</div>').prependTo('.container-fluid');
-
-                // Reload page to refresh data
-                setTimeout(function() {
-                    location.reload();
-                }, 1500);
-            } else {
-                alert('Error: ' + response.message);
-                $('#confirmDeleteBtn').html('<i class="fa fa-trash"></i> Delete Purchase').prop('disabled', false);
+                $('#deleteModal').modal('show');
             }
-        },
-        error: function(xhr) {
-            let message = 'An error occurred while deleting the purchase.';
-            if (xhr.responseJSON && xhr.responseJSON.message) {
-                message = xhr.responseJSON.message;
+
+            function deletePurchase(purchaseId) {
+                // Show loading state
+                $('#confirmDeleteBtn').html('<i class="fa fa-spinner fa-spin"></i> Deleting...').prop('disabled', true);
+
+                $.ajax({
+                    url: '/admin/purchases/' + purchaseId,
+                    type: 'DELETE',
+                    data: {
+                        _token: '{{ csrf_token() }}'
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            $('#deleteModal').modal('hide');
+
+                            // Show success message
+                            $('<div class="alert alert-success alert-dismissible">' +
+                                '<button type="button" class="close" data-dismiss="alert">&times;</button>' +
+                                response.message + '</div>').prependTo('.container-fluid');
+
+                            // Reload page to refresh data
+                            setTimeout(function() {
+                                location.reload();
+                            }, 1500);
+                        } else {
+                            alert('Error: ' + response.message);
+                            $('#confirmDeleteBtn').html('<i class="fa fa-trash"></i> Delete Purchase').prop(
+                                'disabled', false);
+                        }
+                    },
+                    error: function(xhr) {
+                        let message = 'An error occurred while deleting the purchase.';
+                        if (xhr.responseJSON && xhr.responseJSON.message) {
+                            message = xhr.responseJSON.message;
+                        }
+                        alert('Error: ' + message);
+                        $('#confirmDeleteBtn').html('<i class="fa fa-trash"></i> Delete Purchase').prop('disabled',
+                            false);
+                    }
+                });
             }
-            alert('Error: ' + message);
-            $('#confirmDeleteBtn').html('<i class="fa fa-trash"></i> Delete Purchase').prop('disabled', false);
-        }
-    });
-}
-</script>
-@endpush
+        </script>
+    @endpush
 @endsection

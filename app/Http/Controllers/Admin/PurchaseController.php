@@ -13,9 +13,30 @@ use Carbon\Carbon;
 
 class PurchaseController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $purchases = Purchase::with(['customer', 'product'])->latest()->get();
+        $query = Purchase::with(['customer', 'product']);
+
+        // Filter by status
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        // Filter by customer
+        if ($request->filled('customer_id')) {
+            $query->where('customer_id', $request->customer_id);
+        }
+
+        // Filter by date range
+        if ($request->filled('start_date')) {
+            $query->whereDate('purchase_date', '>=', $request->start_date);
+        }
+
+        if ($request->filled('end_date')) {
+            $query->whereDate('purchase_date', '<=', $request->end_date);
+        }
+
+        $purchases = $query->latest()->get();
         return view('purchases.index', compact('purchases'));
     }
 

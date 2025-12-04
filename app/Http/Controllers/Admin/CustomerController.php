@@ -78,20 +78,31 @@ class CustomerController extends Controller
                 })
                 ->addColumn('actions', function ($customer) {
                     $totalPurchases = $customer->purchases->count();
-
-                    return '
-                        <div class="btn-group" role="group">
-                            <a href="' . route('customers.statement', $customer->id) . '" class="btn btn-sm btn-info" title="View Statement">
+                    $buttons = '<div class="btn-group" role="group">';
+                    
+                    // View Statement button
+                    if (auth()->user()->can('view-customer-statement')) {
+                        $buttons .= '<a href="' . route('customers.statement', $customer->id) . '" class="btn btn-sm btn-info" title="View Statement">
                                 <i class="fa fa-file-text"></i>
-                            </a>
-                            <a href="' . route('customers.edit', $customer->id) . '" class="btn btn-sm btn-warning" title="Edit">
+                            </a>';
+                    }
+                    
+                    // Edit button
+                    if (auth()->user()->can('edit-customers')) {
+                        $buttons .= '<a href="' . route('customers.edit', $customer->id) . '" class="btn btn-sm btn-warning" title="Edit">
                                 <i class="fa fa-edit"></i>
-                            </a>
-                            <button onclick="confirmDelete(' . $customer->id . ', \'' . addslashes($customer->name) . '\', ' . $totalPurchases . ')" class="btn btn-sm btn-danger" title="Delete Customer">
+                            </a>';
+                    }
+                    
+                    // Delete button
+                    if (auth()->user()->can('delete-customers')) {
+                        $buttons .= '<button onclick="confirmDelete(' . $customer->id . ', \'' . addslashes($customer->name) . '\', ' . $totalPurchases . ')" class="btn btn-sm btn-danger" title="Delete Customer">
                                 <i class="fa fa-trash"></i>
-                            </button>
-                        </div>
-                    ';
+                            </button>';
+                    }
+                    
+                    $buttons .= '</div>';
+                    return $buttons;
                 })
                 ->rawColumns(['photo', 'name_with_father', 'mobile_numbers', 'purchases_count', 'status', 'actions'])
                 ->make(true);

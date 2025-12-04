@@ -4,7 +4,9 @@
     <div class="container-fluid">
         <div class="d-flex justify-content-between align-items-center mb-3">
             <h2>Guarantors</h2>
-            <a href="{{ route('guarantors.create') }}" class="btn btn-primary">Add Guarantor</a>
+            @can('create-guarantors')
+                <a href="{{ route('guarantors.create') }}" class="btn btn-primary">Add Guarantor</a>
+            @endcan
         </div>
 
         @if (session('success'))
@@ -37,11 +39,11 @@
                                 <td>{{ $loop->iteration }}</td>
                                 <td>
                                     @if ($guarantor->image)
-                                        <img src="{{ asset($guarantor->image) }}" alt="Guarantor Image"
-                                             width="50" height="50" class="rounded-circle object-fit-cover">
+                                        <img src="{{ asset($guarantor->image) }}" alt="Guarantor Image" width="50"
+                                            height="50" class="rounded-circle object-fit-cover">
                                     @else
                                         <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center"
-                                             style="font-weight:700;width: 50px;height: 50px;font-size: 14px;background: darkgrey;border-radius: 27px;text-align: center;line-height: 50px;">
+                                            style="font-weight:700;width: 50px;height: 50px;font-size: 14px;background: darkgrey;border-radius: 27px;text-align: center;line-height: 50px;">
                                             {{ strtoupper(substr($guarantor->name, 0, 2)) }}
                                         </div>
                                     @endif
@@ -57,7 +59,7 @@
                                 <td>{{ $guarantor->relation }}</td>
                                 <td>
                                     @php
-                                        switch($guarantor->guarantor_no) {
+                                        switch ($guarantor->guarantor_no) {
                                             case 1:
                                                 $label = 'Primary';
                                                 $color = 'primary';
@@ -84,23 +86,29 @@
                                 </td>
                                 <td>
                                     <div class="btn-group" role="group">
-                                        <a href="{{ route('guarantors.show', $guarantor->id) }}"
-                                            class="btn btn-sm btn-info" title="View Details">
-                                            <i class="fa fa-eye"></i>
-                                        </a>
-                                        <a href="{{ route('guarantors.edit', $guarantor->id) }}"
-                                            class="btn btn-sm btn-warning" title="Edit">
-                                            <i class="fa fa-edit"></i>
-                                        </a>
-                                        <form action="{{ route('guarantors.destroy', $guarantor->id) }}" method="POST"
-                                            class="" style="display: grid;"
-                                            onsubmit="return confirm('Are you sure you want to delete this guarantor?');">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button class="btn btn-sm btn-danger" title="Delete">
-                                                <i class="fa fa-trash"></i>
-                                            </button>
-                                        </form>
+                                        @can('view-guarantors')
+                                            <a href="{{ route('guarantors.show', $guarantor->id) }}"
+                                                class="btn btn-sm btn-info" title="View Details">
+                                                <i class="fa fa-eye"></i>
+                                            </a>
+                                        @endcan
+                                        @can('edit-guarantors')
+                                            <a href="{{ route('guarantors.edit', $guarantor->id) }}"
+                                                class="btn btn-sm btn-warning" title="Edit">
+                                                <i class="fa fa-edit"></i>
+                                            </a>
+                                        @endcan
+                                        @can('delete-guarantors')
+                                            <form action="{{ route('guarantors.destroy', $guarantor->id) }}" method="POST"
+                                                class="" style="display: grid;"
+                                                onsubmit="return confirm('Are you sure you want to delete this guarantor?');">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button class="btn btn-sm btn-danger" title="Delete">
+                                                    <i class="fa fa-trash"></i>
+                                                </button>
+                                            </form>
+                                        @endcan
                                     </div>
                                 </td>
                             </tr>
@@ -108,7 +116,10 @@
                             <tr>
                                 <td colspan="10" class="text-center py-4">
                                     <p class="text-muted">No guarantors found.</p>
-                                    <a href="{{ route('guarantors.create') }}" class="btn btn-primary btn-sm">Add First Guarantor</a>
+                                    @can('create-guarantors')
+                                        <a href="{{ route('guarantors.create') }}" class="btn btn-primary btn-sm">Add First
+                                            Guarantor</a>
+                                    @endcan
                                 </td>
                             </tr>
                         @endforelse
@@ -127,44 +138,46 @@
 @endsection
 
 @push('styles')
-<style>
-.object-fit-cover {
-    object-fit: cover;
-}
+    <style>
+        .object-fit-cover {
+            object-fit: cover;
+        }
 
-.table th {
-    background-color: #f8f9fa;
-    font-weight: 600;
-}
+        .table th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+        }
 
-.btn-group .btn {
-    margin-right: 2px;
-}
+        .btn-group .btn {
+            margin-right: 2px;
+        }
 
-code {
-    background-color: #f8f9fa;
-    padding: 2px 4px;
-    border-radius: 3px;
-    font-size: 0.9em;
-}
-</style>
+        code {
+            background-color: #f8f9fa;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-size: 0.9em;
+        }
+    </style>
 @endpush
 
 @push('script')
-<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-<script>
-    $(document).ready(function() {
-        $('.table').DataTable({
-            paging: false,
-            info: false,
-            ordering: true,
-            searching: true,
-            responsive: true,
-            columnDefs: [
-                { orderable: false, targets: [1, -1] } // Disable sorting on image and actions columns
-            ]
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            $('.table').DataTable({
+                paging: false,
+                info: false,
+                ordering: true,
+                searching: true,
+                responsive: true,
+                columnDefs: [{
+                        orderable: false,
+                        targets: [1, -1]
+                    } // Disable sorting on image and actions columns
+                ]
+            });
         });
-    });
-</script>
+    </script>
 @endpush

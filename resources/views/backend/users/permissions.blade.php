@@ -6,15 +6,22 @@
 @endpush
 @section('content')
     @php
-        $breadcrumbs = [
-            ['title' => 'Permissions', 'url' => route('permissions'), 'active' => false]
-        ];
+        $breadcrumbs = [['title' => 'Permissions', 'url' => route('permissions'), 'active' => false]];
         $pageTitle = 'Permissions';
         $buttons = [
-            ['title' => 'Add Permission', 'modal' => '#addPermission', 'class' => 'btn-primary', 'icon' => 'bi bi-plus-circle']
+            [
+                'title' => 'Add Permission',
+                'modal' => '#addPermission',
+                'class' => 'btn-primary',
+                'icon' => 'bi bi-plus-circle',
+            ],
         ];
     @endphp
-    @include('backend.partials.breadcrumb', ['pageTitle' => $pageTitle, 'breadcrumbs' => $breadcrumbs, 'buttons' => $buttons ])
+    @include('backend.partials.breadcrumb', [
+        'pageTitle' => $pageTitle,
+        'breadcrumbs' => $breadcrumbs,
+        'buttons' => $buttons,
+    ])
     {{-- <section class="section">
         <div class="card">
         <table class="table table-bordered">
@@ -70,8 +77,8 @@
                             <table id="table1" class="table table-striped table-bordered table-hover dataTables-example" >
                                 <thead>
                                     <tr>
-                                        <th>Role Name</th>
-                                        <th>Permissions</th>
+                                        <th width="20%">Role Name</th>
+                                        <th width="80%">Permissions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -83,25 +90,24 @@
                                                 <form action="{{ route('permissions.update', $role->id) }}" method="POST">
                                                     @csrf
                                                     @method('PUT')
-                                                    @foreach($permissions as $permission)
-                                                        <div class="form-check">
-                                                            <input
-                                                                type="checkbox"
-                                                                class="form-check-input"
-                                                                id="permission-{{ $role->id }}-{{ $permission->id }}"
-                                                                name="permissions[]"
-                                                                value="{{ $permission->id }}"
-                                                                {{ $role->permissions->contains($permission) ? 'checked' : '' }}
-                                                            >
-                                                            <label
-                                                                class="form-check-label"
-                                                                for="permission-{{ $role->id }}-{{ $permission->id }}"
-                                                            >
-                                                                {{ $permission->name }}
-                                                            </label>
-                                                        </div>
-                                                    @endforeach
-                                                    <button type="submit" class="btn btn-primary mt-2">Update Permissions</button>
+                                                    <div class="row">
+                                                        @foreach ($permissions as $permission)
+                                                            <div class="col-md-4 col-sm-6 mb-2">
+                                                                <div class="form-check">
+                                                                    <input type="checkbox" class="form-check-input"
+                                                                        id="permission-{{ $role->id }}-{{ $permission->id }}"
+                                                                        name="permissions[]" value="{{ $permission->id }}"
+                                                                        {{ $role->permissions->contains($permission) ? 'checked' : '' }}>
+                                                                    <label class="form-check-label"
+                                                                        for="permission-{{ $role->id }}-{{ $permission->id }}">
+                                                                        {{ $permission->name }}
+                                                                    </label>
+                                                                </div>
+                                                            </div>
+                                                        @endforeach
+                                                    </div>
+                                                    <button type="submit" class="btn btn-primary mt-3">Update
+                                                        Permissions</button>
                                                 </form>
                                             </td>
                                         </tr>
@@ -165,7 +171,8 @@
                     <div class="modal-body">
                         <label for="name">Permission: </label>
                         <div class="form-group">
-                            <input id="name" type="text" name="name" placeholder="Add permission" class="form-control" required>
+                            <input id="name" type="text" name="name" placeholder="Add permission"
+                                class="form-control" required>
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -176,11 +183,7 @@
             </div>
         </div>
     </div>
-
-
 @endsection
 
 @push('script')
-
 @endpush
-

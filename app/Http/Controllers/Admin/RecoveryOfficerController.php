@@ -27,10 +27,13 @@ class RecoveryOfficerController extends Controller
             'phone' => 'nullable|string|max:20',
             'email' => 'nullable|email|max:255',
             'address' => 'nullable|string',
-            'is_active' => 'boolean',
         ]);
 
-        RecoveryOfficer::create($request->all());
+        $data = $request->only(['name', 'employee_id', 'phone', 'email', 'address']);
+        // Handle checkbox: if checked, value will be "1", if not checked, it won't be in request
+        $data['is_active'] = $request->has('is_active') && $request->is_active == '1' ? true : false;
+
+        RecoveryOfficer::create($data);
 
         return redirect()->route('recovery-officers.index')
             ->with('success', 'Recovery Officer added successfully.');
@@ -65,10 +68,13 @@ class RecoveryOfficerController extends Controller
             'phone' => 'nullable|string|max:20',
             'email' => 'nullable|email|max:255',
             'address' => 'nullable|string',
-            'is_active' => 'boolean',
         ]);
 
-        $recoveryOfficer->update($request->all());
+        $data = $request->only(['name', 'employee_id', 'phone', 'email', 'address']);
+        // Handle checkbox: if checked, value will be "1", if not checked, it won't be in request
+        $data['is_active'] = $request->has('is_active') && $request->is_active == '1' ? true : false;
+
+        $recoveryOfficer->update($data);
 
         return redirect()->route('recovery-officers.index')
             ->with('success', 'Recovery Officer updated successfully.');
