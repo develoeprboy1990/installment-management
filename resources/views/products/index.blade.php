@@ -223,8 +223,11 @@
                 dt.search(this.value).draw();
             });
 
-            // View Customers Button Click Handler
-            $('.view-customers-btn').on('click', function() {
+            // Base URL for product customers (respects app URL / subfolder)
+            const baseProductUrl = "{{ url('admin/products') }}";
+
+            // View Customers Button Click Handler (delegated) - works with DataTables pagination
+            $('#productsTable tbody').on('click', '.view-customers-btn', function() {
                 const productId = $(this).data('product-id');
                 loadProductCustomers(productId);
             });
@@ -243,7 +246,7 @@
 
                 // AJAX request to fetch customers
                 $.ajax({
-                    url: `/admin/products/${productId}/customers`,
+                    url: `${baseProductUrl}/${productId}/customers`,
                     type: 'GET',
                     dataType: 'json',
                     success: function(response) {
