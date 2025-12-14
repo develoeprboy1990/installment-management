@@ -15,9 +15,10 @@ use App\Http\Controllers\Admin\PurchaseController;
 use App\Http\Controllers\Admin\InstallmentController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\ActivityController;
+use App\Http\Controllers\Admin\ExpenseController;
 
 
-Route::group(['prefix' => 'admin', 'middleware' => ['auth.redirect','role:Admin']], function () {
+Route::group(['prefix' => 'admin', 'middleware' => ['auth.redirect','role:Admin|User']], function () {
     // activities
     Route::get('activities', [ActivityController::class, 'index'])->name('activities.index');
     Route::post('activities/mark-all-read', [ActivityController::class, 'markAllRead'])->name('activities.mark-all-read');
@@ -42,6 +43,9 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth.redirect','role:Admin'
     Route::resource('products', ProductController::class);
     Route::get('products/{product}/customers', [ProductController::class, 'getCustomers'])->name('products.customers');
 
+
+    //expenses
+    Route::resource('expenses', ExpenseController::class);
 
 
     // recovery-officers
@@ -116,7 +120,7 @@ Route::group(['middleware' => ['role:Admin|Customer']], function () {
 
 
 Route::get('admin/dashboard', [DashboardController::class, 'report'])
-    ->middleware(['auth.redirect', 'role:Admin'])
+    ->middleware(['auth.redirect', 'role:Admin|User'])
     ->name('dashboard');
 
 Route::middleware('auth')->group(function () {

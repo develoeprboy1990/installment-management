@@ -62,6 +62,12 @@ class RolesAndPermissionsSeeder extends Seeder
             'edit-recovery-officers',
             'delete-recovery-officers',
             
+            // Expenses Module
+            'view-expenses',
+            'create-expenses',
+            'edit-expenses',
+            'delete-expenses',
+            
             // Reports Module
             'view-reports',
             'export-reports',
@@ -130,6 +136,11 @@ class RolesAndPermissionsSeeder extends Seeder
             'create-recovery-officers',
             'edit-recovery-officers',
             'delete-recovery-officers',
+            // Expenses
+            'view-expenses',
+            'create-expenses',
+            'edit-expenses',
+            'delete-expenses',
             // Reports
             'view-reports',
             'export-reports',
@@ -167,6 +178,11 @@ class RolesAndPermissionsSeeder extends Seeder
             'view-guarantors',
             // Recovery Officers - View only
             'view-recovery-officers',
+            // Expenses - Full access
+            'view-expenses',
+            'create-expenses',
+            'edit-expenses',
+            'delete-expenses',
             // Reports - View only
             'view-reports',
             // Profile

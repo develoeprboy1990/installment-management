@@ -29,8 +29,10 @@
     <link href="{{ asset('backend/css/plugins/dataTables/datatables.min.css') }}" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-     <!-- Toastr CSS -->
+    <!-- Toastr CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+    <!-- SweetAlert2 CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     @stack('styles')
 </head>
@@ -42,11 +44,16 @@
                     <li class="nav-header">
                         <div class="dropdown profile-element" style="text-align: center;">
                             <span>
-                                <img alt="image" class="img-circle" src="{{ Auth::user()->avatar ? asset('storage/' . Auth::user()->avatar) : asset('backend/img/profile_small.jpg') }}" style="width: 60px; height: 60px; border-radius: 50%;" />
+                                <img alt="image" class="img-circle"
+                                    src="{{ Auth::user()->avatar ? asset('storage/' . Auth::user()->avatar) : asset('backend/img/profile_small.jpg') }}"
+                                    style="width: 60px; height: 60px; border-radius: 50%;" />
                             </span>
                             <a data-toggle="dropdown" class="dropdown-toggle" href="#">
                                 <span class="clear">
-                                    <span class="block m-t-xs"> <strong class="font-bold">{{ Auth::user()->name }}</strong> </span> <span class="text-muted text-xs block">{{ auth()->user()->getRoleNames()->first() }}<b class="caret"></b></span>
+                                    <span class="block m-t-xs"> <strong
+                                            class="font-bold">{{ Auth::user()->name }}</strong> </span> <span
+                                        class="text-muted text-xs block">{{ auth()->user()->getRoleNames()->first() }}<b
+                                            class="caret"></b></span>
                                 </span>
                             </a>
                             <ul class="dropdown-menu animated fadeInRight m-t-xs">
@@ -61,50 +68,75 @@
                     </li>
 
                     <li class="{{ request()->is('dashboard') ? 'active' : '' }}">
-                        <a href="{{ route('dashboard') }}"><i class="fa fa-dashboard"></i> <span class="nav-label">Dashboard</span></a>
+                        <a href="{{ route('dashboard') }}"><i class="fa fa-dashboard"></i> <span
+                                class="nav-label">Dashboard</span></a>
                     </li>
 
                     <li class="{{ request()->is('admin/customers*') ? 'active' : '' }}">
-                        <a href="{{ route('customers.index') }}"><i class="fa fa-users"></i> <span class="nav-label">Customers</span></a>
+                        <a href="{{ route('customers.index') }}"><i class="fa fa-users"></i> <span
+                                class="nav-label">Customers</span></a>
                     </li>
 
                     <li class="{{ request()->is('admin/guarantors*') ? 'active' : '' }}">
-                        <a href="{{ route('guarantors.index') }}"><i class="fa fa-user-plus"></i> <span class="nav-label">Guarantors</span></a>
+                        <a href="{{ route('guarantors.index') }}"><i class="fa fa-user-plus"></i> <span
+                                class="nav-label">Guarantors</span></a>
                     </li>
 
                     <li class="{{ request()->is('admin/products*') ? 'active' : '' }}">
-                        <a href="{{ route('products.index') }}"><i class="fa fa-cube"></i> <span class="nav-label">Products</span></a>
+                        <a href="{{ route('products.index') }}"><i class="fa fa-cube"></i> <span
+                                class="nav-label">Products</span></a>
                     </li>
 
+
+
                     <li class="{{ request()->is('admin/recovery-officers*') ? 'active' : '' }}">
-                        <a href="{{ route('recovery-officers.index') }}"><i class="fa fa-user-circle-o"></i> <span class="nav-label">Recovery Officers</span></a>
+                        <a href="{{ route('recovery-officers.index') }}"><i class="fa fa-user-circle-o"></i> <span
+                                class="nav-label">Recovery Officers</span></a>
                     </li>
 
                     <li class="{{ request()->is('admin/purchases*') ? 'active' : '' }}">
-                        <a href="{{ route('purchases.index') }}"><i class="fa fa-shopping-cart"></i> <span class="nav-label">Purchases</span></a>
+                        <a href="{{ route('purchases.index') }}"><i class="fa fa-shopping-cart"></i> <span
+                                class="nav-label">Purchases</span></a>
                     </li>
 
+                    @can('view-installments')
                     <li class="{{ request()->is('admin/installments*') ? 'active' : '' }}">
-                        <a href="{{ route('installments.index') }}"><i class="fa fa-credit-card"></i> <span class="nav-label">Installments</span></a>
+                        <a href="{{ route('installments.index') }}"><i class="fa fa-credit-card"></i> <span
+                                class="nav-label">Installments</span></a>
                     </li>
+                    @endcan
 
+                    @can('view profile')
                     <!-- User Management section with better icons -->
                     <li class="{{ request()->is('profile') || request()->routeIs('admin.settings') ? 'active' : '' }}">
                         <a href="#"><i class="fa fa-user-circle"></i> <span class="nav-label">User Management</span> <span class="fa arrow"></span></a>
-                        <ul class="nav nav-second-level {{ request()->is('profile') || request()->routeIs('admin.settings') ? 'collapse' : '' }}">
+                        <ul
+                            class="nav nav-second-level {{ request()->is('profile') || request()->routeIs('admin.settings') ? 'collapse' : '' }}">
                             <li class="{{ request()->is('profile') ? 'active' : '' }}">
                                 <a href="{{ url('profile') }}"><i class="fa fa-user"></i> Profile</a>
                             </li>
                             <li class="{{ request()->routeIs('admin.settings') ? 'active' : '' }}">
-                                <a href="{{ route('admin.settings') }}"><i class="fa fa-cogs"></i> General Setting</a>
+                                <a href="{{ route('admin.settings') }}"><i class="fa fa-cogs"></i> General
+                                    Setting</a>
                             </li>
                         </ul>
                     </li>
+                    @endcan
+
+                    @can('view-expenses')
+                        <li class="{{ request()->is('admin/expenses*') ? 'active' : '' }}">
+                            <a href="{{ route('expenses.index') }}"><i class="fa fa-money"></i> <span
+                                    class="nav-label">Expenses</span></a>
+                        </li>
+                    @endcan
 
                     <!-- Settings section with better icons -->
-                    <li class="{{ request()->routeIs('admin.users') || request()->routeIs('admin.roles') || request()->routeIs('role-assignment') || request()->routeIs('permissions') ? 'active' : '' }}">
-                        <a href="#"><i class="fa fa-cog"></i> <span class="nav-label">System Settings</span> <span class="fa arrow"></span></a>
-                        <ul class="nav nav-second-level {{ request()->routeIs('admin.users') || request()->routeIs('admin.roles') || request()->routeIs('role-assignment') || request()->routeIs('permissions') ? 'collapse' : '' }}">
+                    <li
+                        class="{{ request()->routeIs('admin.users') || request()->routeIs('admin.roles') || request()->routeIs('role-assignment') || request()->routeIs('permissions') ? 'active' : '' }}">
+                        <a href="#"><i class="fa fa-cog"></i> <span class="nav-label">System Settings</span>
+                            <span class="fa arrow"></span></a>
+                        <ul
+                            class="nav nav-second-level {{ request()->routeIs('admin.users') || request()->routeIs('admin.roles') || request()->routeIs('role-assignment') || request()->routeIs('permissions') ? 'collapse' : '' }}">
                             <li class="{{ request()->routeIs('admin.users') ? 'active' : '' }}">
                                 <a href="{{ route('admin.users') }}"><i class="fa fa-users"></i> Users</a>
                             </li>
@@ -112,7 +144,8 @@
                                 <a href="{{ route('admin.roles') }}"><i class="fa fa-shield"></i> Roles</a>
                             </li>
                             <li class="{{ request()->routeIs('role-assignment') ? 'active' : '' }}">
-                                <a href="{{ route('role-assignment') }}"><i class="fa fa-user-secret"></i> Role Assignments</a>
+                                <a href="{{ route('role-assignment') }}"><i class="fa fa-user-secret"></i> Role
+                                    Assignments</a>
                             </li>
                             <li class="{{ request()->routeIs('permissions') ? 'active' : '' }}">
                                 <a href="{{ route('permissions') }}"><i class="fa fa-lock"></i> Permissions</a>
@@ -121,7 +154,8 @@
                     </li>
 
                     <li>
-                        <a href="#" onclick="event.preventDefault(); triggerLogout();"><i class="fa fa-sign-out"></i> <span class="nav-label">Logout</span></a>
+                        <a href="#" onclick="event.preventDefault(); triggerLogout();"><i
+                                class="fa fa-sign-out"></i> <span class="nav-label">Logout</span></a>
                     </li>
                 </ul>
             </div>
@@ -132,10 +166,12 @@
             <div class="row border-bottom">
                 <nav class="navbar navbar-static-top " role="navigation" style="margin-bottom: 0;">
                     <div class="navbar-header">
-                        <a class="navbar-minimalize minimalize-styl-2 btn btn-primary" href="#"><i class="fa fa-bars"></i> </a>
+                        <a class="navbar-minimalize minimalize-styl-2 btn btn-primary" href="#"><i
+                                class="fa fa-bars"></i> </a>
                         <form role="search" class="navbar-form-custom" action="search_results.html">
                             <div class="form-group">
-                                <input type="text" placeholder="Search for something..." class="form-control" name="top-search" id="top-search" />
+                                <input type="text" placeholder="Search for something..." class="form-control"
+                                    name="top-search" id="top-search" />
                             </div>
                         </form>
                     </div>
@@ -151,22 +187,23 @@
                             </a>
                             <ul class="dropdown-menu dropdown-alerts" style="margin-left: 0px;">
                                 @forelse(($latestActivities ?? []) as $activity)
-                                <li>
-                                    <a href="{{ route('activities.index') }}" class="clearfix">
-                                        <div>
-                                            <i class="fa fa-info-circle fa-fw"></i>
-                                            {{ $activity->message }}
-                                            <span class="pull-right text-muted small">{{ $activity->created_at->diffForHumans() }}</span>
-                                        </div>
-                                    </a>
-                                </li>
-                                <li class="divider"></li>
+                                    <li>
+                                        <a href="{{ route('activities.index') }}" class="clearfix">
+                                            <div>
+                                                <i class="fa fa-info-circle fa-fw"></i>
+                                                {{ $activity->message }}
+                                                <span
+                                                    class="pull-right text-muted small">{{ $activity->created_at->diffForHumans() }}</span>
+                                            </div>
+                                        </a>
+                                    </li>
+                                    <li class="divider"></li>
                                 @empty
-                                <li>
-                                    <div class="text-center p-xs">
-                                        <em>No recent activities</em>
-                                    </div>
-                                </li>
+                                    <li>
+                                        <div class="text-center p-xs">
+                                            <em>No recent activities</em>
+                                        </div>
+                                    </li>
                                 @endforelse
                                 <li>
                                     <div class="text-center link-block">
@@ -180,7 +217,8 @@
                         </li>
 
                         <li>
-                            <a href="#" onclick="event.preventDefault(); triggerLogout();"> <i class="fa fa-sign-out"></i> Log out </a>
+                            <a href="#" onclick="event.preventDefault(); triggerLogout();"> <i
+                                    class="fa fa-sign-out"></i> Log out </a>
                         </li>
                         {{-- <li class="dropdown">
                             <a class="right-sidebar-toggle dropdown-toggle count-info" data-toggle="dropdown" href="#">
@@ -201,11 +239,12 @@
                 </nav>
             </div>
 
-                @yield('content')
+            @yield('content')
 
             <div class="footer">
                 <div class="pull-right"></div>
-                <div><strong>Copyright</strong> {{ (getUserSetting('project_name') ?? config('app.name')) }} &copy; {{ date('Y') }}</div>
+                <div><strong>Copyright</strong> {{ getUserSetting('project_name') ?? config('app.name') }} &copy;
+                    {{ date('Y') }}</div>
             </div>
 
         </div>
@@ -236,24 +275,59 @@
 
     {{-- select items --}}
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-    <script src="{{ asset('backend/js/plugins/chartJs/Chart.min.js')  }}"></script>
+    <script src="{{ asset('backend/js/plugins/chartJs/Chart.min.js') }}"></script>
 
     <!-- Rest of your scripts -->
     <script src="{{ asset('backend/js/inspinia.js') }}"></script>
     <script src="{{ asset('backend/js/plugins/pace/pace.min.js') }}"></script>
     <script src="{{ asset('backend/js/plugins/toastr/toastr.min.js') }}"></script>
+    <!-- SweetAlert2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <script>
         $(document).ready(function() {
             // Debug: Check if jQuery is loaded properly
             console.log('jQuery version:', $.fn.jquery);
 
-            var d1 = [[1262304000000, 6], [1264982400000, 3057], [1267401600000, 20434], [1270080000000, 31982], [1272672000000, 26602], [1275350400000, 27826], [1277942400000, 24302], [1280620800000, 24237], [1283299200000, 21004], [1285891200000, 12144], [1288569600000, 10577], [1291161600000, 10295]];
-            var d2 = [[1262304000000, 5], [1264982400000, 200], [1267401600000, 1605], [1270080000000, 6129], [1272672000000, 11643], [1275350400000, 19055], [1277942400000, 30062], [1280620800000, 39197], [1283299200000, 37000], [1285891200000, 27000], [1288569600000, 21000], [1291161600000, 17000]];
+            var d1 = [
+                [1262304000000, 6],
+                [1264982400000, 3057],
+                [1267401600000, 20434],
+                [1270080000000, 31982],
+                [1272672000000, 26602],
+                [1275350400000, 27826],
+                [1277942400000, 24302],
+                [1280620800000, 24237],
+                [1283299200000, 21004],
+                [1285891200000, 12144],
+                [1288569600000, 10577],
+                [1291161600000, 10295]
+            ];
+            var d2 = [
+                [1262304000000, 5],
+                [1264982400000, 200],
+                [1267401600000, 1605],
+                [1270080000000, 6129],
+                [1272672000000, 11643],
+                [1275350400000, 19055],
+                [1277942400000, 30062],
+                [1280620800000, 39197],
+                [1283299200000, 37000],
+                [1285891200000, 27000],
+                [1288569600000, 21000],
+                [1291161600000, 17000]
+            ];
 
-            var data1 = [
-                { label: "Data 1", data: d1, color: '#17a084'},
-                { label: "Data 2", data: d2, color: '#127e68' }
+            var data1 = [{
+                    label: "Data 1",
+                    data: d1,
+                    color: '#17a084'
+                },
+                {
+                    label: "Data 2",
+                    data: d2,
+                    color: '#127e68'
+                }
             ];
 
             // Only plot if the element exists
@@ -291,8 +365,7 @@
 
             var lineData = {
                 labels: ["January", "February", "March", "April", "May", "June", "July"],
-                datasets: [
-                    {
+                datasets: [{
                         label: "Example dataset",
                         backgroundColor: "rgba(26,179,148,0.5)",
                         borderColor: "rgba(26,179,148,0.7)",
@@ -318,7 +391,11 @@
             // Only create chart if the element exists
             if (document.getElementById("lineChart")) {
                 var ctx = document.getElementById("lineChart").getContext("2d");
-                new Chart(ctx, {type: 'line', data: lineData, options:lineOptions});
+                new Chart(ctx, {
+                    type: 'line',
+                    data: lineData,
+                    options: lineOptions
+                });
             }
         });
     </script>
@@ -333,24 +410,25 @@
                 console.error('Logout form not found!');
             }
         }
-        </script>
+    </script>
     <script>
-        @if(session('success'))
+        @if (session('success'))
             toastr.success("{{ session('success') }}");
         @endif
 
-        @if(session('error'))
+        @if (session('error'))
             toastr.error("{{ session('error') }}");
         @endif
 
-        @if(session('warning'))
+        @if (session('warning'))
             toastr.warning("{{ session('warning') }}");
         @endif
 
-        @if(session('info'))
+        @if (session('info'))
             toastr.info("{{ session('info') }}");
         @endif
     </script>
     @stack('script')
 </body>
+
 </html>
