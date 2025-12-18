@@ -46,7 +46,11 @@ class SettingController extends Controller
                 ->where('key', 'favicon')
                 ->value('value');
 
-            $path = $request->file('favicon')->store('settings', 'public');
+            $path = $request->file('favicon')->storeAs(
+                'settings',
+                'favicon_'.time().'.'.$request->file('favicon')->extension(),
+                'public'
+            );
 
             if (!empty($old) && Storage::disk('public')->exists($old)) {
                 Storage::disk('public')->delete($old);
