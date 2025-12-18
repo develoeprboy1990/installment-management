@@ -13,10 +13,12 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <title>{{ (getUserSetting('project_name') ?? config('app.name')) . ' - ' . (getUserSetting('project_tagline') ?? '') }}</title>
-    @if(getUserSetting('favicon'))
-        <link rel="icon" href="{{ asset('storage/' . getUserSetting('favicon')) }}">
-        <link rel="shortcut icon" href="{{ asset('storage/' . getUserSetting('favicon')) }}">
+    <title>
+        {{ (getUserSetting('project_name') ?? config('app.name')) . ' - ' . (getUserSetting('project_tagline') ?? '') }}
+    </title>
+    @if (getUserSetting('favicon'))
+        <link rel="icon" href="{{ getUserSetting('favicon') }}">
+        <link rel="shortcut icon" href="{{ getUserSetting('favicon') }}">
     @endif
     <link href="{{ asset('backend/css/bootstrap.min.css') }}" rel="stylesheet">
     <link href="{{ asset('backend/font-awesome/css/font-awesome.css') }}" rel="stylesheet">
@@ -36,6 +38,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     @stack('styles')
 </head>
+
 <body>
     <div id="wrapper">
         <nav class="navbar-default navbar-static-side" role="navigation">
@@ -45,7 +48,7 @@
                         <div class="dropdown profile-element" style="text-align: center;">
                             <span>
                                 <img alt="image" class="img-circle"
-                                    src="{{ Auth::user()->avatar ? asset('storage/' . Auth::user()->avatar) : asset('backend/img/profile_small.jpg') }}"
+                                    src="{{ getUserSetting('profile_image') ?: asset('backend/img/profile_small.jpg') }}"
                                     style="width: 60px; height: 60px; border-radius: 50%;" />
                             </span>
                             <a data-toggle="dropdown" class="dropdown-toggle" href="#">
@@ -100,27 +103,28 @@
                     </li>
 
                     @can('view-installments')
-                    <li class="{{ request()->is('admin/installments*') ? 'active' : '' }}">
-                        <a href="{{ route('installments.index') }}"><i class="fa fa-credit-card"></i> <span
-                                class="nav-label">Installments</span></a>
-                    </li>
+                        <li class="{{ request()->is('admin/installments*') ? 'active' : '' }}">
+                            <a href="{{ route('installments.index') }}"><i class="fa fa-credit-card"></i> <span
+                                    class="nav-label">Installments</span></a>
+                        </li>
                     @endcan
 
                     @can('view-profile')
-                    <!-- User Management section with better icons -->
-                    <li class="{{ request()->is('profile') || request()->routeIs('admin.settings') ? 'active' : '' }}">
-                        <a href="#"><i class="fa fa-user-circle"></i> <span class="nav-label">User Management</span> <span class="fa arrow"></span></a>
-                        <ul
-                            class="nav nav-second-level {{ request()->is('profile') || request()->routeIs('admin.settings') ? 'collapse' : '' }}">
-                            <li class="{{ request()->is('profile') ? 'active' : '' }}">
-                                <a href="{{ url('profile') }}"><i class="fa fa-user"></i> Profile</a>
-                            </li>
-                            <li class="{{ request()->routeIs('admin.settings') ? 'active' : '' }}">
-                                <a href="{{ route('admin.settings') }}"><i class="fa fa-cogs"></i> General
-                                    Setting</a>
-                            </li>
-                        </ul>
-                    </li>
+                        <!-- User Management section with better icons -->
+                        <li class="{{ request()->is('profile') || request()->routeIs('admin.settings') ? 'active' : '' }}">
+                            <a href="#"><i class="fa fa-user-circle"></i> <span class="nav-label">User
+                                    Management</span> <span class="fa arrow"></span></a>
+                            <ul
+                                class="nav nav-second-level {{ request()->is('profile') || request()->routeIs('admin.settings') ? 'collapse' : '' }}">
+                                <li class="{{ request()->is('profile') ? 'active' : '' }}">
+                                    <a href="{{ url('profile') }}"><i class="fa fa-user"></i> Profile</a>
+                                </li>
+                                <li class="{{ request()->routeIs('admin.settings') ? 'active' : '' }}">
+                                    <a href="{{ route('admin.settings') }}"><i class="fa fa-cogs"></i> General
+                                        Setting</a>
+                                </li>
+                            </ul>
+                        </li>
                     @endcan
 
                     @can('view-expenses')

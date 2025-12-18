@@ -67,6 +67,35 @@ class SettingController extends Controller
             );
         }
 
+        // Handle profile image upload (optional)
+        if ($request->hasFile('profile_image')) {
+            $request->validate([
+                'profile_image' => 'nullable|image|mimes:png,jpg,jpeg,webp,gif|max:2048',
+            ]);
+
+            // Delete old profile image if exists
+            $old = Setting::where('user_id', Auth::id())
+                ->where('key', 'profile_image')
+                ->value('value');
+
+            $path = $request->file('profile_image')->store('settings/profiles', 'public');
+
+            if (!empty($old) && Storage::disk('public')->exists($old)) {
+                Storage::disk('public')->delete($old);
+            }
+
+            Setting::updateOrCreate(
+                [
+                    'key' => 'profile_image',
+                    'user_id' => Auth::id(),
+                ],
+                [
+                    'value' => $path,
+                ]
+            );
+        }
+
+
         return redirect()->route('admin.settings')->with('status', [
             'icon' => 'success',
             'message' => 'Settings saved successfully!'
