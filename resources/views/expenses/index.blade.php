@@ -549,6 +549,15 @@
 @push('script')
     <script>
         $(document).ready(function() {
+            const expenseFlash = sessionStorage.getItem('expenseFlash');
+            const expenseFlashType = sessionStorage.getItem('expenseFlashType') || 'success';
+
+            if (expenseFlash) {
+                toastr[expenseFlashType](expenseFlash);
+                sessionStorage.removeItem('expenseFlash');
+                sessionStorage.removeItem('expenseFlashType');
+            }
+
             // Comprehensive fix for Bootstrap modal scrollbar issue
             // Override Bootstrap's modal methods that cause width changes
             if ($.fn.modal && $.fn.modal.Constructor) {
@@ -612,6 +621,8 @@
                         if (response.success) {
                             $('#createExpenseModal').modal('hide');
                             $('#createExpenseForm')[0].reset();
+                            sessionStorage.setItem('expenseFlash', response.message || 'Expense created successfully.');
+                            sessionStorage.setItem('expenseFlashType', 'success');
                             location.reload();
                         }
                     },
@@ -621,6 +632,8 @@
                             $.each(errors, function(key, value) {
                                 $('.error-' + key).text(value[0]);
                             });
+                        } else {
+                            toastr.error('Failed to create expense. Please try again.');
                         }
                     }
                 });
@@ -680,6 +693,8 @@
                     success: function(response) {
                         if (response.success) {
                             $('#editExpenseModal').modal('hide');
+                            sessionStorage.setItem('expenseFlash', response.message || 'Expense updated successfully.');
+                            sessionStorage.setItem('expenseFlashType', 'success');
                             location.reload();
                         }
                     },
@@ -689,6 +704,8 @@
                             $.each(errors, function(key, value) {
                                 $('.error-edit-' + key).text(value[0]);
                             });
+                        } else {
+                            toastr.error('Failed to update expense. Please try again.');
                         }
                     }
                 });

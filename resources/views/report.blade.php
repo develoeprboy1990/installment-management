@@ -48,112 +48,131 @@
             {{-- Range KPI Row (same ibox card style as your old boxes) --}}
             <div class="row" id="rangeKpis" style="padding-left: 15px; padding-right: 15px;">
                 <div class="col-lg-4 col-md-4 col-sm-6 m-b-sm">
-                    <div class="ibox">
-                        <div class="ibox-title">
-                             <span class="label label-primary pull-left" style="font-size: 13px;">Paid Installment</span>
-                        </div>
-                        <div class="ibox-content">
-                            @if (getUserSetting('show_total_revenue') == '1')
-                            <h1 class="no-margins" id="kpiPaidInst">0</h1>
-                            @else
-                            <h1 class="no-margins">****</h1>
-                            @endif
-                            <small>Installments paid in range</small>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-lg-4 col-md-4 col-sm-6 m-b-sm">
-                    <div class="ibox">
-                        <div class="ibox-title">
-                            <span class="label label-primary pull-left" style="font-size: 13px;">Collected</span>
-                        </div>
-                        <div class="ibox-content">
-                            @if (getUserSetting('show_total_revenue') == '1')
-                            <h1 class="no-margins" id="kpiCollected">Rs. 0</h1>
-                            @else
-                            <h1 class="no-margins">Rs. ****</h1>
-                            @endif
-                            <small>Amount received</small>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-lg-4 col-md-4 col-sm-6 m-b-sm">
-                    <div class="ibox">
-                        <div class="ibox-title">
-                            <span class="label label-primary pull-left" style="font-size: 13px;">Pending Amount</span>
-                        </div>
-                        <div class="ibox-content">
-                            @if (getUserSetting('show_total_revenue') == '1')
-                            <h1 class="no-margins" id="kpiPendingRange">Rs. 0</h1>
-                            @else
-                            <h1 class="no-margins">Rs. ****</h1>
-                            @endif
-                            <small>Due within range (all shown on hover)</small>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-lg-4 col-md-4 col-sm-6 m-b-sm">
-                    <div class="ibox">
-                        <div class="ibox-title">
-                            <span class="label label-primary pull-left" style="font-size: 13px;">Total Revenue</span>
-                        </div>
-                        <div class="ibox-content">
-                            @if (getUserSetting('show_total_revenue') == '1')
-                            <h1 class="no-margins" id="kpiRevenue">Rs. 0</h1>
-                            @else
-                            <h1 class="no-margins">Rs. ****</h1>
-                            @endif
-                            <small>Purchases in range</small>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-lg-4 col-md-4 col-sm-6 m-b-sm">
-                    <div class="ibox">
-                        <div class="ibox-title">
-                            <span class="label label-primary pull-left" style="font-size: 13px;">Total Profit</span>
-                        </div>
-                        <div class="ibox-content">
-                            @if (getUserSetting('show_total_revenue') == '1')
-                            <h1 class="no-margins" id="kpiProfit">Rs. 0</h1>
-                            @else
-                            <h1 class="no-margins">Rs. ****</h1>
-                            @endif
-                            <small>Per-installment profit sum</small>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-lg-4 col-md-4 col-sm-6 m-b-sm">
-                    <div class="ibox">
-                        <div class="ibox-title">
-                            <span class="label label-primary pull-left" style="font-size: 13px;">New Customers</span>
-                        </div>
-                        <div class="ibox-content">
-                            @if (getUserSetting('show_total_revenue') == '1')
-                            <h1 class="no-margins" id="kpiNewCustomers">0</h1>
-                            @else
-                            <h1 class="no-margins">****</h1>
-                            @endif
-                            <small>Joined in range</small>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-4 col-md-4 col-sm-6 m-b-sm"">
-                    <div class="ibox">
-                        <div class="ibox-title">
-                            <span class="label label-primary pull-left" style="font-size: 13px;">Defaulters</span>
-                            <div class="ibox-tools">
-                                <span class="label label-danger pull-right">{{ $data['defaulters_count'] ?? 0 }}</span>
+                    <div class="widget style1 report-widget navy-bg">
+                        <div class="report-widget-body">
+                            <div class="report-widget-icon">
+                                <i class="fa fa-check-circle fa-3x"></i>
+                            </div>
+                            <div class="report-widget-metrics text-right">
+                                <span>Paid Installments</span>
+                                @if (getUserSetting('show_total_revenue') == '1')
+                                    <h2 class="font-bold" id="kpiPaidInst">0</h2>
+                                @else
+                                    <h2 class="font-bold">****</h2>
+                                @endif
+                                <small>Installments paid in range</small>
                             </div>
                         </div>
-                        <div class="ibox-content">
-                            <h1 class="no-margins">{{ $data['defaulters_count'] ?? 0 }}</h1>
-                            <div class="stat-percent font-bold text-danger">{{ number_format($data['defaulters_amount'] ?? 0, 2) }} <i class="fa fa-level-down"></i></div>
-                            <small>Total amount due</small>
+                    </div>
+                </div>
+
+                <div class="col-lg-4 col-md-4 col-sm-6 m-b-sm">
+                    <div class="widget style1 report-widget lazur-bg">
+                        <div class="report-widget-body">
+                            <div class="report-widget-icon">
+                                <i class="fa fa-money fa-3x"></i>
+                            </div>
+                            <div class="report-widget-metrics text-right">
+                                <span>Collected</span>
+                                @if (getUserSetting('show_total_revenue') == '1')
+                                    <h2 class="font-bold" id="kpiCollected">Rs. 0</h2>
+                                @else
+                                    <h2 class="font-bold">Rs. ****</h2>
+                                @endif
+                                <small>Amount received</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4 col-md-4 col-sm-6 m-b-sm">
+                    <div class="widget style1 report-widget yellow-bg">
+                        <div class="report-widget-body">
+                            <div class="report-widget-icon">
+                                <i class="fa fa-clock-o fa-3x"></i>
+                            </div>
+                            <div class="report-widget-metrics text-right">
+                                <span>Pending Amount</span>
+                                @if (getUserSetting('show_total_revenue') == '1')
+                                    <h2 class="font-bold" id="kpiPendingRange">Rs. 0</h2>
+                                @else
+                                    <h2 class="font-bold">Rs. ****</h2>
+                                @endif
+                                <small>Due within range (all shown on hover)</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4 col-md-4 col-sm-6 m-b-sm">
+                    <div class="widget style1 report-widget blue-bg">
+                        <div class="report-widget-body">
+                            <div class="report-widget-icon">
+                                <i class="fa fa-line-chart fa-3x"></i>
+                            </div>
+                            <div class="report-widget-metrics text-right">
+                                <span>Total Revenue</span>
+                                @if (getUserSetting('show_total_revenue') == '1')
+                                    <h2 class="font-bold" id="kpiRevenue">Rs. 0</h2>
+                                @else
+                                    <h2 class="font-bold">Rs. ****</h2>
+                                @endif
+                                <small>Purchases in range</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4 col-md-4 col-sm-6 m-b-sm">
+                    <div class="widget style1 report-widget teal-bg">
+                        <div class="report-widget-body">
+                            <div class="report-widget-icon">
+                                <i class="fa fa-area-chart fa-3x"></i>
+                            </div>
+                            <div class="report-widget-metrics text-right">
+                                <span>Total Profit</span>
+                                @if (getUserSetting('show_total_revenue') == '1')
+                                    <h2 class="font-bold" id="kpiProfit">Rs. 0</h2>
+                                @else
+                                    <h2 class="font-bold">Rs. ****</h2>
+                                @endif
+                                <small>Per-installment profit sum</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4 col-md-4 col-sm-6 m-b-sm">
+                    <div class="widget style1 report-widget green-bg">
+                        <div class="report-widget-body">
+                            <div class="report-widget-icon">
+                                <i class="fa fa-users fa-3x"></i>
+                            </div>
+                            <div class="report-widget-metrics text-right">
+                                <span>New Customers</span>
+                                @if (getUserSetting('show_total_revenue') == '1')
+                                    <h2 class="font-bold" id="kpiNewCustomers">0</h2>
+                                @else
+                                    <h2 class="font-bold">****</h2>
+                                @endif
+                                <small>Joined in range</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4 col-md-4 col-sm-6 m-b-sm">
+                    <div class="widget style1 report-widget red-bg">
+                        <div class="report-widget-body">
+                            <div class="report-widget-icon">
+                                <i class="fa fa-exclamation-triangle fa-3x"></i>
+                            </div>
+                            <div class="report-widget-metrics text-right">
+                                <span>Defaulters</span>
+                                <h2 class="font-bold">{{ $data['defaulters_count'] ?? 0 }}</h2>
+                                <div class="stat-percent font-bold text-white">{{ number_format($data['defaulters_amount'] ?? 0, 2) }} <i class="fa fa-level-down"></i></div>
+                                <small>Total amount due</small>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -521,6 +540,100 @@
         </div>
     </div>
 @endsection
+
+@push('styles')
+    <style>
+        #rangeKpis .report-widget {
+            border-radius: 6px;
+            padding: 20px 25px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+            position: relative;
+            overflow: hidden;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        #rangeKpis .report-widget .row {
+            align-items: center;
+        }
+
+        #rangeKpis .report-widget .report-widget-body {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        #rangeKpis .report-widget .report-widget-icon {
+            flex: 0 0 auto;
+        }
+
+        #rangeKpis .report-widget .report-widget-metrics {
+            flex: 1 1 auto;
+        }
+
+        #rangeKpis .report-widget i {
+            opacity: 0.4;
+            transition: opacity 0.3s ease;
+        }
+
+        #rangeKpis .report-widget:hover i {
+            opacity: 0.65;
+        }
+
+        #rangeKpis .report-widget span {
+            display: block;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-size: 12px;
+        }
+
+        #rangeKpis .report-widget small {
+            display: block;
+            margin-top: 6px;
+            font-size: 11px;
+            opacity: 0.85;
+        }
+
+        #rangeKpis .report-widget .stat-percent {
+            margin-top: 6px;
+        }
+
+        #rangeKpis .report-widget .font-bold {
+            margin: 0;
+        }
+
+        #rangeKpis .navy-bg {
+            background: linear-gradient(135deg, #1c84c6 0%, #1ab394 100%);
+        }
+
+        #rangeKpis .lazur-bg {
+            background: linear-gradient(135deg, #23c6c8 0%, #1ab394 100%);
+        }
+
+        #rangeKpis .yellow-bg {
+            background: linear-gradient(135deg, #f8ac59 0%, #f7aa30 100%);
+            color: #3d2f1b;
+        }
+
+        #rangeKpis .blue-bg {
+            background: linear-gradient(135deg, #1c84c6 0%, #23c6c8 100%);
+        }
+
+        #rangeKpis .teal-bg {
+            background: linear-gradient(135deg, #1ab394 0%, #00a07d 100%);
+        }
+
+        #rangeKpis .green-bg {
+            background: linear-gradient(135deg, #1cbb90 0%, #1ab394 100%);
+        }
+
+        #rangeKpis .red-bg {
+            background: linear-gradient(135deg, #ed5565 0%, #d62d3a 100%);
+        }
+    </style>
+@endpush
 
 @push('script')
     <script>

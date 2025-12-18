@@ -106,7 +106,7 @@
                     </li>
                     @endcan
 
-                    @can('view profile')
+                    @can('view-profile')
                     <!-- User Management section with better icons -->
                     <li class="{{ request()->is('profile') || request()->routeIs('admin.settings') ? 'active' : '' }}">
                         <a href="#"><i class="fa fa-user-circle"></i> <span class="nav-label">User Management</span> <span class="fa arrow"></span></a>

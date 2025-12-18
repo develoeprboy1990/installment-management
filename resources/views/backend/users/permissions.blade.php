@@ -1,7 +1,29 @@
 @extends('layouts.master')
 @push('styles')
     <style>
+        .permission-actions {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
 
+        .permission-actions .actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .permission-actions .btn-link {
+            padding: 0;
+            font-weight: 600;
+        }
+
+        .permission-actions .divider {
+            color: #c2c2c2;
+        }
     </style>
 @endpush
 @section('content')
@@ -87,10 +109,27 @@
                                         <tr>
                                             <td>{{ $role->name }}</td>
                                             <td>
-                                                <form action="{{ route('permissions.update', $role->id) }}" method="POST">
+                                                <form action="{{ route('permissions.update', $role->id) }}" method="POST"
+                                                    class="permission-form">
                                                     @csrf
                                                     @method('PUT')
-                                                    <div class="row">
+                                                    <div class="permission-actions">
+                                                        <strong class="text-muted">Assign permissions</strong>
+                                                        <div class="actions">
+                                                            <button type="button" class="btn btn-link btn-sm permission-toggle"
+                                                                data-target="permission-list-{{ $role->id }}"
+                                                                data-action="select">
+                                                                <i class="fa fa-check-square-o"></i> Select All
+                                                            </button>
+                                                            <span class="divider">|</span>
+                                                            <button type="button" class="btn btn-link btn-sm permission-toggle"
+                                                                data-target="permission-list-{{ $role->id }}"
+                                                                data-action="clear">
+                                                                <i class="fa fa-square-o"></i> Clear
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                    <div class="row permission-list" id="permission-list-{{ $role->id }}">
                                                         @foreach ($permissions as $permission)
                                                             <div class="col-md-4 col-sm-6 mb-2">
                                                                 <div class="form-check">
@@ -186,4 +225,27 @@
 @endsection
 
 @push('script')
+    <script>
+        $(document).ready(function() {
+            $('.permission-form').on('click', '.permission-toggle', function(e) {
+                e.preventDefault();
+
+                const action = $(this).data('action');
+                const targetId = $(this).data('target');
+                const $targetList = $('#' + targetId);
+
+                if (!$targetList.length) {
+                    console.warn('Permission list not found for target:', targetId);
+                    return;
+                }
+
+                const shouldSelect = action === 'select';
+                $targetList.find('input[type="checkbox"]').prop('checked', shouldSelect);
+
+                // Provide quick visual confirmation
+                const message = shouldSelect ? 'All permissions selected.' : 'All permissions cleared.';
+                toastr.info(message);
+            });
+        });
+    </script>
 @endpush
