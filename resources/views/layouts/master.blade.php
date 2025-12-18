@@ -17,8 +17,8 @@
         {{ (getUserSetting('project_name') ?? config('app.name')) . ' - ' . (getUserSetting('project_tagline') ?? '') }}
     </title>
     @if (getUserSetting('favicon'))
-        <link rel="icon" href="{{ getUserSetting('favicon') }}">
-        <link rel="shortcut icon" href="{{ getUserSetting('favicon') }}">
+        <link rel="icon" href="{{ asset('storage/' . getUserSetting('favicon')) }}">
+        <link rel="shortcut icon" href="{{ asset('storage/' . getUserSetting('favicon')) }}">
     @endif
     <link href="{{ asset('backend/css/bootstrap.min.css') }}" rel="stylesheet">
     <link href="{{ asset('backend/font-awesome/css/font-awesome.css') }}" rel="stylesheet">
@@ -48,7 +48,7 @@
                         <div class="dropdown profile-element" style="text-align: center;">
                             <span>
                                 <img alt="image" class="img-circle"
-                                    src="{{ getUserSetting('profile_image') ?: asset('backend/img/profile_small.jpg') }}"
+                                    src="{{ Auth::user()->avatar ? asset('storage/' . Auth::user()->avatar) : asset('backend/img/profile_small.jpg') }}"
                                     style="width: 60px; height: 60px; border-radius: 50%;" />
                             </span>
                             <a data-toggle="dropdown" class="dropdown-toggle" href="#">

@@ -103,41 +103,14 @@
                                                 <div class="col-sm-6">
                                                     @if (!empty($settings['favicon']))
                                                         <div style="display:flex;align-items:center;gap:12px;">
-                                                            <img src="{{ getUserSetting('favicon') }}" alt="Favicon"
+                                                            <img src="{{ asset('storage/' . $settings['favicon']) }}"
+                                                                alt="Favicon"
                                                                 style="width:32px;height:32px;object-fit:contain;border:1px solid #e5e7eb;border-radius:4px;background:#fff;" />
                                                             <code
                                                                 style="background:#f7f7f7;padding:2px 6px;border-radius:4px;">{{ $settings['favicon'] }}</code>
                                                         </div>
                                                     @else
                                                         <span class="text-muted">No favicon uploaded.</span>
-                                                    @endif
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div class="form-group">
-                                        <label class="col-sm-2 control-label">Profile Image</label>
-                                        <div class="col-sm-10">
-                                            <div class="row">
-                                                <div class="col-sm-6">
-                                                    <input type="file" name="profile_image"
-                                                        accept="image/png,image/jpg,image/jpeg,image/webp,image/gif"
-                                                        class="form-control" />
-                                                    <p class="help-block">PNG/JPG/JPEG/WEBP/GIF up to 2 MB. Recommended size
-                                                        200x200.</p>
-                                                </div>
-                                                <div class="col-sm-6">
-                                                    @if (!empty($settings['profile_image']))
-                                                        <div style="display:flex;align-items:center;gap:12px;">
-                                                            <img src="{{ getUserSetting('profile_image') }}"
-                                                                alt="Profile Image"
-                                                                style="width:60px;height:60px;object-fit:cover;border:1px solid #e5e7eb;border-radius:50%;background:#fff;" />
-                                                            <code
-                                                                style="background:#f7f7f7;padding:2px 6px;border-radius:4px;">{{ $settings['profile_image'] }}</code>
-                                                        </div>
-                                                    @else
-                                                        <span class="text-muted">No profile image uploaded.</span>
                                                     @endif
                                                 </div>
                                             </div>
