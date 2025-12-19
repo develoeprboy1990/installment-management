@@ -1,0 +1,68 @@
+# Laravel specific
+/node_modules
+/public/hot
+/public/storage
+/storage/*.key
+/vendor
+.env
+.env.backup
+.env.production
+.phpunit.result.cache
+Homestead.json
+Homestead.yaml
+auth.json
+npm-debug.log
+yarn-error.log
+
+# IDE specific files
+/.fleet
+/.idea
+/.vscode
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Logs
+/storage/logs/*.log
+*.log
+
+# Build artifacts
+/public/build
+/public/css
+/public/js
+/public/mix-manifest.json
+
+# Testing
+/.phpunit.cache
+/coverage
+.phpunit.result.cache
+
+# Backup and temporary files
+*.zip
+*.tar.gz
+*.sql
+*.bak
+*.tmp
+*.old
+
+# Specific large files in your project
+.gitt.zip
+installment.zip
+
+# Database
+*.sqlite
+*.sqlite-journal
+
+# Cache and Framework
+/bootstrap/cache/*
+!/bootstrap/cache/.gitkeep
+/storage/framework/cache/*
+!/storage/framework/cache/.gitkeep
+/storage/framework/sessions/*
+!/storage/framework/sessions/.gitkeep
+/storage/framework/views/*.php
+!/storage/framework/views/.gitkeep
+
+# Compiled files
+*.compiled
