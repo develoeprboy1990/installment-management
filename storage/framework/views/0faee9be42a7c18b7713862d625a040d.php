@@ -13,7 +13,10 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <title><?php echo e((getUserSetting('project_name') ?? config('app.name')) . ' - ' . (getUserSetting('project_tagline') ?? '')); ?></title>
+    <title>
+        <?php echo e((getUserSetting('project_name') ?? config('app.name')) . ' - ' . (getUserSetting('project_tagline') ?? '')); ?>
+
+    </title>
     <?php if(getUserSetting('favicon')): ?>
         <link rel="icon" href="<?php echo e(asset('storage/' . getUserSetting('favicon'))); ?>">
         <link rel="shortcut icon" href="<?php echo e(asset('storage/' . getUserSetting('favicon'))); ?>">
@@ -36,6 +39,7 @@
     <meta name="csrf-token" content="<?php echo e(csrf_token()); ?>">
     <?php echo $__env->yieldPushContent('styles'); ?>
 </head>
+
 <body>
     <div id="wrapper">
         <nav class="navbar-default navbar-static-side" role="navigation">
@@ -100,27 +104,28 @@
                     </li>
 
                     <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('view-installments')): ?>
-                    <li class="<?php echo e(request()->is('admin/installments*') ? 'active' : ''); ?>">
-                        <a href="<?php echo e(route('installments.index')); ?>"><i class="fa fa-credit-card"></i> <span
-                                class="nav-label">Installments</span></a>
-                    </li>
+                        <li class="<?php echo e(request()->is('admin/installments*') ? 'active' : ''); ?>">
+                            <a href="<?php echo e(route('installments.index')); ?>"><i class="fa fa-credit-card"></i> <span
+                                    class="nav-label">Installments</span></a>
+                        </li>
                     <?php endif; ?>
 
                     <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('view-profile')): ?>
-                    <!-- User Management section with better icons -->
-                    <li class="<?php echo e(request()->is('profile') || request()->routeIs('admin.settings') ? 'active' : ''); ?>">
-                        <a href="#"><i class="fa fa-user-circle"></i> <span class="nav-label">User Management</span> <span class="fa arrow"></span></a>
-                        <ul
-                            class="nav nav-second-level <?php echo e(request()->is('profile') || request()->routeIs('admin.settings') ? 'collapse' : ''); ?>">
-                            <li class="<?php echo e(request()->is('profile') ? 'active' : ''); ?>">
-                                <a href="<?php echo e(url('profile')); ?>"><i class="fa fa-user"></i> Profile</a>
-                            </li>
-                            <li class="<?php echo e(request()->routeIs('admin.settings') ? 'active' : ''); ?>">
-                                <a href="<?php echo e(route('admin.settings')); ?>"><i class="fa fa-cogs"></i> General
-                                    Setting</a>
-                            </li>
-                        </ul>
-                    </li>
+                        <!-- User Management section with better icons -->
+                        <li class="<?php echo e(request()->is('profile') || request()->routeIs('admin.settings') ? 'active' : ''); ?>">
+                            <a href="#"><i class="fa fa-user-circle"></i> <span class="nav-label">User
+                                    Management</span> <span class="fa arrow"></span></a>
+                            <ul
+                                class="nav nav-second-level <?php echo e(request()->is('profile') || request()->routeIs('admin.settings') ? 'collapse' : ''); ?>">
+                                <li class="<?php echo e(request()->is('profile') ? 'active' : ''); ?>">
+                                    <a href="<?php echo e(url('profile')); ?>"><i class="fa fa-user"></i> Profile</a>
+                                </li>
+                                <li class="<?php echo e(request()->routeIs('admin.settings') ? 'active' : ''); ?>">
+                                    <a href="<?php echo e(route('admin.settings')); ?>"><i class="fa fa-cogs"></i> General
+                                        Setting</a>
+                                </li>
+                            </ul>
+                        </li>
                     <?php endif; ?>
 
                     <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('view-expenses')): ?>
