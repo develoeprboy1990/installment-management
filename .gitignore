@@ -54,14 +54,14 @@ installment.zip
 *.sqlite
 *.sqlite-journal
 
-# Cache
+# Cache and Framework
 /bootstrap/cache/*
 !/bootstrap/cache/.gitkeep
 /storage/framework/cache/*
 !/storage/framework/cache/.gitkeep
 /storage/framework/sessions/*
 !/storage/framework/sessions/.gitkeep
-/storage/framework/views/*
+/storage/framework/views/*.php
 !/storage/framework/views/.gitkeep
 
 # Compiled files
