@@ -204,6 +204,7 @@
                             <th>Paid Date</th>
                             <th>Receipt No</th>
                             <th>Fine</th>
+                            <th>Discount</th>
                             <th>Recovery Officer</th>
                             <th>Action</th>
                         </tr>
@@ -237,6 +238,13 @@
                             <td>
                                 @if($installment->fine_amount > 0)
                                     <span class="text-danger">Rs. {{ number_format($installment->fine_amount, 2) }}</span>
+                                @else
+                                    Rs. 0.00
+                                @endif
+                            </td>
+                            <td>
+                                @if($installment->discount > 0)
+                                    <span class="text-success">Rs. {{ number_format($installment->discount, 2) }}</span>
                                 @else
                                     Rs. 0.00
                                 @endif
@@ -353,6 +361,7 @@
                 </div>
                 <div class="modal-body">
                     <input type="hidden" name="installment_id" id="installment_id">
+                    <input type="hidden" id="original_amount">
 
                     <div class="form-group">
                         <label>Payment Date <span class="text-danger">*</span></label>
@@ -374,7 +383,7 @@
 
                     <div class="form-group">
                         <label>Discount</label>
-                        <input type="number" class="form-control" name="discount" value="0" step="0.01" min="0">
+                        <input type="number" class="form-control" name="discount" id="discount" value="0" step="0.01" min="0">
                         <small class="text-muted">Enter discount amount if applicable</small>
                     </div>
 
@@ -399,6 +408,9 @@
                         <label>Remarks</label>
                         <textarea class="form-control" name="remarks" id="remarks" rows="3"></textarea>
                         <small class="text-muted">Auto-generated default remarks</small>
+                    </div>
+                    <div id="total_reduction_info" class="alert alert-info" style="margin-top: 15px; margin-bottom: 0;">
+                        Total Balance Reduction: <strong>Rs. <span id="total_reduction_display">0.00</span></strong>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -431,9 +443,12 @@ $(document).ready(function() {
             success: function(response) {
                 // Populate modal with fetched data
                 $('#installment_id').val(installmentId);
+                $('#original_amount').val(response.installment_amount); // Store the scheduled amount
                 $('#receipt_no').val(response.receipt_no);
                 $('#payment_amount').val(response.installment_amount);
+                $('#discount').val(0); // Reset discount to 0
                 $('#remarks').val(response.remarks);
+                
                 // Validate initial value against remaining
                 validatePaymentAmountAgainstRemaining();
 
@@ -477,12 +492,17 @@ $(document).ready(function() {
     }
 
     function validatePaymentAmountAgainstRemaining() {
-        const val = parseFloat($('#payment_amount').val());
+        const amt = parseFloat($('#payment_amount').val()) || 0;
+        const disc = parseFloat($('#discount').val()) || 0;
+        const val = amt + disc;
+        
+        $('#total_reduction_display').text(val.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+        
         const $submit = $('#paymentModal form button[type="submit"]');
         let error = '';
 
         if (!isNaN(val) && val > remainingBalanceForValidation + 0.0001) {
-            error = `Remaining balance is Rs. ${remainingBalanceForValidation.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}. You entered Rs. ${val.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}, which exceeds the remaining amount.`;
+            error = `Remaining balance is Rs. ${remainingBalanceForValidation.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}. Your total (Payment + Discount) is Rs. ${val.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}, which exceeds the remaining amount.`;
         }
 
         if (error) {
@@ -496,8 +516,26 @@ $(document).ready(function() {
         }
     }
 
-    // Validate on input
+    // Auto-calculate logic: 
+    // If you enter a discount, reduce the cash payment
+    $(document).on('input', '#discount', function() {
+        const original = parseFloat($('#original_amount').val()) || 0;
+        const discount = parseFloat($(this).val()) || 0;
+        const newPayment = Math.max(0, original - discount);
+        $('#payment_amount').val(newPayment.toFixed(2));
+        validatePaymentAmountAgainstRemaining();
+    });
+
+    // If you enter a cash payment, adjust the discount to make it "Full Payment"
     $(document).on('input', '#payment_amount', function() {
+        const original = parseFloat($('#original_amount').val()) || 0;
+        const payment = parseFloat($(this).val()) || 0;
+        if (payment < original) {
+            const newDiscount = original - payment;
+            $('#discount').val(newDiscount.toFixed(2));
+        } else {
+            $('#discount').val(0);
+        }
         validatePaymentAmountAgainstRemaining();
     });
 

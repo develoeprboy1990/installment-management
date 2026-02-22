@@ -114,12 +114,23 @@
                 <td class="text-end">{{ isset($installment->payment_method) ? ucfirst($installment->payment_method) : 'N/A' }}</td>
             </tr>
             <tr>
-                <th>Total Paid</th>
+                <th>Cash Paid</th>
                 <td class="text-end">Rs.{{ number_format((float)($installment->installment_amount ?? 0), 2) }}</td>
+                <th>Discount</th>
+                <td class="text-end">Rs.{{ number_format((float)($installment->discount ?? 0), 2) }}</td>
+            </tr>
+            <tr>
+                <th>Fine Amount</th>
+                <td class="text-end">Rs.{{ number_format((float)($installment->fine_amount ?? 0), 2) }}</td>
+                <th>Total Reduction</th>
+                <td class="text-end"><strong>Rs.{{ number_format((float)(($installment->installment_amount ?? 0) + ($installment->discount ?? 0)), 2) }}</strong></td>
+            </tr>
+            <tr>
                 <th>Total Installments</th>
                 <td class="text-end">{{ $installment->purchase->installment_months ?? 'N/A' }}</td>
+                <th>Received By</th>
+                <td class="text-end">{{ $installment->officer->name ?? 'N/A' }}</td>
             </tr>
-
             @php
                 $receivedCount = optional($installment->purchase)
                     ? $installment->purchase->installments()
@@ -139,27 +150,9 @@
                         N/A
                     @endif
                 </td>
-                <th>Received By</th>
-                <td class="text-end">{{ $installment->officer->name ?? 'N/A' }}</td>
+                <th>-</th>
+                <td class="text-end">-</td>
             </tr>
-
-            @if(($installment->discount ?? 0) > 0 || ($installment->fine_amount ?? 0) > 0)
-                <tr>
-                    @if(($installment->discount ?? 0) > 0)
-                        <th>Discount</th>
-                        <td>{{ 'Rs. ' . number_format((float)$installment->discount, 2) }}</td>
-                    @else
-                        <th>Discount</th><td>Rs. 0.00</td>
-                    @endif
-
-                    @if(($installment->fine_amount ?? 0) > 0)
-                        <th>Fine Amount</th>
-                        <td>{{ 'Rs. ' . number_format((float)$installment->fine_amount, 2) }}</td>
-                    @else
-                        <th>Fine Amount</th><td>Rs. 0.00</td>
-                    @endif
-                </tr>
-            @endif
         </tbody>
     </table>
 

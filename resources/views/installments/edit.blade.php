@@ -165,7 +165,7 @@ $(document).ready(function() {
         var installmentAmount = parseFloat($('#installment_amount').val()) || 0;
         var discount = parseFloat($('#discount').val()) || 0;
         
-        var totalPayment = installmentAmount - discount;
+        var totalPayment = installmentAmount + discount;
         var newBalance = Math.max(0, preBalance - totalPayment);
         
         $('#balance').val(newBalance.toFixed(2));

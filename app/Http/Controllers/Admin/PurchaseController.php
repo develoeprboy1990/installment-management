@@ -296,7 +296,8 @@ class PurchaseController extends Controller
         $fine = $installment->calculateFine();
 
         // Calculate new balance after payment
-        $totalPayment = $request->payment_amount - ($request->discount ?? 0);
+        // Total reduction in balance is the sum of cash paid and discount given
+        $totalPayment = $request->payment_amount + ($request->discount ?? 0);
         $newBalance = max(0, $installment->pre_balance - $totalPayment);
 
         // Update installment
