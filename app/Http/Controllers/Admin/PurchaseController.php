@@ -357,8 +357,7 @@ class PurchaseController extends Controller
     private function reconcileIfFullyPaid(Purchase $purchase): void
     {
         // Fresh sums to avoid stale relations
-        $totalPaid = (float) ($purchase->advance_payment
-            + $purchase->installments()->where('status', 'paid')->sum('installment_amount'));
+        $totalPaid = (float) $purchase->total_paid_amount;
 
         if ($totalPaid + 0.0001 >= (float) $purchase->total_price) { // small epsilon for floats
             // Mark all non-paid installments as paid with zero balance

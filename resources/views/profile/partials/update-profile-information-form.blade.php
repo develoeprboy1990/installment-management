@@ -28,7 +28,7 @@
             <x-input-label for="avatar" :value="__('Profile Image')" />
             <div class="mt-2 flex items-center gap-4">
                 @if(!empty($user->avatar))
-                    <img src="{{ asset('storage/'.$user->avatar) }}" alt="Avatar" style="width:72px;height:72px;object-fit:cover;border-radius:8px;border:1px solid #e5e7eb;" />
+                    <img src="{{ getSettingAssetUrl($user->avatar) }}" alt="Avatar" style="width:72px;height:72px;object-fit:cover;border-radius:8px;border:1px solid #e5e7eb;" />
                 @else
                     <div style="width:72px;height:72px;border-radius:8px;background:#f3f4f6;display:flex;align-items:center;justify-content:center;color:#6b7280;border:1px solid #e5e7eb;">
                         <i class="fa fa-user" aria-hidden="true"></i>

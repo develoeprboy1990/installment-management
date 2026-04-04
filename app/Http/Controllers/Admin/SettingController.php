@@ -38,7 +38,7 @@ class SettingController extends Controller
         // Handle favicon upload (optional)
         if ($request->hasFile('favicon')) {
             $request->validate([
-                'favicon' => 'nullable|image|mimes:png,ico,svg,gif,jpg,jpeg,webp|max:1024',
+                'favicon' => 'nullable|file|mimes:png,ico,svg,gif,jpg,jpeg,webp|max:1024',
             ]);
 
             // Delete old favicon if exists
@@ -46,14 +46,23 @@ class SettingController extends Controller
                 ->where('key', 'favicon')
                 ->value('value');
 
-            $path = $request->file('favicon')->storeAs(
-                'settings',
-                'favicon_'.time().'.'.$request->file('favicon')->extension(),
-                'public'
-            );
+            if (!is_dir(public_path('backend/img/settings'))) {
+                mkdir(public_path('backend/img/settings'), 0755, true);
+            }
 
-            if (!empty($old) && Storage::disk('public')->exists($old)) {
-                Storage::disk('public')->delete($old);
+            $fileName = 'favicon_' . time() . '.' . $request->file('favicon')->extension();
+            $request->file('favicon')->move(public_path('backend/img/settings'), $fileName);
+            $path = 'backend/img/settings/' . $fileName;
+
+            if (!empty($old)) {
+                if (Storage::disk('public')->exists($old)) {
+                    Storage::disk('public')->delete($old);
+                }
+
+                $oldPublicPath = public_path($old);
+                if (file_exists($oldPublicPath)) {
+                    @unlink($oldPublicPath);
+                }
             }
 
             Setting::updateOrCreate(

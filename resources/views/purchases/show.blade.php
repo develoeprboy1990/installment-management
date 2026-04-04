@@ -6,7 +6,17 @@
         <h1>Purchase Details</h1>
         <div class="btn-group">
             @php
-                $paidInstallments = $purchase->installments()->where('status', 'paid')->count();
+                        // Calculate all financial values from relationships
+                        $paidInstallments = $purchase->installments()->where('status', 'paid')->count();
+                        $totalPaidRaw = $purchase->total_paid_amount;
+                        $cashPaid = $purchase->advance_payment + $purchase->paid_installments_cash_amount;
+                        $totalDiscount = $purchase->paid_installments_discount_amount;
+                        // Cap display paid to total price to avoid showing overpayment as progress > 100%
+                        $totalPaid = min($totalPaidRaw, $purchase->total_price);
+                        $remainingBalance = $purchase->getRemainingBalance();
+                        $overdueInstallments = $purchase->installments()->where('due_date', '<', now())->where('status', '!=', 'paid')->count();
+                        $totalInstallments = $purchase->installments()->count();
+                        $paidInstallmentCount = $purchase->installments()->where('status', 'paid')->count();
             @endphp
 
             <!-- Edit Button -->
@@ -16,9 +26,9 @@
 
 
             <!-- Delete Button -->
-            <button onclick="confirmDelete()" class="btn btn-danger">
+            {{-- <button onclick="confirmDelete()" class="btn btn-danger">
                 <i class="fa fa-trash"></i> Delete Purchase
-            </button>
+            </button> --}}
 
             <a href="{{ route('purchases.index') }}" class="btn btn-default">
                 <i class="fa fa-arrow-left"></i> Back to List
@@ -74,6 +84,10 @@
                             <td>Rs. {{ number_format($purchase->advance_payment, 2) }}</td>
                         </tr>
                         <tr>
+                            <th>Total Discount:</th>
+                            <td>Rs. {{ number_format($totalDiscount, 2) }}</td>
+                        </tr>
+                        <tr>
                             <th>Remaining Balance:</th>
                             <td><strong>Rs. {{ number_format($remainingBalance, 2) }}</strong></td>
                         </tr>
@@ -115,20 +129,23 @@
                     <h3 class="panel-title">Payment Summary</h3>
                 </div>
                 <div class="panel-body">
-                    @php
-                        $totalPaidRaw = $purchase->advance_payment + $purchase->installments()->where('status', 'paid')->sum('installment_amount');
-                        // Cap display paid to total price to avoid showing overpayment as progress > 100%
-                        $totalPaid = min($totalPaidRaw, $purchase->total_price);
-                        $remainingBalance = $purchase->getRemainingBalance();
-                        $overdueInstallments = $purchase->installments()->where('due_date', '<', now())->where('status', '!=', 'paid')->count();
-                        $totalInstallments = $purchase->installments()->count();
-                        $paidInstallmentCount = $purchase->installments()->where('status', 'paid')->count();
-                    @endphp
-
                     <table class="table table-condensed">
                         <tr>
                             <th width="40%">Total Paid:</th>
                             <td><strong class="text-success">Rs. {{ number_format($totalPaid, 2) }}</strong></td>
+                        </tr>
+                        <tr>
+                            <th>Cash Paid:</th>
+                            <td>Rs. {{ number_format($cashPaid, 2) }}</td>
+                        </tr>
+                        <tr>
+                            <th>Total Discount:</th>
+                            <td>
+                                <strong class="text-info">Rs. {{ number_format($totalDiscount, 2) }}</strong>
+                                @if($totalDiscount > 0)
+                                    <br><small class="text-muted">Total was settled by cash + discount adjustment</small>
+                                @endif
+                            </td>
                         </tr>
                         <tr>
                             <th>Remaining Balance:</th>

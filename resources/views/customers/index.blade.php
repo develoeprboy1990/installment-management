@@ -214,6 +214,16 @@
 
         /* Responsive adjustments */
         @media (max-width: 768px) {
+            .custom-table-wrapper {
+                overflow-x: auto;
+                overflow-y: hidden;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            .custom-table {
+                min-width: 1100px;
+            }
+
             .field-spacing {
                 padding: 8px 10px !important;
             }
@@ -226,6 +236,7 @@
             .custom-table th,
             .custom-table td {
                 font-size: 0.9rem;
+                white-space: nowrap;
             }
 
             .dataTables_wrapper .dataTables_length,

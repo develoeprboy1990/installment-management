@@ -24,8 +24,9 @@
                         $totalPurchaseAmount = $customer->purchases->sum('total_price');
                         $totalAdvancePayments = $customer->purchases->sum('advance_payment');
                         $totalPaidInstallments = $customer->installments()->where('status', 'paid')->sum('installment_amount');
-                        $totalPaidAmount = $totalAdvancePayments + $totalPaidInstallments;
-                        $currentBalance = $totalPurchaseAmount - $totalPaidAmount;
+                        $totalInstallmentDiscount = $customer->installments()->where('status', 'paid')->sum('discount');
+                        $totalPaidAmount = $totalAdvancePayments + $totalPaidInstallments + $totalInstallmentDiscount;
+                        $currentBalance = max(0, $totalPurchaseAmount - $totalPaidAmount);
                         $totalMonthlyInstallments = $customer->purchases()->where('status', 'active')->sum('monthly_installment');
                         $pendingInstallments = $customer->installments()->where('status', 'pending')->count();
                         $overdueInstallments = $customer->installments()->where('status', 'pending')->where('due_date', '<', now())->count();
@@ -167,115 +168,119 @@
                     <!-- Guarantors Section -->
                     @if($customer->guarantors->count() > 0)
                     <div class="guarantors-section">
-                        <table class="guarantor-table">
-                            <thead>
-                                <tr>
-                                    <th>Criteria</th>
-                                    @foreach($customer->guarantors->take(4) as $guarantor)
-                                        <th>
-                                            Guarantor # {{ $guarantor->guarantor_no }}
-                                            <div class="guarantor-photo-in-header">
-                                                @if($guarantor->image)
-                                                    <img src="{{ asset($guarantor->image) }}" alt="Guarantor {{ $guarantor->guarantor_no }}" class="guarantor-img-small">
-                                                @else
-                                                    <div class="guarantor-placeholder-small">G{{ $guarantor->guarantor_no }}</div>
-                                                @endif
-                                            </div>
-                                        </th>
-                                    @endforeach
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td><strong>Name:</strong></td>
-                                    @foreach($customer->guarantors->take(4) as $guarantor)
-                                        <td>{{ $guarantor->name }}</td>
-                                    @endforeach
-                                </tr>
-                                <tr>
-                                    <td><strong>F/H Name:</strong></td>
-                                    @foreach($customer->guarantors->take(4) as $guarantor)
-                                        <td>{{ $guarantor->father_name }}</td>
-                                    @endforeach
-                                </tr>
-                                <tr>
-                                    <td><strong>Phone:</strong></td>
-                                    @foreach($customer->guarantors->take(4) as $guarantor)
-                                        <td>{{ $guarantor->phone }}</td>
-                                    @endforeach
-                                </tr>
-                                <tr>
-                                    <td><strong>NIC:</strong></td>
-                                    @foreach($customer->guarantors->take(4) as $guarantor)
-                                        <td>{{ $guarantor->nic }}</td>
-                                    @endforeach
-                                </tr>
-                                <tr>
-                                    <td><strong>Residence:</strong></td>
-                                    @foreach($customer->guarantors->take(4) as $guarantor)
-                                        <td>{{ substr($guarantor->residence_address, 0, 40) }}{{ strlen($guarantor->residence_address) > 40 ? '...' : '' }}</td>
-                                    @endforeach
-                                </tr>
-                                <tr>
-                                    <td><strong>Office:</strong></td>
-                                    @foreach($customer->guarantors->take(4) as $guarantor)
-                                        <td>{{ $guarantor->office_address ? substr($guarantor->office_address, 0, 40) . (strlen($guarantor->office_address) > 40 ? '...' : '') : 'N/A' }}</td>
-                                    @endforeach
-                                </tr>
-                                <tr>
-                                    <td><strong>Occupation:</strong></td>
-                                    @foreach($customer->guarantors->take(4) as $guarantor)
-                                        <td>{{ $guarantor->occupation ?? 'N/A' }}</td>
-                                    @endforeach
-                                </tr>
-                                <tr>
-                                    <td><strong>Relation:</strong></td>
-                                    @foreach($customer->guarantors->take(4) as $guarantor)
-                                        <td>{{ $guarantor->relation }}</td>
-                                    @endforeach
-                                </tr>
-                            </tbody>
-                        </table>
+                        <div class="table-scroll-mobile">
+                            <table class="guarantor-table">
+                                <thead>
+                                    <tr>
+                                        <th>Criteria</th>
+                                        @foreach($customer->guarantors->take(4) as $guarantor)
+                                            <th>
+                                                Guarantor # {{ $guarantor->guarantor_no }}
+                                                <div class="guarantor-photo-in-header">
+                                                    @if($guarantor->image)
+                                                        <img src="{{ asset($guarantor->image) }}" alt="Guarantor {{ $guarantor->guarantor_no }}" class="guarantor-img-small">
+                                                    @else
+                                                        <div class="guarantor-placeholder-small">G{{ $guarantor->guarantor_no }}</div>
+                                                    @endif
+                                                </div>
+                                            </th>
+                                        @endforeach
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Name:</strong></td>
+                                        @foreach($customer->guarantors->take(4) as $guarantor)
+                                            <td>{{ $guarantor->name }}</td>
+                                        @endforeach
+                                    </tr>
+                                    <tr>
+                                        <td><strong>F/H Name:</strong></td>
+                                        @foreach($customer->guarantors->take(4) as $guarantor)
+                                            <td>{{ $guarantor->father_name }}</td>
+                                        @endforeach
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Phone:</strong></td>
+                                        @foreach($customer->guarantors->take(4) as $guarantor)
+                                            <td>{{ $guarantor->phone }}</td>
+                                        @endforeach
+                                    </tr>
+                                    <tr>
+                                        <td><strong>NIC:</strong></td>
+                                        @foreach($customer->guarantors->take(4) as $guarantor)
+                                            <td>{{ $guarantor->nic }}</td>
+                                        @endforeach
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Residence:</strong></td>
+                                        @foreach($customer->guarantors->take(4) as $guarantor)
+                                            <td>{{ substr($guarantor->residence_address, 0, 40) }}{{ strlen($guarantor->residence_address) > 40 ? '...' : '' }}</td>
+                                        @endforeach
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Office:</strong></td>
+                                        @foreach($customer->guarantors->take(4) as $guarantor)
+                                            <td>{{ $guarantor->office_address ? substr($guarantor->office_address, 0, 40) . (strlen($guarantor->office_address) > 40 ? '...' : '') : 'N/A' }}</td>
+                                        @endforeach
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Occupation:</strong></td>
+                                        @foreach($customer->guarantors->take(4) as $guarantor)
+                                            <td>{{ $guarantor->occupation ?? 'N/A' }}</td>
+                                        @endforeach
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Relation:</strong></td>
+                                        @foreach($customer->guarantors->take(4) as $guarantor)
+                                            <td>{{ $guarantor->relation }}</td>
+                                        @endforeach
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                     @endif
 
                     <!-- Payment History Table (Compact) -->
                     @if($customer->installments->count() > 0)
                     <div class="payment-history">
-                        <table class="payment-table">
-                            <thead>
-                                <tr>
-                                    <th>S.#</th>
-                                    <th>Date</th>
-                                    <th>Rcv. #</th>
-                                    <th>Pre-Bal</th>
-                                    <th>Install.</th>
-                                    <th>Disc</th>
-                                    <th>Balance</th>
-                                    <th>Fine</th>
-                                    {{-- <th>F-Type</th> --}}
-                                    <th>Recovery Officer</th>
-                                    <th>Remarks</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach($customer->installments()->where('status' , 'paid')->orderBy('due_date')->take(10)->get() as $index => $installment)
-                                <tr>
-                                    <td>{{ $index + 1 }}</td>
-                                    <td>{{ $installment->date ? $installment->date->format('d/m/Y') : $installment->due_date->format('d/m/Y') }}</td>
-                                    <td>{{ $installment->receipt_no ?? substr($installment->id, -6) }}</td>
-                                    <td>{{ number_format($installment->pre_balance, 0) }}</td>
-                                    <td>{{ number_format($installment->installment_amount, 0) }}</td>
-                                    <td>{{ $installment->discount ?? 0 }}</td>
-                                    <td>{{ number_format($installment->balance, 0) }}</td>
-                                    <td>{{ $installment->fine_amount ?? 0 }}</td>
-                                    {{-- <td>{{ $installment->status == 'paid' ? 'Nothing' : 'Pending' }}</td> --}}
-                                    <td>{{ $installment->officer?->name ?? 'N/A' }}</td>
-                                    <td>{{ $installment->status == 'paid' ? 'Paid' : 'P' }}</td>
-                                </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
+                        <div class="table-scroll-mobile">
+                            <table class="payment-table">
+                                <thead>
+                                    <tr>
+                                        <th>S.#</th>
+                                        <th>Date</th>
+                                        <th>Rcv. #</th>
+                                        <th>Pre-Bal</th>
+                                        <th>Install.</th>
+                                        <th>Disc</th>
+                                        <th>Balance</th>
+                                        <th>Fine</th>
+                                        {{-- <th>F-Type</th> --}}
+                                        <th>Recovery Officer</th>
+                                        <th>Remarks</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($customer->installments()->where('status' , 'paid')->orderBy('due_date')->take(10)->get() as $index => $installment)
+                                    <tr>
+                                        <td>{{ $index + 1 }}</td>
+                                        <td>{{ $installment->date ? $installment->date->format('d/m/Y') : $installment->due_date->format('d/m/Y') }}</td>
+                                        <td>{{ $installment->receipt_no ?? substr($installment->id, -6) }}</td>
+                                        <td>{{ number_format($installment->pre_balance, 0) }}</td>
+                                        <td>{{ number_format($installment->installment_amount, 0) }}</td>
+                                        <td>{{ $installment->discount ?? 0 }}</td>
+                                        <td>{{ number_format($installment->balance, 0) }}</td>
+                                        <td>{{ $installment->fine_amount ?? 0 }}</td>
+                                        {{-- <td>{{ $installment->status == 'paid' ? 'Nothing' : 'Pending' }}</td> --}}
+                                        <td>{{ $installment->officer?->name ?? 'N/A' }}</td>
+                                        <td>{{ $installment->status == 'paid' ? 'Paid' : 'P' }}</td>
+                                    </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                     @endif
 
@@ -342,6 +347,7 @@
         height: 120px;
         border: 1px solid #000;
         object-fit: cover;
+        border-radius: 10px;
     }
 
     .customer-placeholder {
@@ -408,7 +414,6 @@
     }
 
     .guarantor-photo-in-header {
-        text-align: center;
         margin-top: 5px;
     }
 
@@ -416,6 +421,7 @@
         width: 50px;
         height: 60px;
         border: 1px solid #000;
+        border-radius: 5px;
         object-fit: cover;
     }
 
@@ -448,6 +454,10 @@
     .payment-table th {
         background-color: #f0f0f0;
         font-weight: bold;
+    }
+
+    .table-scroll-mobile {
+        width: 100%;
     }
 
     .no-purchase-alert {
@@ -528,6 +538,56 @@
 
         .payment-table th {
             background-color: #e9ecef;
+        }
+    }
+
+    @media screen and (max-width: 768px) {
+        .ibox-tools {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .customer-section,
+        .financial-section,
+        .info-row {
+            flex-direction: column;
+        }
+
+        .customer-photo-section,
+        .financial-left,
+        .financial-right,
+        .info-item {
+            width: 100%;
+            margin-right: 0;
+        }
+
+        .customer-photo-section {
+            margin-top: 12px;
+            text-align: left;
+        }
+
+        .print-info {
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .table-scroll-mobile {
+            overflow-x: auto;
+            overflow-y: hidden;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .guarantor-table,
+        .payment-table {
+            min-width: 760px;
+        }
+
+        .guarantor-table th,
+        .guarantor-table td,
+        .payment-table th,
+        .payment-table td {
+            white-space: nowrap;
         }
     }
 </style>

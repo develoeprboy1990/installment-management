@@ -47,23 +47,14 @@ class CustomerController extends Controller
                     return 'Rs. ' . number_format($totalAmount, 0);
                 })
                 ->addColumn('paid_amount', function ($customer) {
-                    $totalAdvance = $customer->purchases->sum('advance_payment');
-                    $totalPaid = $totalAdvance + $customer->installments()->where('status', 'paid')->sum('installment_amount');
-                    return 'Rs. ' . number_format($totalPaid, 0);
+                    return 'Rs. ' . number_format($customer->total_paid_amount, 0);
                 })
                 ->addColumn('balance', function ($customer) {
-                    $totalAmount = $customer->purchases->sum('total_price');
-                    $totalAdvance = $customer->purchases->sum('advance_payment');
-                    $totalPaid = $totalAdvance + $customer->installments()->where('status', 'paid')->sum('installment_amount');
-                    $remainingBalance = $totalAmount - $totalPaid;
-                    return 'Rs. ' . number_format($remainingBalance, 0);
+                    return 'Rs. ' . number_format($customer->total_balance, 0);
                 })
                 ->addColumn('status', function ($customer) {
                     $totalPurchases = $customer->purchases->count();
-                    $totalAmount = $customer->purchases->sum('total_price');
-                    $totalAdvance = $customer->purchases->sum('advance_payment');
-                    $totalPaid = $totalAdvance + $customer->installments()->where('status', 'paid')->sum('installment_amount');
-                    $remainingBalance = $totalAmount - $totalPaid;
+                    $remainingBalance = $customer->total_balance;
                     $isDefaulter = $customer->installments()->where('status', 'pending')->where('due_date', '<', now())->exists();
 
                     if ($totalPurchases == 0) {

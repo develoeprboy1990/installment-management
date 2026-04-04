@@ -99,11 +99,14 @@
                                                         class="form-control" />
                                                     <p class="help-block">PNG/ICO/SVG/JPG/WEBP up to 1 MB. Recommended size
                                                         64x64 or 32x32.</p>
+                                                    @error('favicon')
+                                                        <div class="text-danger" style="margin-top: 8px;">{{ $message }}</div>
+                                                    @enderror
                                                 </div>
                                                 <div class="col-sm-6">
                                                     @if (!empty($settings['favicon']))
                                                         <div style="display:flex;align-items:center;gap:12px;">
-                                                            <img src="{{ asset('storage/' . $settings['favicon']) }}"
+                                                            <img src="{{ getSettingAssetUrl($settings['favicon']) }}"
                                                                 alt="Favicon"
                                                                 style="width:32px;height:32px;object-fit:contain;border:1px solid #e5e7eb;border-radius:4px;background:#fff;" />
                                                             <code

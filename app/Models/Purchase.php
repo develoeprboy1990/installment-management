@@ -59,6 +59,27 @@ class Purchase extends Model
         return $this->hasMany(Installment::class);
     }
 
+    public function getPaidInstallmentsCashAmountAttribute()
+    {
+        return (float) $this->installments()
+            ->where('status', 'paid')
+            ->sum('installment_amount');
+    }
+
+    public function getPaidInstallmentsDiscountAmountAttribute()
+    {
+        return (float) $this->installments()
+            ->where('status', 'paid')
+            ->sum('discount');
+    }
+
+    public function getTotalPaidAmountAttribute()
+    {
+        return (float) $this->advance_payment
+            + $this->paid_installments_cash_amount
+            + $this->paid_installments_discount_amount;
+    }
+
     // Calculate monthly installment
     public static function calculateMonthlyInstallment($totalPrice, $advancePayment, $months)
     {
@@ -69,7 +90,7 @@ class Purchase extends Model
     // Calculate remaining balance
     public function getRemainingBalance()
     {
-        $totalPaid = $this->installments()->where('status', 'paid')->sum('installment_amount') + $this->advance_payment;
+        $totalPaid = $this->total_paid_amount;
         // Never return negative remaining due to overpayments or reconciliation
         return max(0, $this->total_price - $totalPaid);
     }

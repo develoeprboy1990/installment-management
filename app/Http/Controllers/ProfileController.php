@@ -38,11 +38,24 @@ class ProfileController extends Controller
         // Handle optional avatar upload
         if ($request->hasFile('avatar')) {
             $file = $request->file('avatar');
-            $path = $file->store('avatars', 'public');
+            if (!is_dir(public_path('backend/img/avatars'))) {
+                mkdir(public_path('backend/img/avatars'), 0755, true);
+            }
+
+            $fileName = 'avatar_' . time() . '.' . $file->extension();
+            $file->move(public_path('backend/img/avatars'), $fileName);
+            $path = 'backend/img/avatars/' . $fileName;
 
             // Delete old avatar if exists
-            if (!empty($user->avatar) && Storage::disk('public')->exists($user->avatar)) {
-                Storage::disk('public')->delete($user->avatar);
+            if (!empty($user->avatar)) {
+                if (Storage::disk('public')->exists($user->avatar)) {
+                    Storage::disk('public')->delete($user->avatar);
+                }
+
+                $oldPublicPath = public_path($user->avatar);
+                if (file_exists($oldPublicPath)) {
+                    @unlink($oldPublicPath);
+                }
             }
 
             $user->avatar = $path;

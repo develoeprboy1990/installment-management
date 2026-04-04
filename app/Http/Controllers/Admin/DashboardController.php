@@ -23,6 +23,7 @@ class DashboardController extends Controller
             'completed_purchases' => 0,
             'total_revenue' => 0,
             'collected_this_month' => 0,
+            'discount_this_month' => 0,
             'defaulters_count' => 0,
             'defaulters_amount' => 0,
             'recent_payments' => collect([]),
@@ -50,6 +51,10 @@ class DashboardController extends Controller
                 ->whereMonth('date', now()->month)
                 ->whereYear('date', now()->year)
                 ->sum('installment_amount') ?? 0;
+            $data['discount_this_month'] = Installment::where('status', 'paid')
+                ->whereMonth('date', now()->month)
+                ->whereYear('date', now()->year)
+                ->sum('discount') ?? 0;
 
             // Defaulter Statistics
             $data['defaulters_count'] = Customer::where('is_defaulter', true)->count();
@@ -103,7 +108,7 @@ class DashboardController extends Controller
                 ->orderBy('month')
                 ->pluck('total', 'month');
 
-            $data['total_profit'] = Installment::where('status', 'paid')
+            $grossProfit = Installment::where('status', 'paid')
                 ->with('purchase.product')
                 ->get()
                 ->reduce(function($carry, $inst) {
@@ -120,7 +125,10 @@ class DashboardController extends Controller
                     return $carry + $profitPerInst;
                 }, 0);
 
-            $data['last_month_profit'] = Installment::where('status','paid')
+            $totalDiscountAllTime = Installment::where('status', 'paid')->sum('discount') ?? 0;
+            $data['total_profit'] = $grossProfit - $totalDiscountAllTime;
+
+            $lastMonthGrossProfit = Installment::where('status','paid')
                 ->whereYear('date', now()->subMonth()->year)
                 ->whereMonth('date', now()->subMonth()->month)
                 ->with('purchase.product')
@@ -136,6 +144,11 @@ class DashboardController extends Controller
 
                     return $carry + $profitPerInst;
                 }, 0);
+            $lastMonthDiscount = Installment::where('status','paid')
+                ->whereYear('date', now()->subMonth()->year)
+                ->whereMonth('date', now()->subMonth()->month)
+                ->sum('discount') ?? 0;
+            $data['last_month_profit'] = $lastMonthGrossProfit - $lastMonthDiscount;
 
         } catch (\Exception $e) {
             // Log the error and return default values
@@ -162,6 +175,7 @@ class DashboardController extends Controller
     }
     $paid_installments_count = (clone $paidBase)->count();
     $collected_amount        = (clone $paidBase)->sum('installment_amount') ?? 0;
+    $discount_amount         = (clone $paidBase)->sum('discount') ?? 0;
 
     // Pending revenue (due in range) and all-time pending
     $pendingInRange = Installment::where('status', 'pending');
@@ -197,10 +211,7 @@ class DashboardController extends Controller
         $profitQuery->whereBetween('installments.date', [$start, $end]);
     }
 
-    $total_profit_in_range = (float) $profitQuery->value(DB::raw(
-        'SUM( (products.price - products.cost_price) / IFNULL(NULLIF(purchases.installment_months,0),1) )'
-    )) ?? 0.0;// sum over (price - cost_price) / installment_months (default 1 if null/0)
-        $total_profit_in_range = (float) $profitQuery
+    $gross_profit_in_range = (float) $profitQuery
     ->selectRaw('
         SUM(
             (COALESCE(products.price, 0) - COALESCE(products.cost_price, 0))
@@ -208,6 +219,7 @@ class DashboardController extends Controller
         ) AS profit_total
     ')
     ->value('profit_total') ?? 0.0;
+    $total_profit_in_range = $gross_profit_in_range - $discount_amount;
 
     // Time-series for chart (collections by day/month depending on range)
     $series = $this->collectionsSeries($start, $end, $groupBy);
@@ -224,6 +236,7 @@ class DashboardController extends Controller
             'customers_new'           => (int) $customers_count_in_range,
             'customers_total'         => (int) $total_customers,
             'collected'               => (float) $collected_amount,
+            'discount'                => (float) $discount_amount,
             'pending_in_range'        => (float) $pending_revenue_in_range,
             'pending_all'             => (float) $pending_revenue_all,
             'total_revenue'           => (float) $total_revenue_in_range,

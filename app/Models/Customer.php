@@ -42,6 +42,20 @@ class Customer extends Model
         return $this->hasMany(Purchase::class);
     }
 
+    public function getTotalInstallmentCashPaidAttribute()
+    {
+        return (float) $this->installments()
+            ->where('status', 'paid')
+            ->sum('installment_amount');
+    }
+
+    public function getTotalInstallmentDiscountAttribute()
+    {
+        return (float) $this->installments()
+            ->where('status', 'paid')
+            ->sum('discount');
+    }
+
     // ===== CALCULATED PROPERTIES =====
 
     /**
@@ -65,8 +79,7 @@ class Customer extends Model
      */
     public function getTotalBalanceAttribute()
     {
-        return $this->purchases()->sum('remaining_balance') -
-               $this->installments()->where('status', 'paid')->sum('installment_amount');
+        return max(0, $this->total_purchase_amount - $this->total_paid_amount);
     }
 
     /**
@@ -93,7 +106,8 @@ class Customer extends Model
     public function getTotalPaidAmountAttribute()
     {
         return $this->getTotalAdvanceAttribute() +
-               $this->installments()->where('status', 'paid')->sum('installment_amount');
+               $this->total_installment_cash_paid +
+               $this->total_installment_discount;
     }
 
     /**

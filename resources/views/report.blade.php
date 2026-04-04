@@ -73,13 +73,13 @@
                                 <i class="fa fa-money fa-3x"></i>
                             </div>
                             <div class="report-widget-metrics text-right">
-                                <span>Collected</span>
+                                <span>Total Collect</span>
                                 @if (getUserSetting('show_total_revenue') == '1')
                                     <h2 class="font-bold" id="kpiCollected">Rs. 0</h2>
                                 @else
                                     <h2 class="font-bold">Rs. ****</h2>
                                 @endif
-                                <small>Amount received</small>
+                                <small>Cash received only</small>
                             </div>
                         </div>
                     </div>
@@ -130,13 +130,32 @@
                                 <i class="fa fa-area-chart fa-3x"></i>
                             </div>
                             <div class="report-widget-metrics text-right">
-                                <span>Total Profit</span>
+                                <span>Net Profit</span>
                                 @if (getUserSetting('show_total_revenue') == '1')
                                     <h2 class="font-bold" id="kpiProfit">Rs. 0</h2>
                                 @else
                                     <h2 class="font-bold">Rs. ****</h2>
                                 @endif
-                                <small>Per-installment profit sum</small>
+                                <small>Profit after discount</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4 col-md-4 col-sm-6 m-b-sm">
+                    <div class="widget style1 report-widget blue-bg">
+                        <div class="report-widget-body">
+                            <div class="report-widget-icon">
+                                <i class="fa fa-tags fa-3x"></i>
+                            </div>
+                            <div class="report-widget-metrics text-right">
+                                <span>Total Discount</span>
+                                @if (getUserSetting('show_total_revenue') == '1')
+                                    <h2 class="font-bold" id="kpiDiscount">Rs. 0</h2>
+                                @else
+                                    <h2 class="font-bold">Rs. ****</h2>
+                                @endif
+                                <small>Discount given in range</small>
                             </div>
                         </div>
                     </div>
@@ -411,7 +430,7 @@
                                                 <td>{{ $due->customer->name ?? '-' }}</td>
                                                 <td>{{ $due->due_date ? Carbon\Carbon::parse($due->due_date)->format('d/m/Y') : '-' }}
                                                 </td>
-                                                <td class="text-right">
+                                                <td class="text-left">
                                                     {{ number_format($due->installment_amount ?? 0, 2) }}</td>
                                                 <td>
                                                     <span
@@ -872,6 +891,7 @@
                 // KPIs
                 $("#kpiPaidInst").text(fmt(resp.kpis.paid_installments_count));
                 $("#kpiCollected").text(money(resp.kpis.collected));
+                $("#kpiDiscount").text(money(resp.kpis.discount));
                 $("#kpiPendingRange").text(money(resp.kpis.pending_in_range) + " (all: " + money(resp.kpis
                     .pending_all) + ")");
                 $("#kpiRevenue").text(money(resp.kpis.total_revenue));
@@ -895,12 +915,12 @@
             if (!canvas || !window.Chart) return;
 
             var ctx = canvas.getContext('2d');
-            var labels = ['Collected', 'Pending (Range)', 'Revenue', 'Profit'];
+            var labels = ['Collect', 'Discount', 'Net Profit', 'Pending'];
             var values = [
                 Number(kpis.collected || 0),
-                Number(kpis.pending_in_range || 0),
-                Number(kpis.total_revenue || 0),
-                Number(kpis.total_profit || 0)
+                Number(kpis.discount || 0),
+                Number(kpis.total_profit || 0),
+                Number(kpis.pending_in_range || 0)
             ];
 
             // If all zeros, show message once
@@ -917,7 +937,7 @@
                 labels: labels,
                 datasets: [{
                     data: values,
-                    backgroundColor: ['#1ab394', '#f8ac59', '#23c6c8', '#ed5565']
+                    backgroundColor: ['#1ab394', '#23c6c8', '#ed5565', '#f0ad4e']
                 }]
             };
 
