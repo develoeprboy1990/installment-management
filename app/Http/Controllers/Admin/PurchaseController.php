@@ -255,6 +255,8 @@ class PurchaseController extends Controller
     public function getInstallmentDetails($installmentId)
     {
         $installment = Installment::with(['customer', 'officer', 'purchase'])->findOrFail($installmentId);
+        $remainingBalance = $installment->purchase ? $installment->purchase->getRemainingBalance() : $installment->pre_balance;
+        $payableAmount = min((float) $installment->installment_amount, (float) $remainingBalance);
 
         // Generate next receipt number
         $lastReceipt = Installment::where('receipt_no', '!=', null)
@@ -268,7 +270,9 @@ class PurchaseController extends Controller
 
         return response()->json([
             'receipt_no' => $nextReceiptNumber,
-            'installment_amount' => $installment->installment_amount,
+            'installment_amount' => $payableAmount,
+            'scheduled_installment_amount' => $installment->installment_amount,
+            'remaining_balance' => $remainingBalance,
             'recovery_officer_id' => $installment->recovery_officer_id,
             'recovery_officer_name' => $installment->officer?->name ?? 'N/A',
             'customer_name' => $installment->customer->name,
@@ -298,7 +302,17 @@ class PurchaseController extends Controller
         // Calculate new balance after payment
         // Total reduction in balance is the sum of cash paid and discount given
         $totalPayment = $request->payment_amount + ($request->discount ?? 0);
-        $newBalance = max(0, $installment->pre_balance - $totalPayment);
+        $remainingBalance = $purchase->getRemainingBalance();
+
+        if ($totalPayment > $remainingBalance + 0.0001) {
+            return back()
+                ->withErrors([
+                    'payment_amount' => 'Remaining balance is Rs. ' . number_format($remainingBalance, 2) . '. Payment + Discount cannot exceed the remaining amount.',
+                ])
+                ->withInput();
+        }
+
+        $newBalance = max(0, $remainingBalance - $totalPayment);
 
         // Update installment
         $installment->update([

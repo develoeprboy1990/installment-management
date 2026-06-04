@@ -394,7 +394,7 @@
                     <div class="form-group">
                         <label>Payment Amount <span class="text-danger">*</span></label>
                         <input type="number" class="form-control" name="payment_amount" id="payment_amount" step="0.01" required>
-                        <small class="text-muted">Pre-filled with scheduled installment amount</small>
+                        <small class="text-muted">Pre-filled with payable amount</small>
                         <div id="payment_amount_error" class="text-danger" style="display:none; margin-top:5px;"></div>
                     </div>
 
@@ -460,11 +460,12 @@ $(document).ready(function() {
             success: function(response) {
                 // Populate modal with fetched data
                 $('#installment_id').val(installmentId);
-                $('#original_amount').val(response.installment_amount); // Store the scheduled amount
+                $('#original_amount').val(response.installment_amount); // Store the payable amount
                 $('#receipt_no').val(response.receipt_no);
                 $('#payment_amount').val(response.installment_amount);
                 $('#discount').val(0); // Reset discount to 0
                 $('#remarks').val(response.remarks);
+                remainingBalanceForValidation = parseFloat(response.remaining_balance) || remainingBalanceForValidation;
                 
                 // Validate initial value against remaining
                 validatePaymentAmountAgainstRemaining();
@@ -498,7 +499,7 @@ $(document).ready(function() {
     }
 
     // ---- Runtime validation against remaining balance ----
-    const remainingBalanceForValidation = parseFloat('{{ number_format($purchase->getRemainingBalance(), 2, '.', '') }}') || 0;
+    let remainingBalanceForValidation = parseFloat('{{ number_format($purchase->getRemainingBalance(), 2, '.', '') }}') || 0;
 
     function setPayError(msg) {
         if (msg) {

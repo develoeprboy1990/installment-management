@@ -256,7 +256,7 @@
                                         <th>Install.</th>
                                         <th>Disc</th>
                                         <th>Balance</th>
-                                        <th>Fine</th>
+                                        {{-- <th>Fine</th> --}}
                                         {{-- <th>F-Type</th> --}}
                                         <th>Recovery Officer</th>
                                         <th>Remarks</th>
@@ -272,7 +272,7 @@
                                         <td>{{ number_format($installment->installment_amount, 0) }}</td>
                                         <td>{{ $installment->discount ?? 0 }}</td>
                                         <td>{{ number_format($installment->balance, 0) }}</td>
-                                        <td>{{ $installment->fine_amount ?? 0 }}</td>
+                                        {{-- <td>{{ $installment->fine_amount ?? 0 }}</td> --}}
                                         {{-- <td>{{ $installment->status == 'paid' ? 'Nothing' : 'Pending' }}</td> --}}
                                         <td>{{ $installment->officer?->name ?? 'N/A' }}</td>
                                         <td>{{ $installment->status == 'paid' ? 'Paid' : 'P' }}</td>
