@@ -48,7 +48,7 @@
                     <!-- Header with Company Info -->
                     <div class="statement-header">
                         <div class="company-info">
-                            <h3> <strong>Talal & Niazi Electronics</strong></h3>
+                            <h3> <strong>{{ getUserSetting('project_name') ?? 'Electronics Corporation' }} </strong></h3>
                             <div class="print-info">
                                 <div>Print Date: {{ now()->format('M j ,Y & h:i A') ?? 'N/A' }}</div>
                             </div>

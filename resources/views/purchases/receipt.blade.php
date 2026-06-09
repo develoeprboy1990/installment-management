@@ -42,7 +42,7 @@
 <div class="receipt-container">
     {{-- Header --}}
     <div class="receipt-header text-center">
-        <div class="receipt-title">Talal & Niazi Electronics</div>
+        <div class="receipt-title">{{ getUserSetting('project_name') ?? 'Electronics Corporation' }}</div>
         <div class="d-flex justify-content-between">
         <div class="mt-1 text-end"><small>PAYMENT RECEIPT</small></div>
         <div class="mt-1 text-end"><small>{{ now()->format('M j ,Y & h:i A') ?? 'N/A' }}</small></div>

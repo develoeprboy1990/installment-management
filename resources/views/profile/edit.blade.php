@@ -25,7 +25,7 @@
                 </div>
             </div>
 
-            @can('delete_account')
+            {{-- @can('delete_account')
             <div class="panel panel-danger">
                 <div class="panel-heading">
                     <h3 class="panel-title"><i class="fa fa-exclamation-triangle"></i> {{ __('Delete Account') }}</h3>
@@ -34,7 +34,7 @@
                     @include('profile.partials.delete-user-form')
                 </div>
             </div>
-            @endcan
+            @endcan --}}
         </div>
     </div>
 </div>

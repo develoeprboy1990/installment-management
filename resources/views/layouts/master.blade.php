@@ -109,6 +109,14 @@
                         </li>
                     @endcan
 
+                    @can('view-expenses')
+                        <li class="{{ request()->is('admin/expenses*') ? 'active' : '' }}">
+                            <a href="{{ route('expenses.index') }}"><i class="fa fa-money"></i> <span
+                                    class="nav-label">Expenses</span></a>
+                        </li>
+                    @endcan
+
+                    {{-- Settings --}}
                     @can('view-profile')
                         <!-- User Management section with better icons -->
                         <li class="{{ request()->is('profile') || request()->routeIs('admin.settings') ? 'active' : '' }}">
@@ -124,13 +132,6 @@
                                         Setting</a>
                                 </li>
                             </ul>
-                        </li>
-                    @endcan
-
-                    @can('view-expenses')
-                        <li class="{{ request()->is('admin/expenses*') ? 'active' : '' }}">
-                            <a href="{{ route('expenses.index') }}"><i class="fa fa-money"></i> <span
-                                    class="nav-label">Expenses</span></a>
                         </li>
                     @endcan
 
