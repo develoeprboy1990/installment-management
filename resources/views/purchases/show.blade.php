@@ -26,9 +26,9 @@
 
 
             <!-- Delete Button -->
-            {{-- <button onclick="confirmDelete()" class="btn btn-danger">
+            <button onclick="confirmDelete()" class="btn btn-danger">
                 <i class="fa fa-trash"></i> Delete Purchase
-            </button> --}}
+            </button>
 
             <a href="{{ route('purchases.index') }}" class="btn btn-default">
                 <i class="fa fa-arrow-left"></i> Back to List
