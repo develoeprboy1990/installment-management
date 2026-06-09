@@ -6,16 +6,17 @@ use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
+use Spatie\Permission\PermissionRegistrar;
 
 class RolesAndPermissionsSeeder extends Seeder
 {
     /**
      * Run the database seeds.
      */
-    public function run()
+    public function run(): void
     {
         // Clear cached roles and permissions
-        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
         // Define all permissions with CRUD operations for each module
         $permissions = [
@@ -90,6 +91,7 @@ class RolesAndPermissionsSeeder extends Seeder
             // Profile
             'view-profile',
             'edit-profile',
+            'delete_account',
         ];
 
         // Create all permissions
@@ -159,6 +161,7 @@ class RolesAndPermissionsSeeder extends Seeder
             // Profile
             'view-profile',
             'edit-profile',
+            'delete_account',
         ];
 
         // User Role - Limited Access (Read-only mostly)
@@ -206,9 +209,9 @@ class RolesAndPermissionsSeeder extends Seeder
             'edit-profile',
         ]);
 
-        echo "✅ Roles and Permissions seeded successfully!\n";
-        echo "   - Admin role: " . count($adminPermissions) . " permissions\n";
-        echo "   - User role: " . count($userPermissions) . " permissions\n";
-        echo "   - Customer role: 3 permissions\n";
+        $this->command?->info('Roles and permissions seeded successfully.');
+        $this->command?->line('Admin role: ' . count($adminPermissions) . ' permissions');
+        $this->command?->line('User role: ' . count($userPermissions) . ' permissions');
+        $this->command?->line('Customer role: 3 permissions');
     }
 }
