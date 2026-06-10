@@ -263,7 +263,7 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @foreach($customer->installments()->where('status' , 'paid')->orderBy('due_date')->take(10)->get() as $index => $installment)
+                                    @foreach($customer->installments()->where('status' , 'paid')->orderBy('due_date')->get() as $index => $installment)
                                     <tr>
                                         <td>{{ $index + 1 }}</td>
                                         <td>{{ $installment->date ? $installment->date->format('d/m/Y') : $installment->due_date->format('d/m/Y') }}</td>

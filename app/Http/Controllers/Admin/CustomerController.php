@@ -87,7 +87,12 @@ class CustomerController extends Controller
                     
                     // Delete button
                     if (auth()->user()->can('delete-customers')) {
-                        $buttons .= '<button onclick="confirmDelete(' . $customer->id . ', \'' . addslashes($customer->name) . '\', ' . $totalPurchases . ')" class="btn btn-sm btn-danger" title="Delete Customer">
+                        $buttons .= '<button type="button"
+                                class="btn btn-sm btn-danger delete-customer"
+                                title="Delete Customer"
+                                data-delete-url="' . route('customers.destroy', $customer->id) . '"
+                                data-customer-name="' . e($customer->name) . '"
+                                data-total-purchases="' . $totalPurchases . '">
                                 <i class="fa fa-trash"></i>
                             </button>';
                     }
