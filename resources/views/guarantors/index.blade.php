@@ -18,7 +18,7 @@
 
         <div class="card">
             <div class="table-responsive">
-                <table class="table table-hover">
+                <table class="table table-hover" id="guarantorsTable">
                     <thead class="table-light">
                         <tr>
                             <th>#</th>
@@ -166,18 +166,20 @@
     <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
     <script>
         $(document).ready(function() {
-            $('.table').DataTable({
-                paging: false,
-                info: false,
-                ordering: true,
-                searching: true,
-                responsive: true,
-                columnDefs: [{
-                        orderable: false,
-                        targets: [1, -1]
-                    } // Disable sorting on image and actions columns
-                ]
-            });
+            if ($('#guarantorsTable tbody tr').length > 0 && !$('#guarantorsTable tbody tr td[colspan]').length) {
+                $('#guarantorsTable').DataTable({
+                    paging: false,
+                    info: false,
+                    ordering: true,
+                    searching: true,
+                    responsive: true,
+                    columnDefs: [{
+                            orderable: false,
+                            targets: [1, -1]
+                        } // Disable sorting on image and actions columns
+                    ]
+                });
+            }
         });
     </script>
 @endpush
