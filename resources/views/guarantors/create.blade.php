@@ -1,6 +1,6 @@
 @extends('layouts.master')
 @section('content')
-<div class="container-fluid">
+<div class="container-fluid" style="background-color: #f9fbfd; padding: 20px; border-radius: 5px;">
     <h2>Create Guarantor</h2>
    <form action="{{ route('guarantors.store') }}" method="POST" enctype="multipart/form-data">
         @csrf

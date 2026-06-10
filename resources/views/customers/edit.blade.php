@@ -2,8 +2,8 @@
 
 @section('content')
     <div class="container-fluid">
+        <div  style="background-color: #f9fbfd; padding: 20px; border-radius: 5px;">
         <h1 class="mb-4">Edit Customer</h1>
-
         <form action="{{ route('customers.update', $customer->id) }}" method="POST" enctype="multipart/form-data">
             @csrf
             @method('PUT')
@@ -115,6 +115,8 @@
             </div>
 
         </form>
+
+        </div>
     </div>
 @endsection
 

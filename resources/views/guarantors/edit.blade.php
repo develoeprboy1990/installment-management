@@ -1,8 +1,10 @@
 @extends('layouts.master')
 
+
 @section('content')
     <div class="container-fluid">
-        <h2>Edit Guarantor</h2>
+        <div style="background-color: #f9fbfd; padding: 30px; border-radius: 5px;">
+            <h2>Edit Guarantor</h2>
         <form action="{{ route('guarantors.update', $guarantor->id) }}" method="POST" enctype="multipart/form-data"
             id="editGuarantorForm">
             @csrf
@@ -160,16 +162,15 @@
                 @enderror
             </div>
 
-            <div class="mb-3 d-flex justify-content-between">
-                <div>
+            <div class="d-flex justify-content-center" style="text-align: center; margin: 18px;">
+                <div class="d-flex gap-2 justify-content-center">
                     <button type="submit" class="btn btn-primary">Update</button>
-                    <a href="{{ route('guarantors.index') }}" class="btn btn-secondary">Cancel</a>
-                </div>
-                <div>
                     <a href="{{ route('guarantors.show', $guarantor->id) }}" class="btn btn-info">View Details</a>
+                    <a href="{{ route('guarantors.index') }}" class="btn btn-primary">Cancel</a>
                 </div>
             </div>
         </form>
+        </div>
     </div>
 @endsection
 
