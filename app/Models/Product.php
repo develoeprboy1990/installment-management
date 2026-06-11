@@ -3,15 +3,16 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\HasTenant;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use App\Traits\LogsActivity;
 
 class Product extends Model
 {
-    use HasFactory, LogsActivity;
+    use HasFactory, HasTenant, LogsActivity;
 
     protected $fillable = [
-        // Removed 'customer_id'
+        'tenant_id',
         'company',
         'model',
         'serial_no',

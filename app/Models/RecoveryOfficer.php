@@ -5,12 +5,14 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use App\Traits\LogsActivity;
+use App\Traits\HasTenant;
 
 class RecoveryOfficer extends Model
 {
-    use HasFactory, LogsActivity;
+    use HasFactory, LogsActivity, HasTenant;
 
     protected $fillable = [
+        'tenant_id',
         'name',
         'employee_id',
         'phone',

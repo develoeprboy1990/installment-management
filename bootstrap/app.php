@@ -12,10 +12,12 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->alias([
-            'role' => \Spatie\Permission\Middleware\RoleMiddleware::class,
-            'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
+            'role'               => \Spatie\Permission\Middleware\RoleMiddleware::class,
+            'permission'         => \Spatie\Permission\Middleware\PermissionMiddleware::class,
             'role_or_permission' => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
-            'auth.redirect' => \App\Http\Middleware\RedirectIfUnauthenticated::class, // ✅ FIXED
+            'auth.redirect'      => \App\Http\Middleware\RedirectIfUnauthenticated::class,
+            'tenant'             => \App\Http\Middleware\ResolveTenant::class,
+            'superadmin'         => \App\Http\Middleware\SuperAdminMiddleware::class, // ← SuperAdmin only
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

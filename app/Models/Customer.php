@@ -5,12 +5,14 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use App\Traits\LogsActivity;
+use App\Traits\HasTenant;
 
 class Customer extends Model
 {
-    use HasFactory, LogsActivity;
+    use HasFactory, LogsActivity, HasTenant;
 
     protected $fillable = [
+        'tenant_id',
         'account_no',
         'name',
         'father_name',
@@ -23,7 +25,7 @@ class Customer extends Model
         'nic',
         'gender',
         'image',
-        'is_defaulter', // Keep this as it's a business status
+        'is_defaulter',
     ];
 
     // Relationships

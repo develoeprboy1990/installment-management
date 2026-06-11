@@ -16,9 +16,11 @@ use App\Http\Controllers\Admin\InstallmentController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\ActivityController;
 use App\Http\Controllers\Admin\ExpenseController;
+use App\Http\Controllers\SuperAdmin\TenantController;
+use App\Http\Controllers\SuperAdmin\SuperAdminDashboardController;
 
 
-Route::group(['prefix' => 'admin', 'middleware' => ['auth.redirect','role:Admin|User']], function () {
+Route::group(['prefix' => 'admin', 'middleware' => ['auth.redirect', 'role:Admin|User', 'tenant']], function () {
     // activities
     Route::get('activities', [ActivityController::class, 'index'])->name('activities.index');
     Route::post('activities/mark-all-read', [ActivityController::class, 'markAllRead'])->name('activities.mark-all-read');
@@ -129,4 +131,21 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
+
 require __DIR__.'/auth.php';
+
+// =====================================================================
+// SUPER ADMIN ROUTES — No tenant scope, manages ALL tenants/stores
+// =====================================================================
+Route::group([
+    'prefix'     => 'superadmin',
+    'middleware' => ['auth.redirect', 'superadmin'],
+    'as'         => 'superadmin.',
+], function () {
+    Route::get('/dashboard', [SuperAdminDashboardController::class, 'index'])->name('dashboard');
+
+    // Tenant (Store) management
+    Route::resource('tenants', TenantController::class);
+    Route::post('tenants/{tenant}/toggle-status', [TenantController::class, 'toggleStatus'])
+         ->name('tenants.toggle-status');
+});

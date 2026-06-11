@@ -6,16 +6,18 @@ use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\View;
 use App\Models\Activity;
 use Illuminate\Support\Facades\Schema;
-//use Illuminate\Support\Facades\Schema;
+use App\Services\TenantManager;
 
 class AppServiceProvider extends ServiceProvider
 {
     /**
      * Register any application services.
+     * TenantManager is registered as a singleton so the same instance
+     * is shared across the entire request lifecycle.
      */
     public function register(): void
     {
-        //
+        $this->app->singleton(TenantManager::class, fn() => new TenantManager());
     }
 
     /**
@@ -23,15 +25,14 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
-        //Schema::defaultStringLength(191);
+        // Activity counts in nav — already tenant-scoped by HasTenant global scope
         View::composer('layouts.master', function ($view) {
             if (Schema::hasTable('activities')) {
                 $unreadCount = Activity::where('is_read', false)->count();
-                $latest = Activity::latest()->limit(5)->get();
+                $latest      = Activity::latest()->limit(5)->get();
             } else {
                 $unreadCount = 0;
-                $latest = collect();
+                $latest      = collect();
             }
 
             $view->with('activityUnreadCount', $unreadCount)

@@ -4,11 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use App\Traits\LogsActivity;
+use App\Traits\HasTenant;
 
 class Setting extends Model
 {
-    use LogsActivity;
-    protected $fillable = ['user_id', 'key', 'value'];
+    use LogsActivity, HasTenant;
+    protected $fillable = ['tenant_id', 'user_id', 'key', 'value'];
 
     // protected $casts = [
     //     'value' => 'array',

@@ -8,6 +8,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
 use App\Traits\LogsActivity;
+use App\Models\Tenant;
 
 class User extends Authenticatable
 {
@@ -20,11 +21,26 @@ class User extends Authenticatable
      * @var list<string>
      */
     protected $fillable = [
+        'tenant_id',
         'name',
         'email',
         'password',
         'avatar',
     ];
+
+    // ─── Tenant relationship ──────────────────────────────────
+    public function tenant()
+    {
+        return $this->belongsTo(Tenant::class);
+    }
+
+    /**
+     * SuperAdmin has no tenant_id — they manage all stores.
+     */
+    public function isSuperAdmin(): bool
+    {
+        return is_null($this->tenant_id);
+    }
 
     /**
      * The attributes that should be hidden for serialization.

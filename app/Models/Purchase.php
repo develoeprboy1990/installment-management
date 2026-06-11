@@ -6,12 +6,14 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Carbon\Carbon;
 use App\Traits\LogsActivity;
+use App\Traits\HasTenant;
 
 class Purchase extends Model
 {
-    use HasFactory, LogsActivity;
+    use HasFactory, LogsActivity, HasTenant;
 
     protected $fillable = [
+        'tenant_id',
         'customer_id',
         'product_id',
         'purchase_date',

@@ -5,14 +5,16 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Carbon\Carbon;
-use App\Models\RecoveryOfficer; // Add this import
+use App\Models\RecoveryOfficer;
 use App\Traits\LogsActivity;
+use App\Traits\HasTenant;
 
 class Installment extends Model
 {
-    use HasFactory, LogsActivity;
+    use HasFactory, LogsActivity, HasTenant;
 
     protected $fillable = [
+        'tenant_id',
         'customer_id',
         'purchase_id',
         'date',
@@ -24,7 +26,7 @@ class Installment extends Model
         'balance',
         'fine_amount',
         'fine_type',
-        'recovery_officer_id', // Changed from recovery_officer
+        'recovery_officer_id',
         'status',
         'payment_method',
         'remarks',
