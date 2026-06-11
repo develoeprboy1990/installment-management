@@ -255,7 +255,7 @@
 @push('script')
     <script>
         $(document).ready(function() {
-            $('#customers-table').DataTable({
+            const customersTable = $('#customers-table').DataTable({
                 processing: true,
                 serverSide: true,
                 ajax: {
@@ -330,29 +330,50 @@
                     [1, 'desc']
                 ]
             });
+
+            $('#customers-table').on('click', '.delete-customer', function() {
+                confirmDelete(this, customersTable);
+            });
         });
 
-        function confirmDelete(customerId, customerName, totalPurchases) {
-            let message = totalPurchases > 0 ?
-                `⚠️ WARNING! This will delete customer "${customerName}" and all ${totalPurchases} purchases. Continue?` :
+        function confirmDelete(button, customersTable) {
+            const deleteUrl = button.dataset.deleteUrl;
+            const customerName = button.dataset.customerName || 'this customer';
+            const totalPurchases = parseInt(button.dataset.totalPurchases || '0', 10);
+            const message = totalPurchases > 0 ?
+                `WARNING! This will delete customer "${customerName}" and all ${totalPurchases} purchases. Continue?` :
                 `Delete customer "${customerName}"?`;
 
             if (confirm(message)) {
-                fetch(`/admin/customers/${customerId}`, {
+                fetch(deleteUrl, {
                         method: 'DELETE',
                         headers: {
+                            'Accept': 'application/json',
                             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
                             'X-Requested-With': 'XMLHttpRequest'
                         }
                     })
-                    .then(response => response.json())
+                    .then(response => response.json().then(data => ({
+                        ok: response.ok,
+                        data
+                    })))
+                    .then(({ ok, data }) => {
+                        if (!ok) {
+                            throw new Error(data.message || 'Customer delete request failed.');
+                        }
+
+                        return data;
+                    })
                     .then(data => {
                         if (data.success) {
-                            $('#customers-table').DataTable().ajax.reload();
-                            alert('✅ ' + data.message);
+                            customersTable.ajax.reload(null, false);
+                            alert(data.message);
                         } else {
-                            alert('❌ ' + data.message);
+                            alert(data.message);
                         }
+                    })
+                    .catch(error => {
+                        alert(error.message || 'Customer delete request failed.');
                     });
             }
         }

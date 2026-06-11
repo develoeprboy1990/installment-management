@@ -55,7 +55,7 @@ class PurchaseController extends Controller
             'product_id' => 'required|exists:products,id',
             'purchase_date' => 'required|date',
             'total_price' => 'required|numeric|min:0',
-            'advance_payment' => 'required|numeric|min:0',
+            'advance_payment' => 'required|numeric|min:0|lte:total_price',
             'installment_months' => 'required|integer|min:1',
             'first_installment_date' => 'required|date|after_or_equal:purchase_date',
             'recovery_officer_id' => 'required|exists:recovery_officers,id',

@@ -549,6 +549,21 @@
 @push('script')
     <script>
         $(document).ready(function() {
+            const expenseRoutes = {
+                store: @json(route('expenses.store')),
+                show: @json(route('expenses.show', ['expense' => '__EXPENSE_ID__'])),
+                edit: @json(route('expenses.edit', ['expense' => '__EXPENSE_ID__'])),
+                update: @json(route('expenses.update', ['expense' => '__EXPENSE_ID__']))
+            };
+
+            function expenseUrl(routeName, expenseId) {
+                return expenseRoutes[routeName].replace('__EXPENSE_ID__', expenseId);
+            }
+
+            function clearExpenseErrors() {
+                $('[class*="error-"]').text('');
+            }
+
             const expenseFlash = sessionStorage.getItem('expenseFlash');
             const expenseFlashType = sessionStorage.getItem('expenseFlashType') || 'success';
 
@@ -611,10 +626,10 @@
                 e.preventDefault();
 
                 // Clear previous errors
-                $('.text-danger').text('');
+                clearExpenseErrors();
 
                 $.ajax({
-                    url: '/admin/expenses',
+                    url: expenseRoutes.store,
                     type: 'POST',
                     data: $(this).serialize(),
                     success: function(response) {
@@ -644,14 +659,14 @@
                 var expenseId = $(this).data('expense-id');
 
                 // Clear previous errors
-                $('.text-danger').text('');
+                clearExpenseErrors();
 
                 // Show modal immediately with loading state
                 $('#editExpenseModal').modal('show');
                 $('#editExpenseForm :input').prop('disabled', true);
 
                 $.ajax({
-                    url: '/admin/expenses/' + expenseId + '/edit',
+                    url: expenseUrl('edit', expenseId),
                     type: 'GET',
                     success: function(response) {
                         if (response.success) {
@@ -684,10 +699,10 @@
                 var expenseId = $('#edit-expense-id').val();
 
                 // Clear previous errors
-                $('.text-danger').text('');
+                clearExpenseErrors();
 
                 $.ajax({
-                    url: '/admin/expenses/' + expenseId,
+                    url: expenseUrl('update', expenseId),
                     type: 'POST',
                     data: $(this).serialize(),
                     success: function(response) {
@@ -722,7 +737,7 @@
                 $('#view-name').text('Loading...');
 
                 $.ajax({
-                    url: '/admin/expenses/' + expenseId,
+                    url: expenseUrl('show', expenseId),
                     type: 'GET',
                     success: function(response) {
                         if (response.success) {
@@ -799,11 +814,11 @@
             // Reset form when modal is closed
             $('#createExpenseModal').on('hidden.bs.modal', function() {
                 $('#createExpenseForm')[0].reset();
-                $('.text-danger').text('');
+                clearExpenseErrors();
             });
 
             $('#editExpenseModal').on('hidden.bs.modal', function() {
-                $('.text-danger').text('');
+                clearExpenseErrors();
             });
         });
     </script>
