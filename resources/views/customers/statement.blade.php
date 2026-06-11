@@ -105,60 +105,62 @@
 
                     <!-- Financial and Product Summary -->
                     @if($totalPurchases > 0)
+                    @php $firstPurchase = $customer->purchases->first(); @endphp
                     <div class="financial-section">
-                        <div class="financial-left">
+                        <div class="financial-panel financial-left">
+                            <div class="summary-panel-title">Financial Summary</div>
                             <div class="info-group">
                                 <div class="info-row">
-                                    <div class="info-item"><strong>Mobile # :</strong> {{ $customer->mobile_1 }}</div>
-                                    <div class="info-item"><strong>Company:</strong> {{ $customer->purchases->first()->product->company ?? 'N/A' }}</div>
+                                    <div class="info-item"><span>Mobile #1</span><strong>{{ $customer->mobile_1 }}</strong></div>
+                                    <div class="info-item"><span>Company</span><strong>{{ $firstPurchase->product->company ?? 'N/A' }}</strong></div>
                                 </div>
                                 <div class="info-row">
-                                    <div class="info-item"><strong>Rl/Cr Mobile:</strong> {{ $customer->mobile_2 ?? 'N/A' }}</div>
-                                    <div class="info-item"><strong>Product:</strong> {{ $customer->purchases->first()->product->model ?? 'N/A' }}</div>
+                                    <div class="info-item"><span>Mobile #2</span><strong>{{ $customer->mobile_2 ?? 'N/A' }}</strong></div>
+                                    <div class="info-item"><span>Product</span><strong>{{ $firstPurchase->product->model ?? 'N/A' }}</strong></div>
                                 </div>
                                 <div class="info-row">
-                                    <div class="info-item"><strong>NIC:</strong> {{ $customer->nic }}</div>
-                                    <div class="info-item"><strong>Model:</strong> {{ $customer->purchases->first()->product->model ?? 'N/A' }}</div>
+                                    <div class="info-item"><span>NIC</span><strong>{{ $customer->nic }}</strong></div>
+                                    <div class="info-item"><span>Model</span><strong>{{ $firstPurchase->product->model ?? 'N/A' }}</strong></div>
                                 </div>
                                 <div class="info-row">
-                                    <div class="info-item"><strong>Gender:</strong> {{ ucfirst($customer->gender ?? 'N/A') }}</div>
-                                    <div class="info-item"><strong>Serial #:</strong> {{ $customer->purchases->first()->product->serial_no ?? 'N/A' }}</div>
+                                    <div class="info-item"><span>Gender</span><strong>{{ ucfirst($customer->gender ?? 'N/A') }}</strong></div>
+                                    <div class="info-item"><span>Serial #</span><strong>{{ $firstPurchase->product->serial_no ?? 'N/A' }}</strong></div>
                                 </div>
                                 <div class="info-row">
-                                    <div class="info-item"><strong>Purchase Price:</strong> {{ number_format($totalPurchaseAmount, 0) }}</div>
-                                    <div class="info-item"><strong>Monthly Installment:</strong> {{ number_format($totalMonthlyInstallments, 0) }}</div>
+                                    <div class="info-item amount-item"><span>Purchase Price</span><strong>{{ number_format($totalPurchaseAmount, 0) }}</strong></div>
+                                    <div class="info-item amount-item"><span>Monthly Installment</span><strong>{{ number_format($totalMonthlyInstallments, 0) }}</strong></div>
                                 </div>
                                 <div class="info-row">
-                                    <div class="info-item"><strong>Advance Payment:</strong> {{ number_format($totalAdvancePayments, 0) }}</div>
-                                    <div class="info-item"><strong>Duration (Months):</strong> {{ $customer->purchases->first()->installment_months ?? 0 }}</div>
+                                    <div class="info-item amount-item"><span>Advance Payment</span><strong>{{ number_format($totalAdvancePayments, 0) }}</strong></div>
+                                    <div class="info-item"><span>Duration (Months)</span><strong>{{ $firstPurchase->installment_months ?? 0 }}</strong></div>
                                 </div>
                                 <div class="info-row">
-                                    <div class="info-item"><strong>Total Paid:</strong> {{ number_format($totalPaidAmount, 0) }}</div>
-                                    <div class="info-item"><strong>Paid Installments:</strong> {{ $customer->installments()->where('status', 'paid')->count() }}</div>
+                                    <div class="info-item amount-item positive-item"><span>Total Paid</span><strong>{{ number_format($totalPaidAmount, 0) }}</strong></div>
+                                    <div class="info-item"><span>Paid Installments</span><strong>{{ $customer->installments()->where('status', 'paid')->count() }}</strong></div>
                                 </div>
                                 <div class="info-row">
-                                    <div class="info-item"><strong>Remaining Balance:</strong> {{ number_format($currentBalance, 0) }}</div>
-                                    <div class="info-item"><strong>Pending Installments:</strong> {{ $pendingInstallments }}</div>
+                                    <div class="info-item amount-item balance-item"><span>Remaining Balance</span><strong>{{ number_format($currentBalance, 0) }}</strong></div>
+                                    <div class="info-item"><span>Pending Installments</span><strong>{{ $pendingInstallments }}</strong></div>
                                 </div>
                                 <div class="info-row">
-                                    <div class="info-item"><strong>Status:</strong> {{ $customerStatus }}</div>
+                                    <div class="info-item status-item"><span>Status</span><strong>{{ $customerStatus }}</strong></div>
                                     @if($overdueInstallments > 0)
-                                        <div class="info-item"><strong>Overdue:</strong> {{ $overdueInstallments }} installments</div>
+                                        <div class="info-item overdue-item"><span>Overdue</span><strong>{{ $overdueInstallments }} installments</strong></div>
                                     @endif
                                 </div>
                             </div>
                         </div>
 
-                        <div class="financial-right">
+                        <div class="financial-panel financial-right">
+                            <div class="summary-panel-title">Product Details</div>
                             <div class="product-info">
-                                @if($customer->purchases->first())
-                                    @php $firstPurchase = $customer->purchases->first(); @endphp
-                                    <div class="info-item"><strong>Company:</strong> {{ $firstPurchase->product->company }}</div>
-                                    <div class="info-item"><strong>Model:</strong> {{ $firstPurchase->product->model }}</div>
-                                    <div class="info-item"><strong>Serial No:</strong> {{ $firstPurchase->product->serial_no }}</div>
-                                    <div class="info-item"><strong>Product Price:</strong> Rs. {{ number_format($firstPurchase->product->price, 0) }}</div>
+                                @if($firstPurchase)
+                                    <div class="info-item"><span>Company</span><strong>{{ $firstPurchase->product->company ?? 'N/A' }}</strong></div>
+                                    <div class="info-item"><span>Model</span><strong>{{ $firstPurchase->product->model ?? 'N/A' }}</strong></div>
+                                    <div class="info-item"><span>Serial No</span><strong>{{ $firstPurchase->product->serial_no ?? 'N/A' }}</strong></div>
+                                    <div class="info-item amount-item"><span>Product Price</span><strong>Rs. {{ number_format($firstPurchase->product->price ?? 0, 0) }}</strong></div>
                                 @else
-                                    <div class="info-item"><strong>Product:</strong> No purchase yet</div>
+                                    <div class="info-item"><span>Product</span><strong>No purchase yet</strong></div>
                                 @endif
                             </div>
                         </div>
@@ -263,7 +265,7 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @foreach($customer->installments()->where('status' , 'paid')->orderBy('due_date')->take(10)->get() as $index => $installment)
+                                    @foreach($customer->installments()->where('status' , 'paid')->orderBy('due_date')->get() as $index => $installment)
                                     <tr>
                                         <td>{{ $index + 1 }}</td>
                                         <td>{{ $installment->date ? $installment->date->format('d/m/Y') : $installment->due_date->format('d/m/Y') }}</td>
@@ -376,17 +378,100 @@
 
     .financial-section {
         display: flex;
+        gap: 12px;
         margin-bottom: 15px;
         font-size: 11px;
     }
 
+    .financial-panel {
+        border: 1px solid #222;
+        border-radius: 6px;
+        overflow: hidden;
+        background: #fff;
+    }
+
     .financial-left {
         flex: 2;
-        margin-right: 20px;
     }
 
     .financial-right {
         flex: 1;
+    }
+
+    .summary-panel-title {
+        padding: 6px 10px;
+        border-bottom: 1px solid #222;
+        background: #f0f0f0;
+        color: #111;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+    }
+
+    .financial-panel .info-group,
+    .financial-panel .product-info {
+        padding: 8px 10px;
+    }
+
+    .financial-panel .info-row {
+        gap: 8px;
+        margin-bottom: 0;
+        border-bottom: 1px solid #e2e2e2;
+    }
+
+    .financial-panel .info-row:last-child,
+    .financial-panel .product-info .info-item:last-child {
+        border-bottom: none;
+    }
+
+    .financial-panel .info-item {
+        display: flex;
+        justify-content: space-between;
+        gap: 8px;
+        align-items: center;
+        min-height: 25px;
+        margin-right: 0;
+        padding: 4px 0;
+        border-bottom: none;
+    }
+
+    .financial-panel .product-info .info-item {
+        border-bottom: 1px solid #e2e2e2;
+    }
+
+    .financial-panel .info-item span {
+        color: #555;
+        font-weight: 600;
+    }
+
+    .financial-panel .info-item strong {
+        color: #111;
+        text-align: right;
+        word-break: break-word;
+    }
+
+    .amount-item strong,
+    .positive-item strong,
+    .balance-item strong {
+        font-weight: 800;
+    }
+
+    .positive-item strong {
+        color: #1f7a3f;
+    }
+
+    .balance-item strong,
+    .overdue-item strong {
+        color: #b42318;
+    }
+
+    .status-item strong {
+        display: inline-block;
+        padding: 2px 8px;
+        border: 1px solid #222;
+        border-radius: 999px;
+        font-size: 10px;
+        letter-spacing: 0;
     }
 
     .guarantors-section {
@@ -513,6 +598,14 @@
             font-size: 10px;
         }
 
+        .financial-panel {
+            border-radius: 0;
+        }
+
+        .status-item strong {
+            border-radius: 0;
+        }
+
         .guarantor-table {
             font-size: 9px;
         }
@@ -554,12 +647,20 @@
             flex-direction: column;
         }
 
+        .financial-section {
+            gap: 12px;
+        }
+
         .customer-photo-section,
         .financial-left,
         .financial-right,
         .info-item {
             width: 100%;
             margin-right: 0;
+        }
+
+        .financial-panel .info-row {
+            gap: 0;
         }
 
         .customer-photo-section {

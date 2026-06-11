@@ -59,7 +59,7 @@ class MigrateToMultiTenantSeeder extends Seeder
         }
 
         // ── Step 3: Create a SuperAdmin (no tenant_id) ────────────────────────
-        $superAdminEmail = 'superadmin@example.com';
+        $superAdminEmail = 'superadmin@gmail.com';
 
         if (!User::where('email', $superAdminEmail)->exists()) {
             $superAdmin = User::create([
