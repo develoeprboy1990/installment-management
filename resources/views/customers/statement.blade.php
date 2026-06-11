@@ -105,24 +105,26 @@
 
                     <!-- Financial and Product Summary -->
                     @if($totalPurchases > 0)
+                    @php $firstPurchase = $customer->purchases->first(); @endphp
                     <div class="financial-section">
-                        <div class="financial-left">
+                        <div class="financial-left financial-card">
+                            <div class="financial-card-title">Financial Summary</div>
                             <div class="info-group">
                                 <div class="info-row">
-                                    <div class="info-item"><strong>Mobile # :</strong> {{ $customer->mobile_1 }}</div>
-                                    <div class="info-item"><strong>Company:</strong> {{ $customer->purchases->first()->product->company ?? 'N/A' }}</div>
+                                    <div class="info-item"><strong>Mobile #1 :</strong> {{ $customer->mobile_1 }}</div>
+                                    <div class="info-item"><strong>Company:</strong> {{ $firstPurchase->product->company ?? 'N/A' }}</div>
                                 </div>
                                 <div class="info-row">
-                                    <div class="info-item"><strong>Rl/Cr Mobile:</strong> {{ $customer->mobile_2 ?? 'N/A' }}</div>
-                                    <div class="info-item"><strong>Product:</strong> {{ $customer->purchases->first()->product->model ?? 'N/A' }}</div>
+                                    <div class="info-item"><strong>Mobile #2 :</strong> {{ $customer->mobile_2 ?? 'N/A' }}</div>
+                                    <div class="info-item"><strong>Product:</strong> {{ $firstPurchase->product->model ?? 'N/A' }}</div>
                                 </div>
                                 <div class="info-row">
                                     <div class="info-item"><strong>NIC:</strong> {{ $customer->nic }}</div>
-                                    <div class="info-item"><strong>Model:</strong> {{ $customer->purchases->first()->product->model ?? 'N/A' }}</div>
+                                    <div class="info-item"><strong>Model:</strong> {{ $firstPurchase->product->model ?? 'N/A' }}</div>
                                 </div>
                                 <div class="info-row">
                                     <div class="info-item"><strong>Gender:</strong> {{ ucfirst($customer->gender ?? 'N/A') }}</div>
-                                    <div class="info-item"><strong>Serial #:</strong> {{ $customer->purchases->first()->product->serial_no ?? 'N/A' }}</div>
+                                    <div class="info-item"><strong>Serial #:</strong> {{ $firstPurchase->product->serial_no ?? 'N/A' }}</div>
                                 </div>
                                 <div class="info-row">
                                     <div class="info-item"><strong>Purchase Price:</strong> {{ number_format($totalPurchaseAmount, 0) }}</div>
@@ -130,7 +132,7 @@
                                 </div>
                                 <div class="info-row">
                                     <div class="info-item"><strong>Advance Payment:</strong> {{ number_format($totalAdvancePayments, 0) }}</div>
-                                    <div class="info-item"><strong>Duration (Months):</strong> {{ $customer->purchases->first()->installment_months ?? 0 }}</div>
+                                    <div class="info-item"><strong>Duration (Months):</strong> {{ $firstPurchase->installment_months ?? 0 }}</div>
                                 </div>
                                 <div class="info-row">
                                     <div class="info-item"><strong>Total Paid:</strong> {{ number_format($totalPaidAmount, 0) }}</div>
@@ -149,14 +151,14 @@
                             </div>
                         </div>
 
-                        <div class="financial-right">
+                        <div class="financial-right financial-card">
+                            <div class="financial-card-title">Product Details</div>
                             <div class="product-info">
-                                @if($customer->purchases->first())
-                                    @php $firstPurchase = $customer->purchases->first(); @endphp
-                                    <div class="info-item"><strong>Company:</strong> {{ $firstPurchase->product->company }}</div>
-                                    <div class="info-item"><strong>Model:</strong> {{ $firstPurchase->product->model }}</div>
-                                    <div class="info-item"><strong>Serial No:</strong> {{ $firstPurchase->product->serial_no }}</div>
-                                    <div class="info-item"><strong>Product Price:</strong> Rs. {{ number_format($firstPurchase->product->price, 0) }}</div>
+                                @if($firstPurchase)
+                                    <div class="info-item"><strong>Company:</strong> {{ $firstPurchase->product->company ?? 'N/A' }}</div>
+                                    <div class="info-item"><strong>Model:</strong> {{ $firstPurchase->product->model ?? 'N/A' }}</div>
+                                    <div class="info-item"><strong>Serial No:</strong> {{ $firstPurchase->product->serial_no ?? 'N/A' }}</div>
+                                    <div class="info-item"><strong>Product Price:</strong> Rs. {{ number_format($firstPurchase->product->price ?? 0, 0) }}</div>
                                 @else
                                     <div class="info-item"><strong>Product:</strong> No purchase yet</div>
                                 @endif
@@ -263,7 +265,7 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @foreach($customer->installments()->where('status' , 'paid')->orderBy('due_date')->take(10)->get() as $index => $installment)
+                                    @foreach($customer->installments()->where('status' , 'paid')->orderBy('due_date')->get() as $index => $installment)
                                     <tr>
                                         <td>{{ $index + 1 }}</td>
                                         <td>{{ $installment->date ? $installment->date->format('d/m/Y') : $installment->due_date->format('d/m/Y') }}</td>
@@ -376,13 +378,61 @@
 
     .financial-section {
         display: flex;
+        gap: 12px;
         margin-bottom: 15px;
         font-size: 11px;
     }
 
+    .financial-card {
+        border: 1px solid #000;
+        border-radius: 4px;
+        background-color: #fff;
+        overflow: hidden;
+    }
+
+    .financial-card-title {
+        border-bottom: 1px solid #000;
+        background-color: #f0f0f0;
+        color: inherit;
+        font-size: 11px;
+        font-weight: bold;
+        padding: 5px 8px;
+    }
+
+    .financial-card .info-group,
+    .financial-card .product-info {
+        padding: 8px;
+    }
+
+    .financial-card .info-row {
+        margin-bottom: 0;
+        border-bottom: 1px solid #ddd;
+        padding: 3px 0;
+    }
+
+    .financial-card .info-row:last-child,
+    .financial-card .product-info .info-item:last-child {
+        border-bottom: none;
+    }
+
+    .financial-card .info-item {
+        color: inherit;
+        line-height: 1.45;
+    }
+
+    .financial-card .info-item strong {
+        color: inherit;
+        font-weight: bold;
+    }
+
+    .financial-card .product-info .info-item {
+        border-bottom: 1px solid #ddd;
+        margin-right: 0;
+        padding: 4px 0;
+    }
+
     .financial-left {
         flex: 2;
-        margin-right: 20px;
     }
 
     .financial-right {
@@ -513,6 +563,10 @@
             font-size: 10px;
         }
 
+        .financial-card {
+            border-radius: 0;
+        }
+
         .guarantor-table {
             font-size: 9px;
         }
@@ -552,6 +606,10 @@
         .financial-section,
         .info-row {
             flex-direction: column;
+        }
+
+        .financial-section {
+            gap: 12px;
         }
 
         .customer-photo-section,
