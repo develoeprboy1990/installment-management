@@ -70,10 +70,12 @@
                         </div>
                     </li>
 
+                    @can('view-dashboard')
                     <li class="{{ request()->is('dashboard') ? 'active' : '' }}">
                         <a href="{{ route('dashboard') }}"><i class="fa fa-dashboard"></i> <span
                                 class="nav-label">Dashboard</span></a>
                     </li>
+                    @endcan
 
                     <li class="{{ request()->is('admin/customers*') ? 'active' : '' }}">
                         <a href="{{ route('customers.index') }}"><i class="fa fa-users"></i> <span
@@ -136,6 +138,7 @@
                     @endcan
 
                     <!-- Settings section with better icons -->
+                    @can('view-system-settings')
                     <li
                         class="{{ request()->routeIs('admin.users') || request()->routeIs('admin.roles') || request()->routeIs('role-assignment') || request()->routeIs('permissions') ? 'active' : '' }}">
                         <a href="#"><i class="fa fa-cog"></i> <span class="nav-label">System Settings</span>
@@ -157,6 +160,7 @@
                             </li>
                         </ul>
                     </li>
+                    @endcan
 
                     <li>
                         <a href="#" onclick="event.preventDefault(); triggerLogout();"><i
