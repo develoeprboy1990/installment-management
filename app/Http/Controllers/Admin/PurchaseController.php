@@ -421,35 +421,30 @@ class PurchaseController extends Controller
 
     /**
      * If total paid (advance + paid installments) covers total price,
-     * mark all remaining installments as paid and complete the purchase.
+     * mark all remaining installments as 'waived' (not paid) and complete the purchase.
      */
     private function reconcileIfFullyPaid(Purchase $purchase): void
     {
         // Fresh sums to avoid stale relations
         $totalPaid = (float) $purchase->total_paid_amount;
 
-        if ($totalPaid + 0.0001 >= (float) $purchase->total_price) { // small epsilon for floats
-            // Mark all non-paid installments as paid with zero balance
-            $pendingOrOverdue = $purchase->installments()
-                ->where('status', '!=', 'paid')
+        if ($totalPaid + 0.0001 >= (float) $purchase->total_price) {
+            // Mark remaining pending installments as 'waived' — NOT 'paid'
+            $pendingInstallments = $purchase->installments()
+                ->whereIn('status', ['pending', 'overdue'])
                 ->get();
 
-            foreach ($pendingOrOverdue as $inst) {
+            foreach ($pendingInstallments as $inst) {
                 $inst->update([
-                    'status' => 'paid',
-                    'date' => $inst->date ?? now(),
-                    'fine_amount' => 0,
-                    'discount' => $inst->discount ?? 0,
-                    'balance' => 0,
-                    // Set amount to 0 for reconciled installments so Total Paid doesn't exceed Total Price
-                    'installment_amount' => 0,
-                    'pre_balance' => 0,
+                    'status'             => 'waived',
+                    'balance'            => 0,
+                    'fine_amount'        => 0,
                 ]);
             }
 
             // Update purchase status and remaining balance
             $purchase->update([
-                'status' => 'completed',
+                'status'            => 'completed',
                 'remaining_balance' => 0,
             ]);
 
@@ -457,7 +452,7 @@ class PurchaseController extends Controller
             $customer = $purchase->customer;
             if ($customer) {
                 $isDefaulter = $customer->installments()
-                    ->where('status', '!=', 'paid')
+                    ->whereIn('status', ['pending', 'overdue'])
                     ->where('due_date', '<', now())
                     ->exists();
                 $customer->update(['is_defaulter' => $isDefaulter]);
@@ -480,7 +475,7 @@ class PurchaseController extends Controller
     public function updateInstallStatus(Request $request, $id)
     {
         $request->validate([
-            'status' => 'required|in:paid,pending',
+            'status' => 'required|in:paid,pending,waived',
         ]);
 
         $installment = Installment::findOrFail($id);

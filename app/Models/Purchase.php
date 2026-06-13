@@ -66,14 +66,14 @@ class Purchase extends Model
     public function getPaidInstallmentsCashAmountAttribute()
     {
         return (float) $this->installments()
-            ->where('status', 'paid')
+            ->where('status', 'paid')  // sirf actual paid — waived exclude
             ->sum('installment_amount');
     }
 
     public function getPaidInstallmentsDiscountAmountAttribute()
     {
         return (float) $this->installments()
-            ->where('status', 'paid')
+            ->where('status', 'paid')  // sirf actual paid — waived exclude
             ->sum('discount');
     }
 
@@ -140,9 +140,8 @@ class Purchase extends Model
     // Check if purchase is defaulted (missed payments)
     public function isDefaulted()
     {
-        // Check if there are any overdue installments
         $overdueInstallments = $this->installments()
-            ->where('status', '!=', 'paid')
+            ->whereIn('status', ['pending', 'overdue'])
             ->where('due_date', '<', now())
             ->exists();
 

@@ -14,9 +14,10 @@
                         // Cap display paid to total price to avoid showing overpayment as progress > 100%
                         $totalPaid = min($totalPaidRaw, $purchase->total_price);
                         $remainingBalance = $purchase->getRemainingBalance();
-                        $overdueInstallments = $purchase->installments()->where('due_date', '<', now())->where('status', '!=', 'paid')->count();
+                        $overdueInstallments = $purchase->installments()->whereIn('status', ['pending','overdue'])->where('due_date', '<', now())->count();
                         $totalInstallments = $purchase->installments()->count();
                         $paidInstallmentCount = $purchase->installments()->where('status', 'paid')->count();
+                        $waivedInstallmentCount = $purchase->installments()->where('status', 'waived')->count();
             @endphp
 
             <!-- Edit Button -->
@@ -177,7 +178,12 @@
                                         {{ number_format($percentage, 1) }}%
                                     </div>
                                 </div>
-                                <small class="text-muted">{{ $paidInstallmentCount }}/{{ $totalInstallments }} installments paid</small>
+                                <small class="text-muted">
+                                    {{ $paidInstallmentCount }}/{{ $totalInstallments }} paid
+                                    @if($waivedInstallmentCount > 0)
+                                        &nbsp;· <span class="text-info">{{ $waivedInstallmentCount }} waived</span>
+                                    @endif
+                                </small>
                             </td>
                         </tr>
                         <tr>
@@ -257,10 +263,15 @@
                             </td>
                             <td>Rs. {{ number_format($installment->installment_amount, 2) }}</td>
                             <td>
-                                <span class="label label-{{ $installment->status == 'paid' ? 'success' : ($isOverdue ? 'danger' : 'warning') }}">
-                                    {{ ucfirst($installment->status) }}
-                                    @if($isOverdue) (Overdue) @endif
-                                </span>
+                                @if($installment->status == 'paid')
+                                    <span class="label label-success">Paid</span>
+                                @elseif($installment->status == 'waived')
+                                    <span class="label label-default" title="Balance zero hua isliye yeh installment waived ho gayi">Waived</span>
+                                @elseif($isOverdue)
+                                    <span class="label label-danger">Pending (Overdue)</span>
+                                @else
+                                    <span class="label label-warning">Pending</span>
+                                @endif
                             </td>
                             <td>{{ $installment->date ? $installment->date->toDisplayDate() : '-' }}</td>
                             <td>{{ $installment->receipt_no ?? '-' }}</td>
@@ -280,11 +291,13 @@
                             </td>
                             <td>{{ $installment->officer?->name ?? $installment->recovery_officer ?? '-' }}</td>
                             <td>
-                                @if($installment->status == 'pending')
+                                @if($installment->status == 'pending' || $installment->status == 'overdue')
                                     <button class="btn btn-sm btn-success process-payment-btn"
                                         data-installment-id="{{ $installment->id }}">
                                         <i class="fa fa-credit-card"></i> Pay
                                     </button>
+                                @elseif($installment->status == 'waived')
+                                    <span class="text-muted"><i class="fa fa-minus-circle"></i> Waived</span>
                                 @else
                                     <div class="btn-group" role="group">
                                         <span class="text-success">
@@ -297,7 +310,7 @@
                                             <i class="fa fa-print"></i> Print
                                         </a>
                                     </div>
-                                         {{-- New Edit button to trigger modal --}}
+                                    {{-- Edit button --}}
                                     <button class="btn btn-sm btn-warning mt-1 edit-status-btn"
                                          data-id="{{ $installment->id }}"
                                          data-status="{{ $installment->status }}"
@@ -335,6 +348,7 @@
                         <select class="form-control" name="status" id="installmentStatus" required>
                             <option value="pending">Pending</option>
                             <option value="paid">Paid</option>
+                            <option value="waived">Waived (Balance Settled)</option>
                         </select>
                     </div>
                 </div>
@@ -546,26 +560,11 @@ $(document).ready(function() {
         }
     }
 
-    // Auto-calculate logic: 
-    // If you enter a discount, reduce the cash payment
     $(document).on('input', '#discount', function() {
-        const original = parseFloat($('#original_amount').val()) || 0;
-        const discount = parseFloat($(this).val()) || 0;
-        const newPayment = Math.max(0, original - discount);
-        $('#payment_amount').val(newPayment.toFixed(2));
         validatePaymentAmountAgainstRemaining();
     });
 
-    // If you enter a cash payment, adjust the discount to make it "Full Payment"
     $(document).on('input', '#payment_amount', function() {
-        const original = parseFloat($('#original_amount').val()) || 0;
-        const payment = parseFloat($(this).val()) || 0;
-        if (payment < original) {
-            const newDiscount = original - payment;
-            $('#discount').val(newDiscount.toFixed(2));
-        } else {
-            $('#discount').val(0);
-        }
         validatePaymentAmountAgainstRemaining();
     });
 
