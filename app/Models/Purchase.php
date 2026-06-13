@@ -18,8 +18,10 @@ class Purchase extends Model
         'total_price',
         'advance_payment',
         'remaining_balance',
-        'installment_months',
-        'monthly_installment',
+        'installment_type',      // 'daily' | 'weekly' | 'monthly'
+        'installment_count',     // total number of installments (generic)
+        'installment_months',    // kept for backward compatibility (monthly)
+        'monthly_installment',   // kept for backward compatibility (monthly)
         'first_installment_date',
         'last_installment_date',
         'status',
@@ -41,6 +43,8 @@ class Purchase extends Model
             'remaining_balance',
             'advance_payment',
             'monthly_installment',
+            'installment_type',
+            'installment_count',
         ];
     }
 
@@ -80,11 +84,49 @@ class Purchase extends Model
             + $this->paid_installments_discount_amount;
     }
 
-    // Calculate monthly installment
-    public static function calculateMonthlyInstallment($totalPrice, $advancePayment, $months)
+    // ─── Installment Calculation ─────────────────────────────────────────────
+
+    /**
+     * Calculate per-installment amount for any type (daily / weekly / monthly).
+     */
+    public static function calculateInstallmentAmount(float $totalPrice, float $advancePayment, int $count): float
     {
-        $remainingBalance = $totalPrice - $advancePayment;
-        return round($remainingBalance / $months, 2);
+        if ($count <= 0) return 0;
+        $remaining = $totalPrice - $advancePayment;
+        return round($remaining / $count, 2);
+    }
+
+    /**
+     * Backward-compatible alias (used in existing monthly code).
+     */
+    public static function calculateMonthlyInstallment($totalPrice, $advancePayment, $months): float
+    {
+        return self::calculateInstallmentAmount($totalPrice, $advancePayment, $months);
+    }
+
+    /**
+     * Return the effective total installment count regardless of type.
+     * - daily/weekly  → uses installment_count
+     * - monthly       → uses installment_months (backward compat)
+     */
+    public function getTotalInstallmentCount(): int
+    {
+        if ($this->installment_type !== 'monthly' && $this->installment_count) {
+            return (int) $this->installment_count;
+        }
+        return (int) $this->installment_months;
+    }
+
+    /**
+     * Human-readable label for the installment type.
+     */
+    public function getInstallmentTypeLabel(): string
+    {
+        return match($this->installment_type ?? 'monthly') {
+            'daily'  => 'Daily',
+            'weekly' => 'Weekly',
+            default  => 'Monthly',
+        };
     }
 
     // Calculate remaining balance

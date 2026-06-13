@@ -90,14 +90,50 @@ class DashboardController extends Controller
                 ->limit(5)
                 ->get();
 
-            // Customer Distribution
-            $data['active_customers'] = Customer::whereHas('purchases', function($query) {
-                $query->where('status', 'active');
-            })->count();
+            // ── Customer Distribution (calculated from actual payment data) ──
+            // A customer is COMPLETED if ALL their purchases are fully paid (remaining_balance = 0)
+            // A customer is DEFAULTED if they have any overdue pending installment
+            // A customer is ACTIVE otherwise (has remaining balance, no overdue)
 
-            $data['completed_customers'] = Customer::whereDoesntHave('purchases', function($query) {
-                $query->where('status', 'active');
-            })->where('is_defaulter', false)->count();
+            $allCustomers = Customer::with([
+                'purchases',
+                'installments' => fn($q) => $q->select('customer_id','purchase_id','status','installment_amount','discount','due_date')
+            ])->get();
+
+            $activeCount    = 0;
+            $completedCount = 0;
+            $defaultedCount = 0;
+
+            foreach ($allCustomers as $cust) {
+                if ($cust->purchases->isEmpty()) continue;
+
+                // Check overdue: any pending installment past due date
+                $hasOverdue = $cust->installments->contains(function($inst) {
+                    return $inst->status === 'pending' && $inst->due_date < now();
+                });
+
+                if ($hasOverdue) {
+                    $defaultedCount++;
+                    continue;
+                }
+
+                // Calculate remaining balance across all purchases
+                $totalPurchased = $cust->purchases->sum('total_price');
+                $totalAdvance   = $cust->purchases->sum('advance_payment');
+                $totalPaid      = $cust->installments->where('status','paid')->sum('installment_amount');
+                $totalDiscount  = $cust->installments->where('status','paid')->sum('discount');
+                $remaining      = $totalPurchased - $totalAdvance - $totalPaid - $totalDiscount;
+
+                if ($remaining <= 0) {
+                    $completedCount++;
+                } else {
+                    $activeCount++;
+                }
+            }
+
+            $data['active_customers']    = $activeCount;
+            $data['completed_customers'] = $completedCount;
+            $data['defaulters_count']    = $defaultedCount;
 
             // Monthly Collections for chart (last 6 months)
             $data['monthly_collections'] = Installment::where('status', 'paid')

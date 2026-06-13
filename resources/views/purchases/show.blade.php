@@ -49,7 +49,7 @@
                     <table class="table table-condensed">
                         <tr>
                             <th width="40%">Purchase Date:</th>
-                            <td>{{ $purchase->purchase_date->format('d/m/Y') }}</td>
+                            <td>{{ $purchase->purchase_date->toDisplayDate() }}</td>
                         </tr>
                         <tr>
                             <th>Account Number:</th>
@@ -92,20 +92,32 @@
                             <td><strong>Rs. {{ number_format($remainingBalance, 2) }}</strong></td>
                         </tr>
                         <tr>
-                            <th>Monthly Installment:</th>
-                            <td>Rs. {{ number_format($purchase->monthly_installment, 2) }}</td>
+                            <th>Installment Type:</th>
+                            <td>
+                                @php
+                                    $typeColors = ['daily' => 'info', 'weekly' => 'warning', 'monthly' => 'primary'];
+                                    $typeColor  = $typeColors[$purchase->installment_type ?? 'monthly'] ?? 'primary';
+                                @endphp
+                                <span class="label label-{{ $typeColor }}">
+                                    {{ $purchase->getInstallmentTypeLabel() }}
+                                </span>
+                            </td>
                         </tr>
                         <tr>
-                            <th>Installment Period:</th>
-                            <td>{{ $purchase->installment_months }} months</td>
+                            <th>Per Installment:</th>
+                            <td>Rs. {{ number_format($purchase->monthly_installment ?? ($purchase->total_price - $purchase->advance_payment) / max(1, $purchase->getTotalInstallmentCount()), 2) }}</td>
+                        </tr>
+                        <tr>
+                            <th>Total Installments:</th>
+                            <td>{{ $purchase->getTotalInstallmentCount() }} {{ $purchase->getInstallmentTypeLabel() }}</td>
                         </tr>
                         <tr>
                             <th>First Installment:</th>
-                            <td>{{ $purchase->first_installment_date->format('d/m/Y') }}</td>
+                            <td>{{ $purchase->first_installment_date->toDisplayDate() }}</td>
                         </tr>
                         <tr>
                             <th>Last Installment:</th>
-                            <td>{{ $purchase->last_installment_date->format('d/m/Y') }}</td>
+                            <td>{{ $purchase->last_installment_date->toDisplayDate() }}</td>
                         </tr>
                         <tr>
                             <th>Status:</th>
@@ -190,7 +202,7 @@
                                         ->first();
                                 @endphp
                                 @if($nextInstallment)
-                                    {{ $nextInstallment->due_date->format('d/m/Y') }}
+                                    {{ $nextInstallment->due_date->toDisplayDate() }}
                                     @if($nextInstallment->due_date < now())
                                         <span class="text-danger">(Overdue)</span>
                                     @endif
@@ -235,7 +247,7 @@
                         <tr class="{{ $isOverdue ? 'danger' : '' }}" id="installment-{{ $installment->id }}">
                             <td><strong>#{{ $installmentNumber }}</strong></td>
                             <td>
-                                {{ $installment->due_date->format('d/m/Y') }}
+                                {{ $installment->due_date->toDisplayDate() }}
                                 @if($isOverdue)
                                     <br><small class="text-danger">
                                         <i class="fa fa-exclamation-triangle"></i>
@@ -250,7 +262,7 @@
                                     @if($isOverdue) (Overdue) @endif
                                 </span>
                             </td>
-                            <td>{{ $installment->date ? $installment->date->format('d/m/Y') : '-' }}</td>
+                            <td>{{ $installment->date ? $installment->date->toDisplayDate() : '-' }}</td>
                             <td>{{ $installment->receipt_no ?? '-' }}</td>
                             <td>
                                 @if($installment->fine_amount > 0)

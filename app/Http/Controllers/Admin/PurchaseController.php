@@ -51,42 +51,49 @@ class PurchaseController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'customer_id' => 'required|exists:customers,id',
-            'product_id' => 'required|exists:products,id',
-            'purchase_date' => 'required|date',
-            'total_price' => 'required|numeric|min:0',
-            'advance_payment' => 'required|numeric|min:0',
-            'installment_months' => 'required|integer|min:1',
+            'customer_id'            => 'required|exists:customers,id',
+            'product_id'             => 'required|exists:products,id',
+            'purchase_date'          => 'required|date',
+            'total_price'            => 'required|numeric|min:0',
+            'advance_payment'        => 'required|numeric|min:0',
+            'installment_type'       => 'required|in:daily,weekly,monthly',
+            'installment_count'      => 'required|integer|min:1',
             'first_installment_date' => 'required|date|after_or_equal:purchase_date',
-            'recovery_officer_id' => 'required|exists:recovery_officers,id',
+            'recovery_officer_id'    => 'required|exists:recovery_officers,id',
         ]);
 
-        // Calculate values
+        $type            = $request->installment_type;
+        $count           = (int) $request->installment_count;
         $remainingBalance = $request->total_price - $request->advance_payment;
-        $monthlyInstallment = Purchase::calculateMonthlyInstallment(
+        $installmentAmount = Purchase::calculateInstallmentAmount(
             $request->total_price,
             $request->advance_payment,
-            $request->installment_months
+            $count
         );
 
-        $lastInstallmentDate = Carbon::parse($request->first_installment_date)
-            ->addMonths($request->installment_months - 1);
+        // Calculate last installment date based on type
+        $lastInstallmentDate = $this->calculateLastInstallmentDate(
+            $request->first_installment_date,
+            $type,
+            $count
+        );
 
-        // Create purchase
         $purchase = Purchase::create([
-            'customer_id' => $request->customer_id,
-            'product_id' => $request->product_id,
-            'purchase_date' => $request->purchase_date,
-            'total_price' => $request->total_price,
-            'advance_payment' => $request->advance_payment,
-            'remaining_balance' => $remainingBalance,
-            'installment_months' => $request->installment_months,
-            'monthly_installment' => $monthlyInstallment,
+            'customer_id'            => $request->customer_id,
+            'product_id'             => $request->product_id,
+            'purchase_date'          => $request->purchase_date,
+            'total_price'            => $request->total_price,
+            'advance_payment'        => $request->advance_payment,
+            'remaining_balance'      => $remainingBalance,
+            'installment_type'       => $type,
+            'installment_count'      => $count,
+            // Always populate these — installment_months is NOT NULL in DB
+            'installment_months'     => $count,
+            'monthly_installment'    => $installmentAmount,
             'first_installment_date' => $request->first_installment_date,
-            'last_installment_date' => $lastInstallmentDate,
+            'last_installment_date'  => $lastInstallmentDate,
         ]);
 
-        // Create installment schedule with selected recovery officer
         $this->createInstallmentSchedule($purchase, $request->recovery_officer_id);
 
         return redirect()->route('purchases.index')->with('success', 'Purchase created successfully');
@@ -112,49 +119,55 @@ class PurchaseController extends Controller
         return view('purchases.edit', compact('purchase', 'customers', 'products', 'recoveryOfficers'));
     }
 
-     public function update(Request $request, Purchase $purchase)
+    public function update(Request $request, Purchase $purchase)
     {
         $request->validate([
-            'customer_id' => 'required|exists:customers,id',
-            'product_id' => 'required|exists:products,id',
-            'purchase_date' => 'required|date',
-            'total_price' => 'required|numeric|min:0',
-            'advance_payment' => 'required|numeric|min:0',
-            'installment_months' => 'required|integer|min:1',
+            'customer_id'            => 'required|exists:customers,id',
+            'product_id'             => 'required|exists:products,id',
+            'purchase_date'          => 'required|date',
+            'total_price'            => 'required|numeric|min:0',
+            'advance_payment'        => 'required|numeric|min:0',
+            'installment_type'       => 'required|in:daily,weekly,monthly',
+            'installment_count'      => 'required|integer|min:1',
             'first_installment_date' => 'required|date|after_or_equal:purchase_date',
-            'recovery_officer_id' => 'required|exists:recovery_officers,id',
+            'recovery_officer_id'    => 'required|exists:recovery_officers,id',
         ]);
 
         try {
             \DB::beginTransaction();
 
-            // Calculate new values
-            $remainingBalance = $request->total_price - $request->advance_payment;
-            $monthlyInstallment = Purchase::calculateMonthlyInstallment(
+            $type              = $request->installment_type;
+            $count             = (int) $request->installment_count;
+            $remainingBalance  = $request->total_price - $request->advance_payment;
+            $installmentAmount = Purchase::calculateInstallmentAmount(
                 $request->total_price,
                 $request->advance_payment,
-                $request->installment_months
+                $count
             );
 
-            $lastInstallmentDate = Carbon::parse($request->first_installment_date)
-                ->addMonths($request->installment_months - 1);
+            $lastInstallmentDate = $this->calculateLastInstallmentDate(
+                $request->first_installment_date,
+                $type,
+                $count
+            );
 
-            // Update purchase
             $purchase->update([
-                'customer_id' => $request->customer_id,
-                'product_id' => $request->product_id,
-                'purchase_date' => $request->purchase_date,
-                'total_price' => $request->total_price,
-                'advance_payment' => $request->advance_payment,
-                'remaining_balance' => $remainingBalance,
-                'installment_months' => $request->installment_months,
-                'monthly_installment' => $monthlyInstallment,
+                'customer_id'            => $request->customer_id,
+                'product_id'             => $request->product_id,
+                'purchase_date'          => $request->purchase_date,
+                'total_price'            => $request->total_price,
+                'advance_payment'        => $request->advance_payment,
+                'remaining_balance'      => $remainingBalance,
+                'installment_type'       => $type,
+                'installment_count'      => $count,
+                // Always populate — installment_months is NOT NULL in DB
+                'installment_months'     => $count,
+                'monthly_installment'    => $installmentAmount,
                 'first_installment_date' => $request->first_installment_date,
-                'last_installment_date' => $lastInstallmentDate,
-                'status' => 'active', // Reset status to active
+                'last_installment_date'  => $lastInstallmentDate,
+                'status'                 => 'active',
             ]);
 
-            // Delete ALL previous installments (both paid and pending) and recreate
             $purchase->installments()->delete();
             $this->createInstallmentSchedule($purchase, $request->recovery_officer_id);
 
@@ -213,43 +226,85 @@ class PurchaseController extends Controller
         }
     }
 
-    private function createInstallmentSchedule(Purchase $purchase, $recoveryOfficerId)
+    /**
+     * Dedicated printable statement for a single purchase.
+     * URL: /admin/purchases/{purchase}/statement
+     */
+    public function purchaseStatement(Purchase $purchase)
     {
-        $currentDate = Carbon::parse($purchase->first_installment_date);
-        $remainingBalance = $purchase->remaining_balance;
+        $purchase->load([
+            'customer.guarantors',
+            'product',
+            'installments.officer',
+        ]);
 
-        for ($i = 1; $i <= $purchase->installment_months; $i++) {
-            $dueDate = $currentDate->copy()->addMonths($i - 1);
+        return view('purchases.statement', compact('purchase'));
+    }
 
-            $installmentAmount = $purchase->monthly_installment;
+    /**
+     * Build the full installment schedule for a purchase.
+     * Supports daily, weekly, and monthly types.
+     */
+    private function createInstallmentSchedule(Purchase $purchase, int $recoveryOfficerId): void
+    {
+        $type             = $purchase->installment_type ?? 'monthly';
+        $totalCount       = $purchase->getTotalInstallmentCount();
+        $startDate        = Carbon::parse($purchase->first_installment_date);
+        $remainingBalance = (float) $purchase->remaining_balance;
+        $installmentAmount = Purchase::calculateInstallmentAmount(
+            $purchase->total_price,
+            $purchase->advance_payment,
+            $totalCount
+        );
 
-            // Calculate balance for this installment
-            if ($i == $purchase->installment_months) {
-                // Last installment takes remaining balance
-                $installmentAmount = $remainingBalance;
+        for ($i = 1; $i <= $totalCount; $i++) {
+            // Calculate due date based on installment type
+            $dueDate = match($type) {
+                'daily'  => $startDate->copy()->addDays($i - 1),
+                'weekly' => $startDate->copy()->addWeeks($i - 1),
+                default  => $startDate->copy()->addMonths($i - 1),  // monthly
+            };
+
+            // Last installment absorbs any rounding remainder
+            if ($i === $totalCount) {
+                $thisAmount = $remainingBalance;
                 $newBalance = 0;
             } else {
-                $newBalance = $remainingBalance - $installmentAmount;
+                $thisAmount = $installmentAmount;
+                $newBalance = round($remainingBalance - $installmentAmount, 2);
             }
 
             Installment::create([
-                'customer_id' => $purchase->customer_id,
-                'purchase_id' => $purchase->id,
-                'date' => null,
-                'due_date' => $dueDate,
-                'receipt_no' => null,
-                'pre_balance' => $remainingBalance,
-                'installment_amount' => $installmentAmount,
-                'discount' => 0,
-                'balance' => $newBalance,
-                'fine_amount' => 0,
-                'status' => 'pending',
+                'customer_id'         => $purchase->customer_id,
+                'purchase_id'         => $purchase->id,
+                'date'                => null,
+                'due_date'            => $dueDate,
+                'receipt_no'          => null,
+                'pre_balance'         => $remainingBalance,
+                'installment_amount'  => $thisAmount,
+                'discount'            => 0,
+                'balance'             => $newBalance,
+                'fine_amount'         => 0,
+                'status'              => 'pending',
                 'recovery_officer_id' => $recoveryOfficerId,
-                'remarks' => "Installment $i of {$purchase->installment_months}",
+                'remarks'             => "Installment $i of $totalCount ($type)",
             ]);
 
             $remainingBalance = $newBalance;
         }
+    }
+
+    /**
+     * Calculate the last installment date based on type and count.
+     */
+    private function calculateLastInstallmentDate(string $firstDate, string $type, int $count): Carbon
+    {
+        $start = Carbon::parse($firstDate);
+        return match($type) {
+            'daily'  => $start->copy()->addDays($count - 1),
+            'weekly' => $start->copy()->addWeeks($count - 1),
+            default  => $start->copy()->addMonths($count - 1),
+        };
     }
 
     public function getInstallmentDetails($installmentId)

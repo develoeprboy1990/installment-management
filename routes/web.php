@@ -57,6 +57,7 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth.redirect','role:Admin|
     Route::post('purchases/{purchase}/process-payment', [PurchaseController::class, 'processPayment'])->name('purchases.process-payment');
     Route::get('purchases/installment/{installmentId}/details', [PurchaseController::class, 'getInstallmentDetails'])->name('purchases.installment-details');
     Route::put('/installments/{id}/status', [PurchaseController::class, 'updateInstallStatus'])->name('installments.status');
+    Route::get('purchases/{purchase}/statement', [PurchaseController::class, 'purchaseStatement'])->name('purchases.statement');
 
 
     //installments

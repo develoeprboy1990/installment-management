@@ -256,14 +256,25 @@ class CustomerController extends Controller
 
     public function statement(Customer $customer)
     {
-        // Load related data through proper relationships
         $customer->load([
             'guarantors',
             'purchases.product',
-            'purchases.installments' => function ($query) {
-                $query->orderBy('due_date', 'asc');
-            }
+            'purchases.installments.officer',
         ]);
+
+        // Sort: Active purchases (newest first) → Completed (newest first)
+        $customer->setRelation('purchases',
+            $customer->purchases->sortBy(function ($purchase) {
+                $remaining = max(0, $purchase->total_price - (
+                    $purchase->advance_payment
+                    + $purchase->installments->where('status','paid')->sum('installment_amount')
+                    + $purchase->installments->where('status','paid')->sum('discount')
+                ));
+                // Active = 0 (comes first), Completed = 1 (goes last)
+                // Within group, sort by date DESC (negate timestamp for descending)
+                return ($remaining <= 0 ? '1_' : '0_') . (9999999999 - $purchase->purchase_date->timestamp);
+            })->values()
+        );
 
         return view('customers.statement', compact('customer'));
     }

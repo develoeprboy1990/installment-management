@@ -67,7 +67,7 @@
                         ?? optional($installment->purchase)->created_at
                         ?? $installment->date;
                     @endphp
-                    {{ optional($purchaseDate)->format('M j ,Y & h:iA') ?? 'N/A' }}
+                    {{ $purchaseDate ? $purchaseDate->toDisplayDate() : 'N/A' }}
                 </td>
             </tr>
              <tr>
@@ -83,7 +83,7 @@
             <tr>
                 <th>Installment date:</th>
                 <td class="text-end">
-                     <span class="text-end">{{ $installment->date->format('M j ,Y') ?? 'N/A' }}</span>
+                     <span class="text-end">{{ $installment->date ? $installment->date->toDisplayDate() : 'N/A' }}</span>
                 </td>
                 <th>Customer Phone:</th>
                 <td class="text-end">
@@ -128,10 +128,17 @@
                 <td class="text-end"><strong>Rs.{{ number_format((float)(($installment->installment_amount ?? 0) + ($installment->discount ?? 0)), 2) }}</strong></td>
             </tr>
             <tr>
+                <th>Installment Type</th>
+                <td class="text-end">
+                    @php
+                        $instType = optional($installment->purchase)->getInstallmentTypeLabel() ?? 'Monthly';
+                    @endphp
+                    <strong>{{ $instType }}</strong>
+                </td>
                 <th>Total Installments</th>
-                <td class="text-end">{{ $installment->purchase->installment_months ?? 'N/A' }}</td>
-                <th>Received By</th>
-                <td class="text-end">{{ $installment->officer->name ?? 'N/A' }}</td>
+                <td class="text-end">
+                    {{ optional($installment->purchase)->getTotalInstallmentCount() ?? 'N/A' }}
+                </td>
             </tr>
             @php
                 $receivedCount = optional($installment->purchase)
@@ -144,16 +151,22 @@
             <tr>
                 <th>Received Installments</th>
                 <td class="text-end">
-                    @if(!is_null($receivedCount) && !empty($installment->purchase->installment_months))
-                        {{ $receivedCount }}
+                    @if(!is_null($receivedCount) && !empty(optional($installment->purchase)->getTotalInstallmentCount()))
+                        {{ $receivedCount }} / {{ optional($installment->purchase)->getTotalInstallmentCount() }}
                     @elseif(!is_null($receivedCount))
                         #{{ $receivedCount }}
                     @else
                         N/A
                     @endif
                 </td>
+                <th>Received By</th>
+                <td class="text-end">{{ $installment->officer->name ?? 'N/A' }}</td>
+            </tr>
+            <tr>
                 <th>Payment Method</th>
                 <td class="text-end">{{ isset($installment->payment_method) ? ucfirst($installment->payment_method) : 'N/A' }}</td>
+                <th>Receipt No</th>
+                <td class="text-end"><strong>{{ $installment->receipt_no ?? 'N/A' }}</strong></td>
             </tr>
         </tbody>
     </table>

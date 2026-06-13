@@ -51,7 +51,7 @@
                                                 </span>
                                             </td>
                                             <td><strong>Rs. {{ number_format($expense->amount, 2) }}</strong></td>
-                                            <td>{{ $expense->expense_date->format('d M, Y') }}</td>
+                                            <td>{{ $expense->expense_date->toDisplayDate() }}</td>
                                             <td>
                                                 <span
                                                     class="label label-{{ $expense->status === 'paid' ? 'success' : ($expense->status === 'pending' ? 'warning' : 'danger') }}">

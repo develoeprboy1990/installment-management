@@ -192,10 +192,10 @@
                                                 <td><strong>Rs.
                                                         {{ number_format($installment->installment_amount, 2) }}</strong>
                                                 </td>
-                                                <td>{{ $installment->due_date->format('d M, Y') }}</td>
+                                                <td>{{ $installment->due_date->toDisplayDate() }}</td>
                                                 <td>
                                                     @if ($installment->paid_date)
-                                                        {{ $installment->paid_date->format('d M, Y') }}
+                                                        {{ $installment->paid_date->toDisplayDate() }}
                                                     @else
                                                         <span class="text-muted">-</span>
                                                     @endif

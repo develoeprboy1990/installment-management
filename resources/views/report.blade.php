@@ -337,7 +337,7 @@
                                     @if (isset($data['recent_payments']) && $data['recent_payments']->count() > 0)
                                         @foreach ($data['recent_payments'] as $payment)
                                             <tr>
-                                                <td>{{ $payment->date ? Carbon\Carbon::parse($payment->date)->format('d/m/Y') : '-' }}
+                                                <td>{{ $payment->date ? $payment->date ? Carbon\Carbon::parse($payment->date)->toDisplayDate() : '-' : '-' }}
                                                 </td>
                                                 <td>{{ $payment->customer->name ?? '-' }}</td>
                                                 <td class="text-left">
@@ -382,7 +382,7 @@
                                 @if (isset($data['recent_payments']) && $data['recent_payments']->count() > 0)
                                     @foreach ($data['recent_payments'] as $payment)
                                         <tr data-date="{{ $payment->date ? Carbon\Carbon::parse($payment->date)->format('Y-m-d') : '' }}">
-                                            <td>{{ $payment->date ? Carbon\Carbon::parse($payment->date)->format('d/m/Y') : '-' }}</td>
+                                            <td>{{ $payment->date ? $payment->date ? Carbon\Carbon::parse($payment->date)->toDisplayDate() : '-' : '-' }}</td>
                                             <td>{{ $payment->customer->name ?? '-' }}</td>
                                             <td class="text-left">{{ number_format($payment->installment_amount ?? 0, 2) }}</td>
                                             <td>{{ $payment->receipt_no ?? '-' }}</td>
@@ -428,7 +428,7 @@
                                         @foreach ($data['due_today'] as $due)
                                             <tr>
                                                 <td>{{ $due->customer->name ?? '-' }}</td>
-                                                <td>{{ $due->due_date ? Carbon\Carbon::parse($due->due_date)->format('d/m/Y') : '-' }}
+                                                <td>{{ $due->due_date ? $due->due_date ? Carbon\Carbon::parse($due->due_date)->toDisplayDate() : '-' : '-' }}
                                                 </td>
                                                 <td class="text-left">
                                                     {{ number_format($due->installment_amount ?? 0, 2) }}</td>
