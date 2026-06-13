@@ -37,7 +37,7 @@
                             <div class="col-md-6">
                                 <div class="form-group {{ $errors->has('company') ? 'has-error' : '' }}">
                                     <label for="company">Company <span class="text-danger">*</span></label>
-                                    <input type="text" class="form-control" id="company" name="company" placeholder="e.g., Samsung, LG, Haier" value="{{ old('company') }}" required>
+                                    <input type="text" class="form-control capitalize-words" id="company" name="company" placeholder="e.g., Samsung, LG, Haier" value="{{ old('company') }}" required>
                                     @if ($errors->has('company'))
                                         <span class="help-block">{{ $errors->first('company') }}</span>
                                     @endif
@@ -46,7 +46,7 @@
                             <div class="col-md-6">
                                 <div class="form-group {{ $errors->has('model') ? 'has-error' : '' }}">
                                     <label for="model">Model <span class="text-danger">*</span></label>
-                                    <input type="text" class="form-control" id="model" name="model" placeholder="e.g., Galaxy A14" value="{{ old('model') }}" required>
+                                    <input type="text" class="form-control capitalize-words" id="model" name="model" placeholder="e.g., Galaxy A14" value="{{ old('model') }}" required>
                                     @if ($errors->has('model'))
                                         <span class="help-block">{{ $errors->first('model') }}</span>
                                     @endif
@@ -121,3 +121,20 @@
     </div>
 </div>
 @endsection
+
+@push('script')
+<script>
+// Capitalize first letter of each word
+function capitalizeWords(el) {
+    let pos = el.selectionStart;
+    let val = el.value.replace(/\b([a-z])/g, function(char) {
+        return char.toUpperCase();
+    });
+    el.value = val;
+    el.setSelectionRange(pos, pos);
+}
+document.querySelectorAll('.capitalize-words').forEach(function(el) {
+    el.addEventListener('input', function() { capitalizeWords(this); });
+});
+</script>
+@endpush

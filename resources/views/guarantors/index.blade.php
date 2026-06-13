@@ -34,7 +34,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @forelse($guarantors as $guarantor)
+                        @foreach($guarantors as $guarantor)
                             <tr>
                                 <td>{{ $loop->iteration }}</td>
                                 <td>
@@ -112,17 +112,7 @@
                                     </div>
                                 </td>
                             </tr>
-                        @empty
-                            <tr>
-                                <td colspan="10" class="text-center py-4">
-                                    <p class="text-muted">No guarantors found.</p>
-                                    @can('create-guarantors')
-                                        <a href="{{ route('guarantors.create') }}" class="btn btn-primary btn-sm">Add First
-                                            Guarantor</a>
-                                    @endcan
-                                </td>
-                            </tr>
-                        @endforelse
+                        @endforeach
                     </tbody>
                 </table>
 
@@ -162,8 +152,6 @@
 @endpush
 
 @push('script')
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
     <script>
         $(document).ready(function() {
             $('.table').DataTable({
@@ -176,7 +164,11 @@
                         orderable: false,
                         targets: [1, -1]
                     } // Disable sorting on image and actions columns
-                ]
+                ],
+                language: {
+                    emptyTable: '<div class="text-center py-3"><p class="text-muted mb-2">No guarantors found.</p>@can("create-guarantors")<a href="{{ route("guarantors.create") }}" class="btn btn-primary btn-sm">Add First Guarantor</a>@endcan</div>',
+                    zeroRecords: 'No guarantors match your search.'
+                }
             });
         });
     </script>

@@ -110,8 +110,10 @@
             <tr>
                 <th>Serial No</th>
                 <td class="text-end">{{ optional(optional($installment->purchase)->product)->serial_no ?? 'N/A' }}</td>
-                <th>Payment Method</th>
-                <td class="text-end">{{ isset($installment->payment_method) ? ucfirst($installment->payment_method) : 'N/A' }}</td>
+                <th>Advance Amount</th>
+                <td class="text-end">
+                    Rs.{{ number_format((float)($installment->purchase->advance_payment ?? 0), 2) }}
+                </td>
             </tr>
             <tr>
                 <th>Cash Paid</th>
@@ -150,8 +152,8 @@
                         N/A
                     @endif
                 </td>
-                <th>-</th>
-                <td class="text-end">-</td>
+                <th>Payment Method</th>
+                <td class="text-end">{{ isset($installment->payment_method) ? ucfirst($installment->payment_method) : 'N/A' }}</td>
             </tr>
         </tbody>
     </table>
