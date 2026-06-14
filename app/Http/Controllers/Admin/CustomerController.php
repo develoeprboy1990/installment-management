@@ -69,6 +69,7 @@ class CustomerController extends Controller
                 })
                 ->addColumn('actions', function ($customer) {
                     $totalPurchases = $customer->purchases->count();
+                    $paidInstallments = $customer->installments()->where('status', 'paid')->count();
                     $buttons = '<div class="btn-group" role="group">';
                     
                     // View Statement button
@@ -87,7 +88,7 @@ class CustomerController extends Controller
                     
                     // Delete button
                     if (auth()->user()->can('delete-customers')) {
-                        $buttons .= '<button onclick="confirmDelete(' . $customer->id . ', \'' . addslashes($customer->name) . '\', ' . $totalPurchases . ')" class="btn btn-sm btn-danger" title="Delete Customer">
+                        $buttons .= '<button onclick="confirmDelete(' . $customer->id . ', \'' . addslashes($customer->name) . '\', ' . $totalPurchases . ', ' . $paidInstallments . ')" class="btn btn-sm btn-danger" title="Delete Customer">
                                 <i class="fa fa-trash"></i>
                             </button>';
                     }

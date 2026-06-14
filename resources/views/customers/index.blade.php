@@ -356,7 +356,17 @@
             });
         });
 
-        function confirmDelete(customerId, customerName, totalPurchases) {
+        function confirmDelete(customerId, customerName, totalPurchases, paidInstallments) {
+            if (paidInstallments > 0) {
+                // Customer has paid installments, block deletion
+                $('#deleteCustomerMessage').html(`<div class="text-danger"><i class="fa fa-times-circle"></i> Cannot delete customer <strong>${customerName}</strong>. This customer has <strong>${paidInstallments} paid installment(s)</strong> on record. Customers with payment history cannot be deleted to preserve financial data integrity.</div>`);
+                $('#confirmDeleteBtn').hide();
+                $('#deleteCustomerModal').modal('show');
+                return;
+            }
+
+            // Customer can be deleted
+            $('#confirmDeleteBtn').show();
             let message = totalPurchases > 0
                 ? `Are you sure you want to delete customer <strong>${customerName}</strong> and all <strong>${totalPurchases} purchase(s)</strong>?`
                 : `Are you sure you want to delete customer <strong>${customerName}</strong>?`;
