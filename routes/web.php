@@ -32,6 +32,8 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth.redirect','role:Admin|
 
     //customers
     Route::resource('customers', CustomerController::class);
+    // POST route for shared hosting where DELETE method is blocked
+    Route::post('customers/{customer}/delete', [CustomerController::class, 'destroy'])->name('customers.delete.post');
     Route::get('customers/{customer}/statement', [CustomerController::class, 'statement'])->name('customers.statement');
 
 

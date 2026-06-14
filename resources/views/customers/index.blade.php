@@ -339,13 +339,11 @@
 
             if (!confirm(message)) return;
 
-            // POST + _method=DELETE (Laravel method spoofing)
-            // Live shared hosting servers block actual DELETE method
+            // Use dedicated POST /delete route (works on all shared hosting servers)
             const formData = new FormData();
-            formData.append('_method', 'DELETE');
             formData.append('_token', document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
 
-            fetch(`/admin/customers/${customerId}`, {
+            fetch(`/admin/customers/${customerId}/delete`, {
                     method: 'POST',
                     headers: { 'X-Requested-With': 'XMLHttpRequest' },
                     body: formData
@@ -355,7 +353,7 @@
                     if (contentType.includes('application/json')) {
                         return response.json();
                     }
-                    throw new Error('Server error (Status: ' + response.status + '). Check server logs.');
+                    throw new Error('Server error (Status: ' + response.status + '). Please check server logs.');
                 })
                 .then(data => {
                     if (data.success) {
