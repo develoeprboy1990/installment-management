@@ -201,6 +201,26 @@ class CustomerController extends Controller
     public function destroy(Customer $customer)
     {
         try {
+            // ── Block deletion if any paid installment exists ──────────────
+            $paidInstallmentCount = $customer->installments()
+                ->where('status', 'paid')
+                ->count();
+
+            if ($paidInstallmentCount > 0) {
+                $message = "Cannot delete \"{$customer->name}\". This customer has {$paidInstallmentCount} paid installment(s) on record. Customers with payment history cannot be deleted.";
+
+                if (request()->ajax()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => $message,
+                    ], 422);
+                }
+
+                return redirect()->route('customers.index')
+                    ->with('error', $message);
+            }
+            // ──────────────────────────────────────────────────────────────
+
             \DB::beginTransaction();
 
             // Delete customer image if exists
@@ -253,6 +273,7 @@ class CustomerController extends Controller
                 ->with('error', 'Error deleting customer: ' . $e->getMessage());
         }
     }
+
 
     public function statement(Customer $customer)
     {

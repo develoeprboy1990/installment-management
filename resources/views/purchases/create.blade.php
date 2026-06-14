@@ -166,6 +166,26 @@
                         <h5><i class="fa fa-calendar-check-o text-navy"></i> Installment Schedule</h5>
                     </div>
                     <div class="ibox-content">
+
+                        {{-- Mode Toggle --}}
+                        <div class="form-group">
+                            <label><i class="fa fa-sliders"></i> Calculation Mode</label>
+                            <div class="row" style="margin-top:8px;">
+                                <div class="col-xs-6">
+                                    <label id="mode_btn_count" style="display:block;padding:10px 14px;border:2px solid #1ab394;border-radius:6px;cursor:pointer;text-align:center;background:#1ab394;color:#fff;font-weight:600;font-size:13px;">
+                                        <input type="radio" name="calc_mode" value="by_count" checked style="display:none;">
+                                        <i class="fa fa-list-ol"></i> By No. of Installments
+                                    </label>
+                                </div>
+                                <div class="col-xs-6">
+                                    <label id="mode_btn_amount" style="display:block;padding:10px 14px;border:2px solid #ccc;border-radius:6px;cursor:pointer;text-align:center;background:#fff;color:#555;font-weight:600;font-size:13px;">
+                                        <input type="radio" name="calc_mode" value="by_amount" style="display:none;">
+                                        <i class="fa fa-money"></i> By Per Installment Amount
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="row">
                             <div class="col-md-4">
                                 <div class="form-group">
@@ -176,30 +196,49 @@
                                     <select class="form-control" name="installment_type"
                                             id="installment_type" required>
                                         <option value="monthly" {{ old('installment_type','monthly') === 'monthly' ? 'selected' : '' }}>
-                                            📅 Monthly
+                                            Monthly
                                         </option>
                                         <option value="weekly" {{ old('installment_type') === 'weekly' ? 'selected' : '' }}>
-                                            📆 Weekly
+                                            Weekly
                                         </option>
                                         <option value="daily" {{ old('installment_type') === 'daily' ? 'selected' : '' }}>
-                                            🗓️ Daily
+                                            Daily
                                         </option>
                                     </select>
                                 </div>
                             </div>
-                            <div class="col-md-4">
+
+                            {{-- Mode A: By Count --}}
+                            <div class="col-md-4" id="field_count">
                                 <div class="form-group">
-                                    <label for="installment_count" id="installment_count_label">
+                                    <label for="installment_count">
                                         <i class="fa fa-list-ol"></i> No. of Installments
                                         <span class="text-danger">*</span>
                                     </label>
                                     <input type="number" class="form-control" name="installment_count"
                                            id="installment_count" min="1"
                                            value="{{ old('installment_count') }}"
-                                           placeholder="e.g. 12" required>
+                                           placeholder="e.g. 12">
                                     <small class="text-muted" id="installment_count_hint">e.g. 12 months</small>
                                 </div>
                             </div>
+
+                            {{-- Mode B: By Per Installment Amount --}}
+                            <div class="col-md-4" id="field_per_amount" style="display:none;">
+                                <div class="form-group">
+                                    <label for="per_installment_input">
+                                        <i class="fa fa-money"></i> Per Installment Amount
+                                        <span class="text-danger">*</span>
+                                    </label>
+                                    <div class="input-group">
+                                        <span class="input-group-addon"><strong>Rs.</strong></span>
+                                        <input type="number" class="form-control" id="per_installment_input"
+                                               step="1" min="1" placeholder="e.g. 7000">
+                                    </div>
+                                    <small class="text-muted">Count will be auto-calculated</small>
+                                </div>
+                            </div>
+
                             <div class="col-md-4">
                                 <div class="form-group">
                                     <label for="first_installment_date">
@@ -212,6 +251,13 @@
                                 </div>
                             </div>
                         </div>
+
+                        {{-- Last installment adjustment alert --}}
+                        <div id="last_installment_note" class="alert alert-info" style="display:none;margin-bottom:0;">
+                            <i class="fa fa-info-circle"></i>
+                            <span id="last_installment_note_text"></span>
+                        </div>
+
                     </div>
                 </div>
 
@@ -270,12 +316,15 @@
                             </table>
                         </div>
 
-                        {{-- Hidden calculated fields (read-only display) --}}
+                        {{-- Hidden fields for form submission --}}
                         <div class="form-group">
                             <label style="font-size:11px;color:#888;">Last Installment Date (Calculated)</label>
                             <input type="date" class="form-control input-sm" id="last_installment_date_preview" readonly
                                    style="background:#f8f8f8;font-size:12px;">
                         </div>
+
+                        {{-- Hidden: actual per-installment amount to pass to controller --}}
+                        <input type="hidden" name="per_installment_override" id="per_installment_override" value="0">
 
                     </div>
                 </div>
@@ -320,43 +369,113 @@ $(document).ready(function () {
     function formatDate(dateStr) {
         if (!dateStr) return '—';
         const [y, m, dd] = dateStr.split('-');
-        const months=['January','February','March','April','May','June','July','August','September','October','November','December']; return `${parseInt(dd)} ${months[parseInt(m)-1]} ${y}`;
+        const months = ['January','February','March','April','May','June',
+                        'July','August','September','October','November','December'];
+        return `${parseInt(dd)} ${months[parseInt(m)-1]} ${y}`;
     }
 
     function numFmt(n) {
         return 'Rs. ' + parseFloat(n || 0).toLocaleString('en-PK', { minimumFractionDigits: 0 });
     }
 
-    const typeLabels = { daily: '🗓️ Daily', weekly: '📆 Weekly', monthly: '📅 Monthly' };
-    const hints = {
-        daily:   'e.g. 30 days',
-        weekly:  'e.g. 52 weeks',
-        monthly: 'e.g. 12 months',
-    };
+    const typeLabels = { daily: 'Daily', weekly: 'Weekly', monthly: 'Monthly' };
+    const hints = { daily: 'e.g. 30 days', weekly: 'e.g. 52 weeks', monthly: 'e.g. 12 months' };
 
+    let currentMode = 'by_count'; // default mode
+
+    // ── Mode Toggle ────────────────────────────────────────────────────────
+    $('input[name="calc_mode"]').on('change', function () {
+        currentMode = $(this).val();
+
+        if (currentMode === 'by_count') {
+            $('#field_count').show();
+            $('#field_per_amount').hide();
+            $('#installment_count').prop('required', true);
+            // Mode A active style
+            $('#mode_btn_count').css({ background: '#1ab394', color: '#fff', 'border-color': '#1ab394' });
+            $('#mode_btn_amount').css({ background: '#fff', color: '#555', 'border-color': '#ccc' });
+        } else {
+            $('#field_count').hide();
+            $('#field_per_amount').show();
+            $('#installment_count').prop('required', false);
+            // Mode B active style
+            $('#mode_btn_amount').css({ background: '#1ab394', color: '#fff', 'border-color': '#1ab394' });
+            $('#mode_btn_count').css({ background: '#fff', color: '#555', 'border-color': '#ccc' });
+        }
+        recalculate();
+    });
+
+    // ── Main Recalculate ───────────────────────────────────────────────────
     function recalculate() {
-        const total    = parseFloat($('#total_price').val())        || 0;
-        const advance  = parseFloat($('#advance_payment').val())    || 0;
-        const count    = parseInt($('#installment_count').val())    || 0;
-        const type     = $('#installment_type').val();
+        const total     = parseFloat($('#total_price').val())     || 0;
+        const advance   = parseFloat($('#advance_payment').val()) || 0;
+        const type      = $('#installment_type').val();
         const firstDate = $('#first_installment_date').val();
+        const remaining = Math.max(0, total - advance);
 
-        const remaining      = Math.max(0, total - advance);
-        const perInstallment = count > 0 ? remaining / count : 0;
-        const lastDate       = addPeriod(firstDate, type, count);
+        let count = 0;
+        let perInstallment = 0;
+        let lastInstallmentAmt = 0;
+
+        if (currentMode === 'by_count') {
+            // Mode A: user enters count, we calc per amount
+            count = parseInt($('#installment_count').val()) || 0;
+            perInstallment = count > 0 ? Math.round((remaining / count) * 100) / 100 : 0;
+            $('#last_installment_note').hide();
+            // Pass calculated per-installment to controller
+            $('#per_installment_override').val(perInstallment);
+
+        } else {
+            // Mode B: user enters per amount, we calc count
+            const perAmt = parseFloat($('#per_installment_input').val()) || 0;
+            if (perAmt > 0 && remaining > 0) {
+
+                const fullCount = Math.floor(remaining / perAmt);
+                // Floating point safe: round to 2 decimals
+                const lastAmt   = Math.round((remaining - (fullCount * perAmt)) * 100) / 100;
+
+                if (lastAmt > 0.01) {
+                    // Not evenly divisible
+                    count = fullCount + 1;
+                    perInstallment = perAmt;
+                    // Pass user-entered per-installment to controller
+                    $('#per_installment_override').val(perAmt);
+                    $('#last_installment_note').show();
+                    $('#last_installment_note_text').html(
+                        `Total <strong>${count} installments</strong> &mdash; ` +
+                        `First <strong>${fullCount}</strong> installments = <strong>${numFmt(perAmt)}</strong> each &mdash; ` +
+                        `Last (<strong>${count}th</strong>) installment = <strong>${numFmt(lastAmt)}</strong> (baqi amount).`
+                    );
+                } else {
+                    // Evenly divisible
+                    count = fullCount;
+                    perInstallment = perAmt;
+                    // Pass user-entered per-installment to controller
+                    $('#per_installment_override').val(perAmt);
+                    $('#last_installment_note').show();
+                    $('#last_installment_note_text').html(
+                        `Total <strong>${count} installments</strong> of <strong>${numFmt(perAmt)}</strong> each &mdash; Balance evenly divides.`
+                    );
+                }
+
+            } else {
+                $('#last_installment_note').hide();
+            }
+
+            // Auto-fill hidden installment_count for form submission
+            $('#installment_count').val(count > 0 ? count : '');
+        }
+
+        const lastDate = addPeriod(firstDate, type, count);
 
         // Update summary cards
         $('#summary_remaining').text(numFmt(remaining));
         $('#summary_per_installment').text(count > 0 ? numFmt(perInstallment) : 'Rs. 0');
         $('#summary_first_date').text(firstDate ? formatDate(firstDate) : '—');
-        $('#summary_last_date').text(lastDate ? formatDate(lastDate) : '—');
+        $('#summary_last_date').text(lastDate  ? formatDate(lastDate)  : '—');
         $('#summary_count').text(count > 0 ? count + ' installments' : '—');
         $('#summary_type').text(typeLabels[type] || 'Monthly');
-
-        // Update hidden last date preview
         $('#last_installment_date_preview').val(lastDate);
-
-        // Update hint
         $('#installment_count_hint').text(hints[type] || hints.monthly);
     }
 
@@ -369,6 +488,7 @@ $(document).ready(function () {
 
     $('#installment_type').on('change', recalculate);
     $('#advance_payment, #installment_count, #first_installment_date').on('input change', recalculate);
+    $('#per_installment_input').on('input', recalculate);
 
     // ── Init ───────────────────────────────────────────────────────────────
     recalculate();

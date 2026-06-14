@@ -65,11 +65,17 @@ class PurchaseController extends Controller
         $type            = $request->installment_type;
         $count           = (int) $request->installment_count;
         $remainingBalance = $request->total_price - $request->advance_payment;
-        $installmentAmount = Purchase::calculateInstallmentAmount(
-            $request->total_price,
-            $request->advance_payment,
-            $count
-        );
+
+        // Use user-specified per-installment amount if provided (Mode B)
+        // Otherwise auto-calculate from count (Mode A)
+        $overrideAmt = (float) $request->per_installment_override;
+        $installmentAmount = ($overrideAmt > 0)
+            ? $overrideAmt
+            : Purchase::calculateInstallmentAmount(
+                $request->total_price,
+                $request->advance_payment,
+                $count
+              );
 
         // Calculate last installment date based on type
         $lastInstallmentDate = $this->calculateLastInstallmentDate(
@@ -87,9 +93,8 @@ class PurchaseController extends Controller
             'remaining_balance'      => $remainingBalance,
             'installment_type'       => $type,
             'installment_count'      => $count,
-            // Always populate these — installment_months is NOT NULL in DB
             'installment_months'     => $count,
-            'monthly_installment'    => $installmentAmount,
+            'monthly_installment'    => $installmentAmount,  // actual per-installment
             'first_installment_date' => $request->first_installment_date,
             'last_installment_date'  => $lastInstallmentDate,
         ]);
@@ -251,27 +256,34 @@ class PurchaseController extends Controller
         $totalCount       = $purchase->getTotalInstallmentCount();
         $startDate        = Carbon::parse($purchase->first_installment_date);
         $remainingBalance = (float) $purchase->remaining_balance;
-        $installmentAmount = Purchase::calculateInstallmentAmount(
-            $purchase->total_price,
-            $purchase->advance_payment,
-            $totalCount
-        );
+
+        // Use the stored monthly_installment (which may be user-specified via Mode B)
+        // Fall back to auto-calculation only if not set
+        $fixedInstallmentAmt = (float) $purchase->monthly_installment;
+        if ($fixedInstallmentAmt <= 0) {
+            $fixedInstallmentAmt = Purchase::calculateInstallmentAmount(
+                $purchase->total_price,
+                $purchase->advance_payment,
+                $totalCount
+            );
+        }
 
         for ($i = 1; $i <= $totalCount; $i++) {
             // Calculate due date based on installment type
             $dueDate = match($type) {
                 'daily'  => $startDate->copy()->addDays($i - 1),
                 'weekly' => $startDate->copy()->addWeeks($i - 1),
-                default  => $startDate->copy()->addMonths($i - 1),  // monthly
+                default  => $startDate->copy()->addMonths($i - 1),
             };
 
-            // Last installment absorbs any rounding remainder
             if ($i === $totalCount) {
-                $thisAmount = $remainingBalance;
+                // Last installment: use whatever is left (handles remainder)
+                $thisAmount = round($remainingBalance, 2);
                 $newBalance = 0;
             } else {
-                $thisAmount = $installmentAmount;
-                $newBalance = round($remainingBalance - $installmentAmount, 2);
+                // All other installments: use fixed amount
+                $thisAmount = $fixedInstallmentAmt;
+                $newBalance = round($remainingBalance - $fixedInstallmentAmt, 2);
             }
 
             Installment::create([
