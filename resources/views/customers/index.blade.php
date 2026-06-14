@@ -334,27 +334,40 @@
 
         function confirmDelete(customerId, customerName, totalPurchases) {
             let message = totalPurchases > 0 ?
-                `⚠️ WARNING! This will delete customer "${customerName}" and all ${totalPurchases} purchases. Continue?` :
+                `WARNING! This will delete customer "${customerName}" and all ${totalPurchases} purchases. Continue?` :
                 `Delete customer "${customerName}"?`;
 
-            if (confirm(message)) {
-                fetch(`/admin/customers/${customerId}`, {
-                        method: 'DELETE',
-                        headers: {
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                            'X-Requested-With': 'XMLHttpRequest'
-                        }
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            $('#customers-table').DataTable().ajax.reload();
-                            alert('✅ ' + data.message);
-                        } else {
-                            alert('❌ ' + data.message);
-                        }
-                    });
-            }
+            if (!confirm(message)) return;
+
+            // POST + _method=DELETE (Laravel method spoofing)
+            // Live shared hosting servers block actual DELETE method
+            const formData = new FormData();
+            formData.append('_method', 'DELETE');
+            formData.append('_token', document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
+
+            fetch(`/admin/customers/${customerId}`, {
+                    method: 'POST',
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                    body: formData
+                })
+                .then(response => {
+                    const contentType = response.headers.get('content-type') || '';
+                    if (contentType.includes('application/json')) {
+                        return response.json();
+                    }
+                    throw new Error('Server error (Status: ' + response.status + '). Check server logs.');
+                })
+                .then(data => {
+                    if (data.success) {
+                        $('#customers-table').DataTable().ajax.reload();
+                        alert('Deleted: ' + data.message);
+                    } else {
+                        alert('Cannot delete: ' + data.message);
+                    }
+                })
+                .catch(err => {
+                    alert('Error: ' + err.message);
+                });
         }
     </script>
 @endpush
