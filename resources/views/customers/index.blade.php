@@ -373,10 +373,12 @@
                 const $btn = $(this);
                 $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Deleting...');
 
+                // Use the same logic as products/guarantors: POST to resource route with _method=DELETE
                 const formData = new FormData();
+                formData.append('_method', 'DELETE');
                 formData.append('_token', document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
 
-                fetch(`/admin/customers/${customerId}/delete`, {
+                fetch(`/admin/customers/${customerId}`, {
                         method: 'POST',
                         headers: { 'X-Requested-With': 'XMLHttpRequest' },
                         body: formData
