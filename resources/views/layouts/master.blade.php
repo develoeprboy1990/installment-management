@@ -50,9 +50,9 @@
                                 {{-- <img alt="image" class="img-circle"
                                     src="{{ Auth::user()->avatar ? getSettingAssetUrl(Auth::user()->avatar) : asset('backend/img/profile_small.jpg') }}"
                                     style="width: 60px; height: 60px; border-radius: 50%;" /> --}}
-                                    <img alt="image"
-     src="{{ Auth::user()->avatar ? getSettingAssetUrl(Auth::user()->avatar) : asset('backend/img/profile_small.jpg') }}"
-     style="width: 150px; height: 80px; object-fit: contain;" />
+                            <img alt="image"
+                                src="{{ Auth::user()->avatar ? getSettingAssetUrl(Auth::user()->avatar) : asset('backend/img/profile_small.jpg') }}"
+                                style="width: 150px; height: 80px; object-fit: contain;" />
                             </span>
                             <a data-toggle="dropdown" class="dropdown-toggle" href="#">
                                 <span class="clear">
