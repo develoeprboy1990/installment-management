@@ -46,7 +46,7 @@
         <div class="col-lg-12">
             <div class="ibox">
                 <div class="ibox-content printable-area">
-                    <div class="text-center print-header" style="display:none; margin-bottom: 20px;">
+                    <div class="text-center print-header" style="display:none; margin-bottom: 20px;padding-top:20px;">
                         <h2>{{ getUserSetting('project_name') ?? 'Electronics Corporation' }}</h2>
                         <h4>Monthly Installment Schedule - {{ date('F', mktime(0, 0, 0, $month, 10)) }} {{ $year }}</h4>
                         <p>Printed on: {{ now()->format('d-M-Y h:i A') }}</p>
