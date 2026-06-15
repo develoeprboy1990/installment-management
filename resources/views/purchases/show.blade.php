@@ -261,12 +261,20 @@
                                     </small>
                                 @endif
                             </td>
-                            <td>Rs. {{ number_format($installment->installment_amount, 2) }}</td>
+                            <td>
+                                <strong>Rs. {{ number_format($installment->installment_amount, 2) }}</strong>
+                                @if($installment->paid_amount > 0)
+                                    <br><small class="text-success">Paid: Rs. {{ number_format($installment->paid_amount, 2) }}</small>
+                                    <br><small class="text-danger">Due: Rs. {{ number_format($installment->installment_amount - $installment->paid_amount - $installment->discount, 2) }}</small>
+                                @endif
+                            </td>
                             <td>
                                 @if($installment->status == 'paid')
                                     <span class="label label-success">Paid</span>
                                 @elseif($installment->status == 'waived')
                                     <span class="label label-default" title="Balance zero hua isliye yeh installment waived ho gayi">Waived</span>
+                                @elseif($installment->status == 'partial')
+                                    <span class="label label-warning" style="background-color: #f0ad4e;">Partial Paid</span>
                                 @elseif($isOverdue)
                                     <span class="label label-danger">Pending (Overdue)</span>
                                 @else
@@ -291,7 +299,7 @@
                             </td>
                             <td>{{ $installment->officer?->name ?? $installment->recovery_officer ?? '-' }}</td>
                             <td>
-                                @if($installment->status == 'pending' || $installment->status == 'overdue')
+                                @if(in_array($installment->status, ['pending', 'overdue', 'partial']))
                                     <button class="btn btn-sm btn-success process-payment-btn"
                                         data-installment-id="{{ $installment->id }}">
                                         <i class="fa fa-credit-card"></i> Pay

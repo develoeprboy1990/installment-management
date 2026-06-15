@@ -22,8 +22,8 @@
                         $totalPurchases       = $customer->purchases->count();
                         $totalPurchaseAmount  = $customer->purchases->sum('total_price');
                         $totalAdvance         = $customer->purchases->sum('advance_payment');
-                        $totalPaidInst        = $customer->installments()->where('status','paid')->sum('installment_amount');
-                        $totalDiscount        = $customer->installments()->where('status','paid')->sum('discount');
+                        $totalPaidInst        = $customer->installments()->whereIn('status',['paid','partial'])->sum('paid_amount');
+                        $totalDiscount        = $customer->installments()->whereIn('status',['paid','partial'])->sum('discount');
                         $totalPaid            = $totalAdvance + $totalPaidInst + $totalDiscount;
                         $totalRemaining       = max(0, $totalPurchaseAmount - $totalPaid);
                         $overdueCount         = $customer->installments()->where('status','pending')->where('due_date','<',now())->count();
@@ -125,8 +125,8 @@
                     {{-- ══ Per-Purchase Cards ═══════════════════════════════════ --}}
                     @foreach($customer->purchases as $i => $purchase)
                     @php
-                        $pPaidInst    = $purchase->installments->where('status','paid');
-                        $pCash        = $purchase->advance_payment + $pPaidInst->sum('installment_amount');
+                        $pPaidInst    = $purchase->installments->whereIn('status',['paid','partial']);
+                        $pCash        = $purchase->advance_payment + $pPaidInst->sum('paid_amount');
                         $pDisc        = $pPaidInst->sum('discount');
                         $pTotalPaid   = $pCash + $pDisc;
                         $pRemaining   = max(0, $purchase->total_price - $pTotalPaid);

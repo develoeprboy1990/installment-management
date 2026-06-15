@@ -135,9 +135,11 @@
                                     $statusClass =
                                         $installment->status == 'paid'
                                             ? 'success'
-                                            : ($isOverdue
-                                                ? 'danger'
-                                                : 'warning');
+                                            : ($installment->status == 'partial'
+                                                ? 'warning'
+                                                : ($isOverdue
+                                                    ? 'danger'
+                                                    : 'warning'));
                                 @endphp
                                 <tr class="{{ $isOverdue ? 'danger' : '' }}">
                                     <td>{{ $loop->iteration + ($installments->currentPage() - 1) * $installments->perPage() }}
@@ -165,11 +167,17 @@
                                             </small>
                                         @endif
                                     </td>
-                                    <td>Rs. {{ number_format($installment->installment_amount, 2) }}</td>
                                     <td>
-                                        <span class="label label-{{ $statusClass }}">
-                                            {{ ucfirst($installment->status) }}
-                                            @if ($isOverdue)
+                                        <strong>Rs. {{ number_format($installment->installment_amount, 2) }}</strong>
+                                        @if($installment->paid_amount > 0)
+                                            <br><small class="text-success">Paid: Rs. {{ number_format($installment->paid_amount, 2) }}</small>
+                                            <br><small class="text-danger">Due: Rs. {{ number_format($installment->installment_amount - $installment->paid_amount - $installment->discount, 2) }}</small>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        <span class="label label-{{ $statusClass }}" {{ $installment->status == 'partial' ? 'style=background-color:#f0ad4e;' : '' }}>
+                                            {{ $installment->status == 'partial' ? 'Partial Paid' : ucfirst($installment->status) }}
+                                            @if ($isOverdue && $installment->status != 'partial')
                                                 (Overdue)
                                             @endif
                                         </span>
@@ -184,7 +192,7 @@
                                                 class="btn btn-sm btn-info" title="View Purchase Details">
                                                 <i class="fa fa-eye"></i>
                                             </a>
-                                            @if ($installment->status == 'pending')
+                                            @if (in_array($installment->status, ['pending', 'partial']))
                                                 <a href="{{ route('purchases.show', $installment->purchase_id) }}#installment-{{ $installment->id }}"
                                                     class="btn btn-sm btn-success" title="Process Payment">
                                                     <i class="fa fa-credit-card"></i>

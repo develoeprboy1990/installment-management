@@ -47,11 +47,11 @@ class DashboardController extends Controller
 
             // Revenue Statistics
             $data['total_revenue'] = Purchase::sum('total_price') ?? 0;
-            $data['collected_this_month'] = Installment::where('status', 'paid')
+            $data['collected_this_month'] = Installment::whereIn('status', ['paid', 'partial'])
                 ->whereMonth('date', now()->month)
                 ->whereYear('date', now()->year)
-                ->sum('installment_amount') ?? 0;
-            $data['discount_this_month'] = Installment::where('status', 'paid')
+                ->sum('paid_amount') ?? 0;
+            $data['discount_this_month'] = Installment::whereIn('status', ['paid', 'partial'])
                 ->whereMonth('date', now()->month)
                 ->whereYear('date', now()->year)
                 ->sum('discount') ?? 0;
@@ -67,7 +67,7 @@ class DashboardController extends Controller
             }
 
             // Recent Payments (last 5)
-            $data['recent_payments'] = Installment::where('status', 'paid')
+            $data['recent_payments'] = Installment::whereIn('status', ['paid', 'partial'])
                 ->with('customer')
                 ->orderBy('date', 'desc')
                 ->limit(100)
@@ -120,8 +120,8 @@ class DashboardController extends Controller
                 // Calculate remaining balance across all purchases
                 $totalPurchased = $cust->purchases->sum('total_price');
                 $totalAdvance   = $cust->purchases->sum('advance_payment');
-                $totalPaid      = $cust->installments->where('status','paid')->sum('installment_amount');
-                $totalDiscount  = $cust->installments->where('status','paid')->sum('discount');
+                $totalPaid      = $cust->installments->whereIn('status',['paid','partial'])->sum('paid_amount');
+                $totalDiscount  = $cust->installments->whereIn('status',['paid','partial'])->sum('discount');
                 $remaining      = $totalPurchased - $totalAdvance - $totalPaid - $totalDiscount;
 
                 if ($remaining <= 0) {
@@ -136,15 +136,15 @@ class DashboardController extends Controller
             $data['defaulters_count']    = $defaultedCount;
 
             // Monthly Collections for chart (last 6 months)
-            $data['monthly_collections'] = Installment::where('status', 'paid')
+            $data['monthly_collections'] = Installment::whereIn('status', ['paid', 'partial'])
                 ->where('date', '>=', now()->subMonths(6))
                 ->selectRaw('DATE_FORMAT(date, "%Y-%m") as month')
-                ->selectRaw('COALESCE(SUM(installment_amount), 0) as total')
+                ->selectRaw('COALESCE(SUM(paid_amount), 0) as total')
                 ->groupBy('month')
                 ->orderBy('month')
                 ->pluck('total', 'month');
 
-            $grossProfit = Installment::where('status', 'paid')
+            $grossProfit = Installment::whereIn('status', ['paid', 'partial'])
                 ->with('purchase.product')
                 ->get()
                 ->reduce(function($carry, $inst) {
@@ -161,10 +161,10 @@ class DashboardController extends Controller
                     return $carry + $profitPerInst;
                 }, 0);
 
-            $totalDiscountAllTime = Installment::where('status', 'paid')->sum('discount') ?? 0;
+            $totalDiscountAllTime = Installment::whereIn('status', ['paid', 'partial'])->sum('discount') ?? 0;
             $data['total_profit'] = $grossProfit - $totalDiscountAllTime;
 
-            $lastMonthGrossProfit = Installment::where('status','paid')
+            $lastMonthGrossProfit = Installment::whereIn('status',['paid','partial'])
                 ->whereYear('date', now()->subMonth()->year)
                 ->whereMonth('date', now()->subMonth()->month)
                 ->with('purchase.product')
@@ -180,7 +180,7 @@ class DashboardController extends Controller
 
                     return $carry + $profitPerInst;
                 }, 0);
-            $lastMonthDiscount = Installment::where('status','paid')
+            $lastMonthDiscount = Installment::whereIn('status',['paid','partial'])
                 ->whereYear('date', now()->subMonth()->year)
                 ->whereMonth('date', now()->subMonth()->month)
                 ->sum('discount') ?? 0;
@@ -205,12 +205,12 @@ class DashboardController extends Controller
     [$start, $end, $groupBy] = $this->resolveRange($range, $startDate, $endDate);
 
     // Paid installments (count + sum)
-    $paidBase = Installment::where('status', 'paid');
+    $paidBase = Installment::whereIn('status', ['paid', 'partial']);
     if ($start && $end) {
         $paidBase->whereBetween('date', [$start, $end]);
     }
     $paid_installments_count = (clone $paidBase)->count();
-    $collected_amount        = (clone $paidBase)->sum('installment_amount') ?? 0;
+    $collected_amount        = (clone $paidBase)->sum('paid_amount') ?? 0;
     $discount_amount         = (clone $paidBase)->sum('discount') ?? 0;
 
     // Pending revenue (due in range) and all-time pending
@@ -241,7 +241,7 @@ class DashboardController extends Controller
     $profitQuery = Installment::query()
         ->join('purchases', 'installments.purchase_id', '=', 'purchases.id')
         ->join('products', 'products.id', '=', 'purchases.product_id')
-        ->where('installments.status', 'paid');
+        ->whereIn('installments.status', ['paid', 'partial']);
 
     if ($start && $end) {
         $profitQuery->whereBetween('installments.date', [$start, $end]);
@@ -343,14 +343,14 @@ private function resolveRange(string $range, $startDate = null, $endDate = null)
  */
 private function collectionsSeries(?Carbon $start, ?Carbon $end, string $groupBy): array
 {
-    $q = Installment::where('status', 'paid');
+    $q = Installment::whereIn('status', ['paid', 'partial']);
 
     if ($start && $end) {
         $q->whereBetween('date', [$start, $end]);
     }
 
     if ($groupBy === 'day') {
-        $rows = $q->selectRaw('DATE(date) as d, COALESCE(SUM(installment_amount),0) as total')
+        $rows = $q->selectRaw('DATE(date) as d, COALESCE(SUM(paid_amount),0) as total')
                   ->groupBy('d')
                   ->orderBy('d')
                   ->get();
@@ -358,7 +358,7 @@ private function collectionsSeries(?Carbon $start, ?Carbon $end, string $groupBy
     }
 
     // month grouping
-    $rows = $q->selectRaw('DATE_FORMAT(date, "%Y-%m") as m, COALESCE(SUM(installment_amount),0) as total')
+    $rows = $q->selectRaw('DATE_FORMAT(date, "%Y-%m") as m, COALESCE(SUM(paid_amount),0) as total')
               ->groupBy('m')
               ->orderBy('m')
               ->get();

@@ -323,7 +323,10 @@ class PurchaseController extends Controller
     {
         $installment = Installment::with(['customer', 'officer', 'purchase'])->findOrFail($installmentId);
         $remainingBalance = $installment->purchase ? $installment->purchase->getRemainingBalance() : $installment->pre_balance;
-        $payableAmount = min((float) $installment->installment_amount, (float) $remainingBalance);
+        
+        // Calculate remaining amount for THIS installment
+        $installmentRemaining = $installment->installment_amount - $installment->paid_amount - $installment->discount;
+        $payableAmount = min((float) $installmentRemaining, (float) $remainingBalance);
 
         // Generate next receipt number
         $lastReceipt = Installment::where('receipt_no', '!=', null)
@@ -381,15 +384,24 @@ class PurchaseController extends Controller
 
         $newBalance = max(0, $remainingBalance - $totalPayment);
 
+        // Add to existing paid amount (in case they are paying remaining balance of a partial installment)
+        $newPaidAmount = $installment->paid_amount + $request->payment_amount;
+        $totalPaidForThisInstallment = $newPaidAmount + $installment->discount + ($request->discount ?? 0);
+        
+        $status = 'paid';
+        if ($totalPaidForThisInstallment < $installment->installment_amount) {
+            $status = 'partial';
+        }
+
         // Update installment
         $installment->update([
             'date' => $request->payment_date,
             'receipt_no' => $request->receipt_no,
-            'installment_amount' => $request->payment_amount,
-            'discount' => $request->discount ?? 0,
+            'paid_amount' => $newPaidAmount,
+            'discount' => $installment->discount + ($request->discount ?? 0),
             'balance' => $newBalance,
             'fine_amount' => $fine,
-            'status' => 'paid',
+            'status' => $status,
             'payment_method' => $request->payment_method,
             'recovery_officer_id' => $request->recovery_officer_id,
             'remarks' => $request->remarks,

@@ -66,14 +66,14 @@ class Purchase extends Model
     public function getPaidInstallmentsCashAmountAttribute()
     {
         return (float) $this->installments()
-            ->where('status', 'paid')  // sirf actual paid — waived exclude
-            ->sum('installment_amount');
+            ->whereIn('status', ['paid', 'partial'])  // sirf actual paid aur partial — waived exclude
+            ->sum('paid_amount');
     }
 
     public function getPaidInstallmentsDiscountAmountAttribute()
     {
         return (float) $this->installments()
-            ->where('status', 'paid')  // sirf actual paid — waived exclude
+            ->whereIn('status', ['paid', 'partial'])  // sirf actual paid aur partial — waived exclude
             ->sum('discount');
     }
 

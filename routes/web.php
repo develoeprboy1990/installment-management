@@ -64,6 +64,7 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth.redirect','role:Admin|
 
     //installments
     Route::get('installments', [InstallmentController::class, 'index'])->name('installments.index');
+    Route::get('installments/monthly-schedule', [InstallmentController::class, 'monthlySchedule'])->name('installments.monthly_schedule');
     Route::get('installments/{installment}/edit', [InstallmentController::class, 'edit'])->name('installments.edit');
     Route::put('installments/{installment}', [InstallmentController::class, 'update'])->name('installments.update');
     Route::delete('installments/{installment}', [InstallmentController::class, 'destroy'])->name('installments.destroy');

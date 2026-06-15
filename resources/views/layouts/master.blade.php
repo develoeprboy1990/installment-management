@@ -109,8 +109,15 @@
 
                     @can('view-installments')
                         <li class="{{ request()->is('admin/installments*') ? 'active' : '' }}">
-                            <a href="{{ route('installments.index') }}"><i class="fa fa-credit-card"></i> <span
-                                    class="nav-label">Installments</span></a>
+                            <a href="#"><i class="fa fa-credit-card"></i> <span class="nav-label">Installments</span> <span class="fa arrow"></span></a>
+                            <ul class="nav nav-second-level {{ request()->is('admin/installments*') ? '' : 'collapse' }}">
+                                <li class="{{ request()->routeIs('installments.index') ? 'active' : '' }}">
+                                    <a href="{{ route('installments.index') }}">All Installments</a>
+                                </li>
+                                <li class="{{ request()->routeIs('installments.monthly_schedule') ? 'active' : '' }}">
+                                    <a href="{{ route('installments.monthly_schedule') }}">Monthly Schedule</a>
+                                </li>
+                            </ul>
                         </li>
                     @endcan
 

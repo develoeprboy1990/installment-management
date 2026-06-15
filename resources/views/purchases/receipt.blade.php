@@ -117,7 +117,7 @@
             </tr>
             <tr>
                 <th>Cash Paid</th>
-                <td class="text-end">Rs.{{ number_format((float)($installment->installment_amount ?? 0), 2) }}</td>
+                <td class="text-end">Rs.{{ number_format((float)($installment->paid_amount ?? 0), 2) }}</td>
                 <th>Discount</th>
                 <td class="text-end">Rs.{{ number_format((float)($installment->discount ?? 0), 2) }}</td>
             </tr>
@@ -125,7 +125,7 @@
                 <th>Fine Amount</th>
                 <td class="text-end">Rs.{{ number_format((float)($installment->fine_amount ?? 0), 2) }}</td>
                 <th>Total Reduction</th>
-                <td class="text-end"><strong>Rs.{{ number_format((float)(($installment->installment_amount ?? 0) + ($installment->discount ?? 0)), 2) }}</strong></td>
+                <td class="text-end"><strong>Rs.{{ number_format((float)(($installment->paid_amount ?? 0) + ($installment->discount ?? 0)), 2) }}</strong></td>
             </tr>
             <tr>
                 <th>Installment Type</th>

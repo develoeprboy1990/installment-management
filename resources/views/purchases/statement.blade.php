@@ -4,10 +4,10 @@
 @php
     $customer   = $purchase->customer;
     $product    = $purchase->product;
-    $paidInst   = $purchase->installments->where('status', 'paid')->sortBy('due_date');
+    $paidInst   = $purchase->installments->whereIn('status', ['paid', 'partial'])->sortBy('due_date');
     $pendingInst = $purchase->installments->where('status', 'pending')->sortBy('due_date');
 
-    $paidCash    = $purchase->advance_payment + $paidInst->sum('installment_amount');
+    $paidCash    = $purchase->advance_payment + $paidInst->sum('paid_amount');
     $pDiscount   = $paidInst->sum('discount');
     $pTotalPaid  = $paidCash + $pDiscount;
     $pRemaining  = max(0, $purchase->total_price - $pTotalPaid);
@@ -200,11 +200,12 @@
                                     <th>Date</th>
                                     <th>Rcv. #</th>
                                     <th>Pre-Balance</th>
-                                    <th>Installment</th>
+                                    <th>Total Inst.</th>
+                                    <th>Paid Amt</th>
                                     <th>Discount</th>
                                     <th>Balance</th>
-                                    <th>Recovery Officer</th>
-                                    <th>Remarks</th>
+                                    <th>Officer</th>
+                                    <th>Status</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -215,10 +216,11 @@
                                     <td>{{ $inst->receipt_no ?? '-' }}</td>
                                     <td>{{ number_format($inst->pre_balance, 0) }}</td>
                                     <td>{{ number_format($inst->installment_amount, 0) }}</td>
+                                    <td>{{ number_format($inst->paid_amount, 0) }}</td>
                                     <td>{{ number_format($inst->discount ?? 0, 0) }}</td>
                                     <td>{{ number_format($inst->balance, 0) }}</td>
                                     <td>{{ $inst->officer?->name ?? 'N/A' }}</td>
-                                    <td>Paid</td>
+                                    <td>{{ $inst->status == 'partial' ? 'Partial' : 'Paid' }}</td>
                                 </tr>
                                 @endforeach
                             </tbody>
