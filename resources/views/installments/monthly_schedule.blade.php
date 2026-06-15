@@ -124,36 +124,110 @@
 
 @push('styles')
 <style>
+    /* Display styles */
+    .table-responsive {
+        overflow-x: auto;
+    }
+    
     @media print {
-        .no-print, .sidebar, .navbar, .footer, .btn, .breadcrumb {
-            display: none !important;
-        }
-        body {
-            background-color: #fff;
-            margin: 0;
-            padding: 0;
-        }
-        .wrapper, .ibox-content {
-            margin: 0;
-            padding: 0;
-            border: none;
-            box-shadow: none;
-        }
-        .print-header {
-            display: block !important;
-            text-align: center;
-        }
-        .table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        .table th, .table td {
-            border: 1px solid #000 !important;
-            padding: 5px !important;
-        }
         @page {
             size: A4 portrait;
             margin: 10mm;
+        }
+        
+        /* Hide unnecessary elements */
+        .no-print, .sidebar, .navbar, .footer, .btn, .breadcrumb, form {
+            display: none !important;
+        }
+        
+        /* Reset margins and backgrounds */
+        body, .wrapper, .ibox, .ibox-content {
+            background-color: #fff !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            border: none !important;
+            box-shadow: none !important;
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif !important;
+        }
+        
+        /* Header styling */
+        .print-header {
+            display: block !important;
+            text-align: center;
+            margin-bottom: 15px !important;
+        }
+        .print-header h2 {
+            font-size: 20px !important;
+            margin: 0 0 5px 0 !important;
+            font-weight: bold !important;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .print-header h4 {
+            font-size: 14px !important;
+            margin: 0 0 5px 0 !important;
+            color: #333 !important;
+        }
+        .print-header p {
+            font-size: 10px !important;
+            color: #777 !important;
+            margin: 0 0 10px 0 !important;
+        }
+        .print-header hr {
+            border-top: 1px solid #ccc !important;
+            margin: 10px 0 !important;
+        }
+        
+        /* Table styling */
+        .table {
+            width: 100% !important;
+            border-collapse: collapse !important;
+            font-size: 11px !important; /* Smaller text */
+            margin-bottom: 0 !important;
+        }
+        .table th, .table td {
+            border: 1px solid #ddd !important;
+            padding: 4px 6px !important;
+            vertical-align: middle !important;
+            color: #333 !important;
+        }
+        .table th {
+            background-color: #f3f3f4 !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            font-weight: bold !important;
+            text-align: left !important;
+        }
+        .table th.text-center, .table td.text-center {
+            text-align: center !important;
+        }
+        .table th.text-right, .table td.text-right {
+            text-align: right !important;
+        }
+        
+        /* Text emphasis */
+        strong {
+            font-weight: 600 !important;
+        }
+        .text-danger {
+            color: #d62d3a !important; /* A slightly darker red for better print visibility */
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+        
+        /* Signature column line */
+        td[style*="dashed"] {
+            border-bottom: 1px dashed #999 !important;
+        }
+        
+        /* Tfoot styling */
+        .table tfoot th {
+            background-color: #f9f9f9 !important;
+            font-size: 12px !important;
+            padding: 8px 6px !important;
+        }
+        .table tfoot th.text-danger {
+            font-size: 14px !important;
         }
     }
 </style>
