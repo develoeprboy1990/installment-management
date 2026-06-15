@@ -97,7 +97,7 @@ class DashboardController extends Controller
 
             $allCustomers = Customer::with([
                 'purchases',
-                'installments' => fn($q) => $q->select('customer_id','purchase_id','status','installment_amount','discount','due_date')
+                'installments' => fn($q) => $q->select('id','customer_id','purchase_id','status','installment_amount','paid_amount','discount','due_date')
             ])->get();
 
             $activeCount    = 0;
