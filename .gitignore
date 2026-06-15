@@ -63,6 +63,9 @@ installment.zip
 !/storage/framework/sessions/.gitkeep
 /storage/framework/views/*.php
 !/storage/framework/views/.gitkeep
+/storage/app/public/avatars/*
+/storage/app/public/customers/*
+/storage/app/public/settings/*
 
 # Compiled files
 *.compiled
