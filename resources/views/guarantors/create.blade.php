@@ -62,7 +62,7 @@
             <div class="col-md-6">
                 <div class="mb-3">
                     <label>Name</label>
-                    <input type="text" name="name" class="form-control" value="{{ old('name') }}" required>
+                    <input type="text" name="name" class="form-control capitalize-words" value="{{ old('name') }}" required>
                     @error('name')
                         <small class="text-danger">{{ $message }}</small>
                     @enderror
@@ -71,7 +71,7 @@
             <div class="col-md-6">
                 <div class="mb-3">
                     <label>Father's Name</label>
-                    <input type="text" name="father_name" class="form-control" value="{{ old('father_name') }}" required>
+                    <input type="text" name="father_name" class="form-control capitalize-words" value="{{ old('father_name') }}" required>
                     @error('father_name')
                         <small class="text-danger">{{ $message }}</small>
                     @enderror
@@ -101,7 +101,7 @@
             <div class="col-md-4">
                 <div class="mb-3">
                     <label>Relation</label>
-                    <input type="text" name="relation" class="form-control" value="{{ old('relation') }}" required>
+                    <input type="text" name="relation" class="form-control capitalize-words" value="{{ old('relation') }}" required>
                     @error('relation')
                         <small class="text-danger">{{ $message }}</small>
                     @enderror
@@ -113,7 +113,7 @@
             <div class="col-md-6">
                 <div class="mb-3">
                     <label>Residence Address</label>
-                    <textarea name="residence_address" class="form-control" rows="3" required>{{ old('residence_address') }}</textarea>
+                    <textarea name="residence_address" class="form-control capitalize-words" rows="3" required>{{ old('residence_address') }}</textarea>
                     @error('residence_address')
                         <small class="text-danger">{{ $message }}</small>
                     @enderror
@@ -122,7 +122,7 @@
             <div class="col-md-6">
                 <div class="mb-3">
                     <label>Office Address</label>
-                    <textarea name="office_address" class="form-control" rows="3">{{ old('office_address') }}</textarea>
+                    <textarea name="office_address" class="form-control capitalize-words" rows="3">{{ old('office_address') }}</textarea>
                     @error('office_address')
                         <small class="text-danger">{{ $message }}</small>
                     @enderror
@@ -132,7 +132,7 @@
 
         <div class="mb-3">
             <label>Occupation</label>
-            <input type="text" name="occupation" class="form-control" value="{{ old('occupation') }}">
+            <input type="text" name="occupation" class="form-control capitalize-words" value="{{ old('occupation') }}">
             @error('occupation')
                 <small class="text-danger">{{ $message }}</small>
             @enderror
@@ -144,7 +144,7 @@
                 <small class="text-danger">{{ $message }}</small>
             @enderror
         </div>
-       <div style="margin-top: 10px; align-items: center;text-align: center;">
+       <div style="margin-top: 10px; align-items: center;text-align: center; margin-bottom: 60px; ">
              <button type="submit" class="btn btn-success">Save</button>
              <a href="{{ route('guarantors.index') }}" class="btn btn-info">Cancel</a>
        </div>
@@ -153,8 +153,20 @@
 </div>
 @endsection
 @push('script')
-
 <script>
+// Capitalize first letter of each word
+function capitalizeWords(el) {
+    let pos = el.selectionStart;
+    let val = el.value.replace(/\b([a-z])/g, function(char) {
+        return char.toUpperCase();
+    });
+    el.value = val;
+    el.setSelectionRange(pos, pos);
+}
+document.querySelectorAll('.capitalize-words').forEach(function(el) {
+    el.addEventListener('input', function() { capitalizeWords(this); });
+});
+
     $(document).ready(function() {
         $('#customerSelect').select2({
             placeholder: "Select a customer",

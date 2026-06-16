@@ -162,7 +162,7 @@
                 @enderror
             </div>
 
-            <div class="d-flex justify-content-center" style="text-align: center; margin: 18px;">
+            <div class="d-flex justify-content-center" style="text-align: center; margin: 30px;">
                 <div class="d-flex gap-2 justify-content-center">
                     <button type="submit" class="btn btn-primary">Update</button>
                     <a href="{{ route('guarantors.show', $guarantor->id) }}" class="btn btn-info">View Details</a>

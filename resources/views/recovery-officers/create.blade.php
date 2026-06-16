@@ -23,7 +23,7 @@
                                 <div class="col-md-6">
                                     <div class="form-group">
                                         <label for="name">Full Name <span class="text-danger">*</span></label>
-                                        <input type="text" class="form-control @error('name') is-invalid @enderror"
+                                        <input type="text" class="form-control capitalize-words @error('name') is-invalid @enderror"
                                             id="name" name="name" value="{{ old('name') }}"
                                             placeholder="Enter officer's full name" required>
                                         @error('name')
@@ -74,7 +74,7 @@
 
                             <div class="form-group">
                                 <label for="address">Address</label>
-                                <textarea class="form-control @error('address') is-invalid @enderror" id="address" name="address" rows="3"
+                                <textarea class="form-control capitalize-words @error('address') is-invalid @enderror" id="address" name="address" rows="3"
                                     placeholder="Enter complete address">{{ old('address') }}</textarea>
                                 @error('address')
                                     <span class="text-danger small">{{ $message }}</span>
@@ -130,4 +130,21 @@
             margin-top: 5px;
         }
     </style>
+@endpush
+
+@push('script')
+<script>
+// Capitalize first letter of each word
+function capitalizeWords(el) {
+    let pos = el.selectionStart;
+    let val = el.value.replace(/\b([a-z])/g, function(char) {
+        return char.toUpperCase();
+    });
+    el.value = val;
+    el.setSelectionRange(pos, pos);
+}
+document.querySelectorAll('.capitalize-words').forEach(function(el) {
+    el.addEventListener('input', function() { capitalizeWords(this); });
+});
+</script>
 @endpush

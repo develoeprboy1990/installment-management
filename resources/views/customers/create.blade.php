@@ -20,14 +20,14 @@
 
             <div class="col-md-6">
                 <label for="name">Name <span class="text-danger">*</span></label>
-                <input type="text" class="form-control" id="name" name="name" required>
+                <input type="text" class="form-control capitalize-words" id="name" name="name" required>
             </div>
         </div>
 
         <div class="row mt-3">
             <div class="col-md-6">
                 <label for="father_name">Father Name</label>
-                <input type="text" class="form-control" id="father_name" name="father_name">
+                <input type="text" class="form-control capitalize-words" id="father_name" name="father_name">
             </div>
 
             <div class="col-md-6">
@@ -44,19 +44,19 @@
         <div class="row mt-3">
             <div class="col-md-6">
                 <label for="occupation">Occupation</label>
-                <input type="text" class="form-control" id="occupation" name="occupation">
+                <input type="text" class="form-control capitalize-words" id="occupation" name="occupation">
             </div>
 
             <div class="col-md-6">
                 <label for="residence">Residence Address</label>
-                <textarea class="form-control" id="residence" name="residence" rows="2"></textarea>
+                <textarea class="form-control capitalize-words" id="residence" name="residence" rows="2"></textarea>
             </div>
         </div>
 
         <div class="row mt-3">
             <div class="col-md-6">
                 <label for="office_address">Office Address</label>
-                <textarea class="form-control" id="office_address" name="office_address" rows="2"></textarea>
+                <textarea class="form-control capitalize-words" id="office_address" name="office_address" rows="2"></textarea>
             </div>
 
             <div class="col-md-6">
@@ -115,6 +115,22 @@
 
 @push('script')
 <script>
+// Capitalize first letter of each word
+function capitalizeWords(el) {
+    let pos = el.selectionStart;
+    let val = el.value.replace(/\b([a-z])/g, function(char) {
+        return char.toUpperCase();
+    });
+    el.value = val;
+    el.setSelectionRange(pos, pos);
+}
+
+document.querySelectorAll('.capitalize-words').forEach(function(el) {
+    el.addEventListener('input', function() {
+        capitalizeWords(this);
+    });
+});
+
 // Format NIC input
 $('#nic').on('input', function() {
     let value = this.value.replace(/\D/g, '');
