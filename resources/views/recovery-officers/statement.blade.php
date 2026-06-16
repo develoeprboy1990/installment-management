@@ -97,7 +97,7 @@
                                     <tbody>
                                         @foreach($customer->purchases as $purchase)
                                         <tr>
-                                            <td>{{ $purchase->purchase_date->format('d/m/Y') }}</td>
+                                            <td>{{ $purchase->purchase_date->toDisplayDate() }}</td>
                                             <td>{{ $purchase->product->company }}</td>
                                             <td>{{ $purchase->product->model }}</td>
                                             <td>{{ $purchase->product->serial_no }}</td>
@@ -178,8 +178,8 @@
                                     <tbody>
                                         @foreach($allInstallments as $installment)
                                         <tr>
-                                            <td>{{ $installment->due_date ? $installment->due_date->format('d/m/Y') : '-' }}</td>
-                                            <td>{{ $installment->date ? $installment->date->format('d/m/Y') : '-' }}</td>
+                                            <td>{{ $installment->due_date ? $installment->due_date->toDisplayDate() : '-' }}</td>
+                                            <td>{{ $installment->date ? $installment->date->toDisplayDate() : '-' }}</td>
                                             <td>{{ $installment->receipt_no ?? '-' }}</td>
                                             <td>{{ number_format($installment->installment_amount, 2) }}</td>
                                             <td>{{ number_format($installment->discount, 2) }}</td>

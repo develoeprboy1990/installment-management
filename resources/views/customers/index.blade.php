@@ -40,6 +40,30 @@
             </table>
         </div>
     </div>
+{{-- ── Delete Confirmation Modal ─────────────────────────────────────── --}}
+    <div class="modal fade" id="deleteCustomerModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">Confirm Delete</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger">
+                        <i class="fa fa-exclamation-triangle"></i>
+                        <strong>Warning!</strong> This action cannot be undone.
+                    </div>
+                    <p id="deleteCustomerMessage"></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+                        <i class="fa fa-trash"></i> Delete Customer
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 @endsection
 
 @push('styles')
@@ -332,29 +356,67 @@
             });
         });
 
-        function confirmDelete(customerId, customerName, totalPurchases) {
-            let message = totalPurchases > 0 ?
-                `⚠️ WARNING! This will delete customer "${customerName}" and all ${totalPurchases} purchases. Continue?` :
-                `Delete customer "${customerName}"?`;
+        function confirmDelete(customerId, customerName, totalPurchases, paidInstallments) {
+            if (paidInstallments > 0) {
+                // Customer has paid installments, block deletion
+                $('#deleteCustomerMessage').html(`<div class="text-danger"><i class="fa fa-times-circle"></i> Cannot delete customer <strong>${customerName}</strong>. This customer has <strong>${paidInstallments} paid installment(s)</strong> on record. Customers with payment history cannot be deleted to preserve financial data integrity.</div>`);
+                $('#confirmDeleteBtn').hide();
+                $('#deleteCustomerModal').modal('show');
+                return;
+            }
 
-            if (confirm(message)) {
-                fetch(`/admin/customers/${customerId}`, {
-                        method: 'DELETE',
-                        headers: {
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                            'X-Requested-With': 'XMLHttpRequest'
-                        }
+            // Customer can be deleted
+            $('#confirmDeleteBtn').show();
+            let message = totalPurchases > 0
+                ? `Are you sure you want to delete customer <strong>${customerName}</strong> and all <strong>${totalPurchases} purchase(s)</strong>?`
+                : `Are you sure you want to delete customer <strong>${customerName}</strong>?`;
+
+            // Set modal message
+            $('#deleteCustomerMessage').html(message);
+
+            // Open confirmation modal
+            $('#deleteCustomerModal').modal('show');
+
+            // Remove old click handler, attach fresh one
+            $('#confirmDeleteBtn').off('click').on('click', function () {
+                // Show loading state on btn while processing
+                const $btn = $(this);
+                $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Deleting...');
+
+                const formData = new FormData();
+                formData.append('_method', 'DELETE');
+                formData.append('_token', document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
+
+                // Use Laravel's url() helper to ensure absolute URL. 
+                // Prevents 301/302 redirects which drop the POST method and turn it into a GET request.
+                const url = `{{ url('admin/customers') }}/${customerId}`;
+
+                fetch(url, {
+                        method: 'POST',
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                        body: formData
                     })
-                    .then(response => response.json())
+                    .then(response => {
+                        const contentType = response.headers.get('content-type') || '';
+                        if (contentType.includes('application/json')) return response.json();
+                        throw new Error('Server error (Status: ' + response.status + ')');
+                    })
                     .then(data => {
+                        $btn.prop('disabled', false).html('<i class="fa fa-trash"></i> Delete Customer');
+                        $('#deleteCustomerModal').modal('hide');
                         if (data.success) {
                             $('#customers-table').DataTable().ajax.reload();
-                            alert('✅ ' + data.message);
+                            toastr.success(data.message);
                         } else {
-                            alert('❌ ' + data.message);
+                            toastr.error(data.message);
                         }
+                    })
+                    .catch(err => {
+                        $btn.prop('disabled', false).html('<i class="fa fa-trash"></i> Delete Customer');
+                        $('#deleteCustomerModal').modal('hide');
+                        toastr.error(err.message);
                     });
-            }
+            });
         }
     </script>
 @endpush

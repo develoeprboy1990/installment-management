@@ -47,9 +47,12 @@
                     <li class="nav-header">
                         <div class="dropdown profile-element" style="text-align: center;">
                             <span>
-                                <img alt="image" class="img-circle"
+                                {{-- <img alt="image" class="img-circle"
                                     src="{{ Auth::user()->avatar ? getSettingAssetUrl(Auth::user()->avatar) : asset('backend/img/profile_small.jpg') }}"
-                                    style="width: 60px; height: 60px; border-radius: 50%;" />
+                                    style="width: 60px; height: 60px; border-radius: 50%;" /> --}}
+                            <img alt="image"
+                                src="{{ Auth::user()->avatar ? getSettingAssetUrl(Auth::user()->avatar) : asset('backend/img/profile_small.jpg') }}"
+                                style="width: 150px; height: 80px; object-fit: contain;" />
                             </span>
                             <a data-toggle="dropdown" class="dropdown-toggle" href="#">
                                 <span class="clear">
@@ -106,8 +109,15 @@
 
                     @can('view-installments')
                         <li class="{{ request()->is('admin/installments*') ? 'active' : '' }}">
-                            <a href="{{ route('installments.index') }}"><i class="fa fa-credit-card"></i> <span
-                                    class="nav-label">Installments</span></a>
+                            <a href="#"><i class="fa fa-credit-card"></i> <span class="nav-label">Installments</span> <span class="fa arrow"></span></a>
+                            <ul class="nav nav-second-level {{ request()->is('admin/installments*') ? '' : 'collapse' }}">
+                                <li class="{{ request()->routeIs('installments.index') ? 'active' : '' }}">
+                                    <a href="{{ route('installments.index') }}">All Installments</a>
+                                </li>
+                                <li class="{{ request()->routeIs('installments.monthly_schedule') ? 'active' : '' }}">
+                                    <a href="{{ route('installments.monthly_schedule') }}">Monthly Schedule</a>
+                                </li>
+                            </ul>
                         </li>
                     @endcan
 
