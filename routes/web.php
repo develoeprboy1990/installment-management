@@ -32,8 +32,6 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth.redirect','role:Admin|
 
     //customers
     Route::resource('customers', CustomerController::class);
-    // POST route for shared hosting where DELETE method is blocked
-    Route::post('customers/{customer}/delete', [CustomerController::class, 'destroy'])->name('customers.delete.post');
     Route::get('customers/{customer}/statement', [CustomerController::class, 'statement'])->name('customers.statement');
 
 
@@ -59,12 +57,10 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth.redirect','role:Admin|
     Route::post('purchases/{purchase}/process-payment', [PurchaseController::class, 'processPayment'])->name('purchases.process-payment');
     Route::get('purchases/installment/{installmentId}/details', [PurchaseController::class, 'getInstallmentDetails'])->name('purchases.installment-details');
     Route::put('/installments/{id}/status', [PurchaseController::class, 'updateInstallStatus'])->name('installments.status');
-    Route::get('purchases/{purchase}/statement', [PurchaseController::class, 'purchaseStatement'])->name('purchases.statement');
 
 
     //installments
     Route::get('installments', [InstallmentController::class, 'index'])->name('installments.index');
-    Route::get('installments/monthly-schedule', [InstallmentController::class, 'monthlySchedule'])->name('installments.monthly_schedule');
     Route::get('installments/{installment}/edit', [InstallmentController::class, 'edit'])->name('installments.edit');
     Route::put('installments/{installment}', [InstallmentController::class, 'update'])->name('installments.update');
     Route::delete('installments/{installment}', [InstallmentController::class, 'destroy'])->name('installments.destroy');

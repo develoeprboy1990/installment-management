@@ -51,7 +51,7 @@
                                                 </span>
                                             </td>
                                             <td><strong>Rs. {{ number_format($expense->amount, 2) }}</strong></td>
-                                            <td>{{ $expense->expense_date->toDisplayDate() }}</td>
+                                            <td>{{ $expense->expense_date->format('d M, Y') }}</td>
                                             <td>
                                                 <span
                                                     class="label label-{{ $expense->status === 'paid' ? 'success' : ($expense->status === 'pending' ? 'warning' : 'danger') }}">
@@ -614,7 +614,7 @@
                 $('.text-danger').text('');
 
                 $.ajax({
-                    url: '{{ route("expenses.store") }}',
+                    url: '/admin/expenses',
                     type: 'POST',
                     data: $(this).serialize(),
                     success: function(response) {
@@ -651,7 +651,7 @@
                 $('#editExpenseForm :input').prop('disabled', true);
 
                 $.ajax({
-                    url: '{{ url("admin/expenses") }}/' + expenseId + '/edit',
+                    url: '/admin/expenses/' + expenseId + '/edit',
                     type: 'GET',
                     success: function(response) {
                         if (response.success) {
@@ -687,7 +687,7 @@
                 $('.text-danger').text('');
 
                 $.ajax({
-                    url: '{{ url("admin/expenses") }}/' + expenseId,
+                    url: '/admin/expenses/' + expenseId,
                     type: 'POST',
                     data: $(this).serialize(),
                     success: function(response) {
@@ -722,7 +722,7 @@
                 $('#view-name').text('Loading...');
 
                 $.ajax({
-                    url: '{{ url("admin/expenses") }}/' + expenseId,
+                    url: '/admin/expenses/' + expenseId,
                     type: 'GET',
                     success: function(response) {
                         if (response.success) {

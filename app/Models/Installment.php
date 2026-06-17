@@ -20,7 +20,6 @@ class Installment extends Model
         'receipt_no',
         'pre_balance',
         'installment_amount',
-        'paid_amount',
         'discount',
         'balance',
         'fine_amount',

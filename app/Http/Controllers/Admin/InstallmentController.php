@@ -99,21 +99,6 @@ class InstallmentController extends Controller
     return view('installments.index', compact('installments'));
     }
 
-    public function monthlySchedule(Request $request)
-    {
-        $month = $request->input('month', now()->month);
-        $year = $request->input('year', now()->year);
-
-        $installments = Installment::with(['customer', 'purchase.product'])
-            ->whereIn('status', ['pending', 'partial'])
-            ->whereMonth('due_date', $month)
-            ->whereYear('due_date', $year)
-            ->orderBy('due_date', 'asc')
-            ->get();
-
-        return view('installments.monthly_schedule', compact('installments', 'month', 'year'));
-    }
-
     public function getCustomerInstallmentInfo($id)
     {
         $customer = Customer::findOrFail($id);

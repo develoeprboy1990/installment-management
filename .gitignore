@@ -63,14 +63,6 @@ installment.zip
 !/storage/framework/sessions/.gitkeep
 /storage/framework/views/*.php
 !/storage/framework/views/.gitkeep
-/public/backend/img/avatars/*
-!/public/backend/img/avatars/.gitkeep
-/public/backend/img/customers/*
-!/public/backend/img/customers/.gitkeep
-/public/backend/img/guarantors/*
-!/public/backend/img/guarantors/.gitkeep
-/public/backend/img/settings/*
-!/public/backend/img/settings/.gitkeep
 
 # Compiled files
 *.compiled
