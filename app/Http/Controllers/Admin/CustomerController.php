@@ -69,7 +69,6 @@ class CustomerController extends Controller
                 })
                 ->addColumn('actions', function ($customer) {
                     $totalPurchases = $customer->purchases->count();
-                    $paidInstallments = $customer->installments()->where('status', 'paid')->count();
                     $buttons = '<div class="btn-group" role="group">';
                     
                     // View Statement button
@@ -88,7 +87,7 @@ class CustomerController extends Controller
                     
                     // Delete button
                     if (auth()->user()->can('delete-customers')) {
-                        $buttons .= '<button onclick="confirmDelete(' . $customer->id . ', \'' . addslashes($customer->name) . '\', ' . $totalPurchases . ', ' . $paidInstallments . ')" class="btn btn-sm btn-danger" title="Delete Customer">
+                        $buttons .= '<button onclick="confirmDelete(' . $customer->id . ', \'' . addslashes($customer->name) . '\', ' . $totalPurchases . ')" class="btn btn-sm btn-danger" title="Delete Customer">
                                 <i class="fa fa-trash"></i>
                             </button>';
                     }
@@ -202,26 +201,6 @@ class CustomerController extends Controller
     public function destroy(Customer $customer)
     {
         try {
-            // ── Block deletion if any paid installment exists ──────────────
-            $paidInstallmentCount = $customer->installments()
-                ->where('status', 'paid')
-                ->count();
-
-            if ($paidInstallmentCount > 0) {
-                $message = "Cannot delete \"{$customer->name}\". This customer has {$paidInstallmentCount} paid installment(s) on record. Customers with payment history cannot be deleted.";
-
-                if (request()->ajax()) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => $message,
-                    ], 422);
-                }
-
-                return redirect()->route('customers.index')
-                    ->with('error', $message);
-            }
-            // ──────────────────────────────────────────────────────────────
-
             \DB::beginTransaction();
 
             // Delete customer image if exists
@@ -275,28 +254,16 @@ class CustomerController extends Controller
         }
     }
 
-
     public function statement(Customer $customer)
     {
+        // Load related data through proper relationships
         $customer->load([
             'guarantors',
             'purchases.product',
-            'purchases.installments.officer',
+            'purchases.installments' => function ($query) {
+                $query->orderBy('due_date', 'asc');
+            }
         ]);
-
-        // Sort: Active purchases (newest first) → Completed (newest first)
-        $customer->setRelation('purchases',
-            $customer->purchases->sortBy(function ($purchase) {
-                $remaining = max(0, $purchase->total_price - (
-                    $purchase->advance_payment
-                    + $purchase->installments->whereIn('status',['paid','partial'])->sum('paid_amount')
-                    + $purchase->installments->whereIn('status',['paid','partial'])->sum('discount')
-                ));
-                // Active = 0 (comes first), Completed = 1 (goes last)
-                // Within group, sort by date DESC (negate timestamp for descending)
-                return ($remaining <= 0 ? '1_' : '0_') . (9999999999 - $purchase->purchase_date->timestamp);
-            })->values()
-        );
 
         return view('customers.statement', compact('customer'));
     }

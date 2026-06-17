@@ -87,7 +87,6 @@ class RolesAndPermissionsSeeder extends Seeder
             
             // Activities/Logs
             'view-activities',
-            'view-system-settings',
             
             // Profile
             'view-profile',
@@ -159,7 +158,6 @@ class RolesAndPermissionsSeeder extends Seeder
             'manage-permissions',
             // Activities
             'view-activities',
-            'view-system-settings',
             // Profile
             'view-profile',
             'edit-profile',

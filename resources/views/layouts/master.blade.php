@@ -47,12 +47,9 @@
                     <li class="nav-header">
                         <div class="dropdown profile-element" style="text-align: center;">
                             <span>
-                                {{-- <img alt="image" class="img-circle"
+                                <img alt="image" class="img-circle"
                                     src="{{ Auth::user()->avatar ? getSettingAssetUrl(Auth::user()->avatar) : asset('backend/img/profile_small.jpg') }}"
-                                    style="width: 60px; height: 60px; border-radius: 50%;" /> --}}
-                            <img alt="image"
-                                src="{{ Auth::user()->avatar ? getSettingAssetUrl(Auth::user()->avatar) : asset('backend/img/profile_small.jpg') }}"
-                                style="width: 150px; height: 80px; object-fit: contain;" />
+                                    style="width: 60px; height: 60px; border-radius: 50%;" />
                             </span>
                             <a data-toggle="dropdown" class="dropdown-toggle" href="#">
                                 <span class="clear">
@@ -73,12 +70,10 @@
                         </div>
                     </li>
 
-                    @can('view-dashboard')
                     <li class="{{ request()->is('dashboard') ? 'active' : '' }}">
                         <a href="{{ route('dashboard') }}"><i class="fa fa-dashboard"></i> <span
                                 class="nav-label">Dashboard</span></a>
                     </li>
-                    @endcan
 
                     <li class="{{ request()->is('admin/customers*') ? 'active' : '' }}">
                         <a href="{{ route('customers.index') }}"><i class="fa fa-users"></i> <span
@@ -109,15 +104,8 @@
 
                     @can('view-installments')
                         <li class="{{ request()->is('admin/installments*') ? 'active' : '' }}">
-                            <a href="#"><i class="fa fa-credit-card"></i> <span class="nav-label">Installments</span> <span class="fa arrow"></span></a>
-                            <ul class="nav nav-second-level {{ request()->is('admin/installments*') ? '' : 'collapse' }}">
-                                <li class="{{ request()->routeIs('installments.index') ? 'active' : '' }}">
-                                    <a href="{{ route('installments.index') }}">All Installments</a>
-                                </li>
-                                <li class="{{ request()->routeIs('installments.monthly_schedule') ? 'active' : '' }}">
-                                    <a href="{{ route('installments.monthly_schedule') }}">Monthly Schedule</a>
-                                </li>
-                            </ul>
+                            <a href="{{ route('installments.index') }}"><i class="fa fa-credit-card"></i> <span
+                                    class="nav-label">Installments</span></a>
                         </li>
                     @endcan
 
@@ -148,7 +136,6 @@
                     @endcan
 
                     <!-- Settings section with better icons -->
-                    @can('view-system-settings')
                     <li
                         class="{{ request()->routeIs('admin.users') || request()->routeIs('admin.roles') || request()->routeIs('role-assignment') || request()->routeIs('permissions') ? 'active' : '' }}">
                         <a href="#"><i class="fa fa-cog"></i> <span class="nav-label">System Settings</span>
@@ -170,7 +157,6 @@
                             </li>
                         </ul>
                     </li>
-                    @endcan
 
                     <li>
                         <a href="#" onclick="event.preventDefault(); triggerLogout();"><i
@@ -276,13 +262,14 @@
 
 
 
-    <!-- jQuery (single instance - must be loaded once only) -->
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <!-- jQuery (required for toastr) -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
     <!-- Toastr JS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
 
     <!-- Mainly scripts -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="{{ asset('backend/js/bootstrap.min.js') }}"></script>
     <script src="{{ asset('backend/js/plugins/metisMenu/jquery.metisMenu.js') }}"></script>
     <script src="{{ asset('backend/js/plugins/slimscroll/jquery.slimscroll.min.js') }}"></script>
