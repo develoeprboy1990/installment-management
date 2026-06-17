@@ -135,11 +135,9 @@
                                     $statusClass =
                                         $installment->status == 'paid'
                                             ? 'success'
-                                            : ($installment->status == 'partial'
-                                                ? 'warning'
-                                                : ($isOverdue
-                                                    ? 'danger'
-                                                    : 'warning'));
+                                            : ($isOverdue
+                                                ? 'danger'
+                                                : 'warning');
                                 @endphp
                                 <tr class="{{ $isOverdue ? 'danger' : '' }}">
                                     <td>{{ $loop->iteration + ($installments->currentPage() - 1) * $installments->perPage() }}
@@ -153,13 +151,13 @@
                                             <strong>{{ $installment->purchase->product->company }}
                                                 {{ $installment->purchase->product->model }}</strong><br>
                                             <small class="text-muted">Purchase Date:
-                                                {{ $installment->purchase->purchase_date->toDisplayDate() }}</small>
+                                                {{ $installment->purchase->purchase_date->format('d/m/Y') }}</small>
                                         @else
                                             <span class="text-muted">Manual Entry</span>
                                         @endif
                                     </td>
                                     <td>
-                                        {{ $installment->due_date ? $installment->due_date->toDisplayDate() : '-' }}
+                                        {{ $installment->due_date ? $installment->due_date->format('d/m/Y') : '-' }}
                                         @if ($isOverdue)
                                             <br><small class="text-danger">
                                                 <i class="fa fa-exclamation-triangle"></i>
@@ -189,7 +187,7 @@
                                             @endif
                                         </span>
                                     </td>
-                                    <td>{{ $installment->date ? $installment->date->toDisplayDate() : '-' }}</td>
+                                    <td>{{ $installment->date ? $installment->date->format('d/m/Y') : '-' }}</td>
                                     <td>{{ $installment->receipt_no ?? '-' }}</td>
                                     <td>{{ $installment->officer?->name ?? ($installment->recovery_officer ?? '-') }}</td>
                                     <td>
@@ -199,7 +197,7 @@
                                                 class="btn btn-sm btn-info" title="View Purchase Details">
                                                 <i class="fa fa-eye"></i>
                                             </a>
-                                            @if (in_array($installment->status, ['pending', 'partial']))
+                                            @if ($installment->status == 'pending')
                                                 <a href="{{ route('purchases.show', $installment->purchase_id) }}#installment-{{ $installment->id }}"
                                                     class="btn btn-sm btn-success" title="Process Payment">
                                                     <i class="fa fa-credit-card"></i>

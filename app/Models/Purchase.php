@@ -18,10 +18,8 @@ class Purchase extends Model
         'total_price',
         'advance_payment',
         'remaining_balance',
-        'installment_type',      // 'daily' | 'weekly' | 'monthly'
-        'installment_count',     // total number of installments (generic)
-        'installment_months',    // kept for backward compatibility (monthly)
-        'monthly_installment',   // kept for backward compatibility (monthly)
+        'installment_months',
+        'monthly_installment',
         'first_installment_date',
         'last_installment_date',
         'status',
@@ -43,8 +41,6 @@ class Purchase extends Model
             'remaining_balance',
             'advance_payment',
             'monthly_installment',
-            'installment_type',
-            'installment_count',
         ];
     }
 
@@ -66,14 +62,14 @@ class Purchase extends Model
     public function getPaidInstallmentsCashAmountAttribute()
     {
         return (float) $this->installments()
-            ->whereIn('status', ['paid', 'partial'])  // sirf actual paid aur partial — waived exclude
-            ->sum('paid_amount');
+            ->where('status', 'paid')
+            ->sum('installment_amount');
     }
 
     public function getPaidInstallmentsDiscountAmountAttribute()
     {
         return (float) $this->installments()
-            ->whereIn('status', ['paid', 'partial'])  // sirf actual paid aur partial — waived exclude
+            ->where('status', 'paid')
             ->sum('discount');
     }
 
@@ -84,49 +80,11 @@ class Purchase extends Model
             + $this->paid_installments_discount_amount;
     }
 
-    // ─── Installment Calculation ─────────────────────────────────────────────
-
-    /**
-     * Calculate per-installment amount for any type (daily / weekly / monthly).
-     */
-    public static function calculateInstallmentAmount(float $totalPrice, float $advancePayment, int $count): float
+    // Calculate monthly installment
+    public static function calculateMonthlyInstallment($totalPrice, $advancePayment, $months)
     {
-        if ($count <= 0) return 0;
-        $remaining = $totalPrice - $advancePayment;
-        return round($remaining / $count, 2);
-    }
-
-    /**
-     * Backward-compatible alias (used in existing monthly code).
-     */
-    public static function calculateMonthlyInstallment($totalPrice, $advancePayment, $months): float
-    {
-        return self::calculateInstallmentAmount($totalPrice, $advancePayment, $months);
-    }
-
-    /**
-     * Return the effective total installment count regardless of type.
-     * - daily/weekly  → uses installment_count
-     * - monthly       → uses installment_months (backward compat)
-     */
-    public function getTotalInstallmentCount(): int
-    {
-        if ($this->installment_type !== 'monthly' && $this->installment_count) {
-            return (int) $this->installment_count;
-        }
-        return (int) $this->installment_months;
-    }
-
-    /**
-     * Human-readable label for the installment type.
-     */
-    public function getInstallmentTypeLabel(): string
-    {
-        return match($this->installment_type ?? 'monthly') {
-            'daily'  => 'Daily',
-            'weekly' => 'Weekly',
-            default  => 'Monthly',
-        };
+        $remainingBalance = $totalPrice - $advancePayment;
+        return round($remainingBalance / $months, 2);
     }
 
     // Calculate remaining balance
@@ -140,8 +98,9 @@ class Purchase extends Model
     // Check if purchase is defaulted (missed payments)
     public function isDefaulted()
     {
+        // Check if there are any overdue installments
         $overdueInstallments = $this->installments()
-            ->whereIn('status', ['pending', 'overdue'])
+            ->where('status', '!=', 'paid')
             ->where('due_date', '<', now())
             ->exists();
 

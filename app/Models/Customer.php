@@ -45,14 +45,14 @@ class Customer extends Model
     public function getTotalInstallmentCashPaidAttribute()
     {
         return (float) $this->installments()
-            ->whereIn('status', ['paid', 'partial'])
-            ->sum('paid_amount');
+            ->where('status', 'paid')
+            ->sum('installment_amount');
     }
 
     public function getTotalInstallmentDiscountAttribute()
     {
         return (float) $this->installments()
-            ->whereIn('status', ['paid', 'partial'])
+            ->where('status', 'paid')
             ->sum('discount');
     }
 

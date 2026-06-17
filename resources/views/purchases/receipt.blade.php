@@ -74,7 +74,7 @@
                         ?? optional($installment->purchase)->created_at
                         ?? $installment->date;
                     @endphp
-                    {{ $purchaseDate ? $purchaseDate->toDisplayDate() : 'N/A' }}
+                    {{ optional($purchaseDate)->format('M j ,Y & h:iA') ?? 'N/A' }}
                 </td>
             </tr>
              <tr>
@@ -90,7 +90,7 @@
             <tr>
                 <th>Installment date:</th>
                 <td class="text-end">
-                     <span class="text-end">{{ $installment->date ? $installment->date->toDisplayDate() : 'N/A' }}</span>
+                     <span class="text-end">{{ $installment->date->format('M j ,Y') ?? 'N/A' }}</span>
                 </td>
                 <th>Customer Phone:</th>
                 <td class="text-end">
@@ -117,14 +117,12 @@
             <tr>
                 <th>Serial No</th>
                 <td class="text-end">{{ optional(optional($installment->purchase)->product)->serial_no ?? 'N/A' }}</td>
-                <th>Advance Amount</th>
-                <td class="text-end">
-                    Rs.{{ number_format((float)($installment->purchase->advance_payment ?? 0), 2) }}
-                </td>
+                <th>Payment Method</th>
+                <td class="text-end">{{ isset($installment->payment_method) ? ucfirst($installment->payment_method) : 'N/A' }}</td>
             </tr>
             <tr>
                 <th>Cash Paid</th>
-                <td class="text-end">Rs.{{ number_format((float)($installment->paid_amount ?? 0), 2) }}</td>
+                <td class="text-end">Rs.{{ number_format((float)($installment->installment_amount ?? 0), 2) }}</td>
                 <th>Discount</th>
                 <td class="text-end">Rs.{{ number_format((float)($installment->discount ?? 0), 2) }}</td>
             </tr>
@@ -132,20 +130,13 @@
                 <th>Fine Amount</th>
                 <td class="text-end">Rs.{{ number_format((float)($installment->fine_amount ?? 0), 2) }}</td>
                 <th>Total Reduction</th>
-                <td class="text-end"><strong>Rs.{{ number_format((float)(($installment->paid_amount ?? 0) + ($installment->discount ?? 0)), 2) }}</strong></td>
+                <td class="text-end"><strong>Rs.{{ number_format((float)(($installment->installment_amount ?? 0) + ($installment->discount ?? 0)), 2) }}</strong></td>
             </tr>
             <tr>
-                <th>Installment Type</th>
-                <td class="text-end">
-                    @php
-                        $instType = optional($installment->purchase)->getInstallmentTypeLabel() ?? 'Monthly';
-                    @endphp
-                    <strong>{{ $instType }}</strong>
-                </td>
                 <th>Total Installments</th>
-                <td class="text-end">
-                    {{ optional($installment->purchase)->getTotalInstallmentCount() ?? 'N/A' }}
-                </td>
+                <td class="text-end">{{ $installment->purchase->installment_months ?? 'N/A' }}</td>
+                <th>Received By</th>
+                <td class="text-end">{{ $installment->officer->name ?? 'N/A' }}</td>
             </tr>
             @php
                 $receivedCount = optional($installment->purchase)
@@ -158,22 +149,16 @@
             <tr>
                 <th>Received Installments</th>
                 <td class="text-end">
-                    @if(!is_null($receivedCount) && !empty(optional($installment->purchase)->getTotalInstallmentCount()))
-                        {{ $receivedCount }} / {{ optional($installment->purchase)->getTotalInstallmentCount() }}
+                    @if(!is_null($receivedCount) && !empty($installment->purchase->installment_months))
+                        {{ $receivedCount }}
                     @elseif(!is_null($receivedCount))
                         #{{ $receivedCount }}
                     @else
                         N/A
                     @endif
                 </td>
-                <th>Received By</th>
-                <td class="text-end">{{ $installment->officer->name ?? 'N/A' }}</td>
-            </tr>
-            <tr>
-                <th>Payment Method</th>
-                <td class="text-end">{{ isset($installment->payment_method) ? ucfirst($installment->payment_method) : 'N/A' }}</td>
-                <th>Receipt No</th>
-                <td class="text-end"><strong>{{ $installment->receipt_no ?? 'N/A' }}</strong></td>
+                <th>-</th>
+                <td class="text-end">-</td>
             </tr>
             <tr>
                 <th>Payment Status</th>

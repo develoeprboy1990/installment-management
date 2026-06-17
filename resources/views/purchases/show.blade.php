@@ -14,10 +14,9 @@
                         // Cap display paid to total price to avoid showing overpayment as progress > 100%
                         $totalPaid = min($totalPaidRaw, $purchase->total_price);
                         $remainingBalance = $purchase->getRemainingBalance();
-                        $overdueInstallments = $purchase->installments()->whereIn('status', ['pending','overdue'])->where('due_date', '<', now())->count();
+                        $overdueInstallments = $purchase->installments()->where('due_date', '<', now())->where('status', '!=', 'paid')->count();
                         $totalInstallments = $purchase->installments()->count();
                         $paidInstallmentCount = $purchase->installments()->where('status', 'paid')->count();
-                        $waivedInstallmentCount = $purchase->installments()->where('status', 'waived')->count();
             @endphp
 
             <!-- Edit Button -->
@@ -50,7 +49,7 @@
                     <table class="table table-condensed">
                         <tr>
                             <th width="40%">Purchase Date:</th>
-                            <td>{{ $purchase->purchase_date->toDisplayDate() }}</td>
+                            <td>{{ $purchase->purchase_date->format('d/m/Y') }}</td>
                         </tr>
                         <tr>
                             <th>Account Number:</th>
@@ -93,32 +92,20 @@
                             <td><strong>Rs. {{ number_format($remainingBalance, 2) }}</strong></td>
                         </tr>
                         <tr>
-                            <th>Installment Type:</th>
-                            <td>
-                                @php
-                                    $typeColors = ['daily' => 'info', 'weekly' => 'warning', 'monthly' => 'primary'];
-                                    $typeColor  = $typeColors[$purchase->installment_type ?? 'monthly'] ?? 'primary';
-                                @endphp
-                                <span class="label label-{{ $typeColor }}">
-                                    {{ $purchase->getInstallmentTypeLabel() }}
-                                </span>
-                            </td>
+                            <th>Monthly Installment:</th>
+                            <td>Rs. {{ number_format($purchase->monthly_installment, 2) }}</td>
                         </tr>
                         <tr>
-                            <th>Per Installment:</th>
-                            <td>Rs. {{ number_format($purchase->monthly_installment ?? ($purchase->total_price - $purchase->advance_payment) / max(1, $purchase->getTotalInstallmentCount()), 2) }}</td>
-                        </tr>
-                        <tr>
-                            <th>Total Installments:</th>
-                            <td>{{ $purchase->getTotalInstallmentCount() }} {{ $purchase->getInstallmentTypeLabel() }}</td>
+                            <th>Installment Period:</th>
+                            <td>{{ $purchase->installment_months }} months</td>
                         </tr>
                         <tr>
                             <th>First Installment:</th>
-                            <td>{{ $purchase->first_installment_date->toDisplayDate() }}</td>
+                            <td>{{ $purchase->first_installment_date->format('d/m/Y') }}</td>
                         </tr>
                         <tr>
                             <th>Last Installment:</th>
-                            <td>{{ $purchase->last_installment_date->toDisplayDate() }}</td>
+                            <td>{{ $purchase->last_installment_date->format('d/m/Y') }}</td>
                         </tr>
                         <tr>
                             <th>Status:</th>
@@ -178,12 +165,7 @@
                                         {{ number_format($percentage, 1) }}%
                                     </div>
                                 </div>
-                                <small class="text-muted">
-                                    {{ $paidInstallmentCount }}/{{ $totalInstallments }} paid
-                                    @if($waivedInstallmentCount > 0)
-                                        &nbsp;· <span class="text-info">{{ $waivedInstallmentCount }} waived</span>
-                                    @endif
-                                </small>
+                                <small class="text-muted">{{ $paidInstallmentCount }}/{{ $totalInstallments }} installments paid</small>
                             </td>
                         </tr>
                         <tr>
@@ -208,7 +190,7 @@
                                         ->first();
                                 @endphp
                                 @if($nextInstallment)
-                                    {{ $nextInstallment->due_date->toDisplayDate() }}
+                                    {{ $nextInstallment->due_date->format('d/m/Y') }}
                                     @if($nextInstallment->due_date < now())
                                         <span class="text-danger">(Overdue)</span>
                                     @endif
@@ -253,7 +235,7 @@
                         <tr class="{{ $isOverdue ? 'danger' : '' }}" id="installment-{{ $installment->id }}">
                             <td><strong>#{{ $installmentNumber }}</strong></td>
                             <td>
-                                {{ $installment->due_date->toDisplayDate() }}
+                                {{ $installment->due_date->format('d/m/Y') }}
                                 @if($isOverdue)
                                     <br><small class="text-danger">
                                         <i class="fa fa-exclamation-triangle"></i>
@@ -275,20 +257,7 @@
                                     @endif
                                 @endif
                             </td>
-                            <td>
-                                @if($installment->status == 'paid')
-                                    <span class="label label-success">Paid</span>
-                                @elseif($installment->status == 'waived')
-                                    <span class="label label-default" title="Balance zero hua isliye yeh installment waived ho gayi">Waived</span>
-                                @elseif($installment->status == 'partial')
-                                    <span class="label label-warning" style="background-color: #f0ad4e;">Partial Paid</span>
-                                @elseif($isOverdue)
-                                    <span class="label label-danger">Pending (Overdue)</span>
-                                @else
-                                    <span class="label label-warning">Pending</span>
-                                @endif
-                            </td>
-                            <td>{{ $installment->date ? $installment->date->toDisplayDate() : '-' }}</td>
+                            <td>{{ $installment->date ? $installment->date->format('d/m/Y') : '-' }}</td>
                             <td>{{ $installment->receipt_no ?? '-' }}</td>
                             <td>
                                 @if($installment->fine_amount > 0)
@@ -338,7 +307,7 @@
                                             <i class="fa fa-print"></i> Print
                                         </a>
                                     </div>
-                                    {{-- Edit button --}}
+                                         {{-- New Edit button to trigger modal --}}
                                     <button class="btn btn-sm btn-warning mt-1 edit-status-btn"
                                          data-id="{{ $installment->id }}"
                                          data-status="{{ $installment->status }}"
@@ -376,7 +345,6 @@
                         <select class="form-control" name="status" id="installmentStatus" required>
                             <option value="pending">Pending</option>
                             <option value="paid">Paid</option>
-                            <option value="waived">Waived (Balance Settled)</option>
                         </select>
                     </div>
                 </div>
@@ -588,11 +556,26 @@ $(document).ready(function() {
         }
     }
 
+    // Auto-calculate logic: 
+    // If you enter a discount, reduce the cash payment
     $(document).on('input', '#discount', function() {
+        const original = parseFloat($('#original_amount').val()) || 0;
+        const discount = parseFloat($(this).val()) || 0;
+        const newPayment = Math.max(0, original - discount);
+        $('#payment_amount').val(newPayment.toFixed(2));
         validatePaymentAmountAgainstRemaining();
     });
 
+    // If you enter a cash payment, adjust the discount to make it "Full Payment"
     $(document).on('input', '#payment_amount', function() {
+        const original = parseFloat($('#original_amount').val()) || 0;
+        const payment = parseFloat($(this).val()) || 0;
+        if (payment < original) {
+            const newDiscount = original - payment;
+            $('#discount').val(newDiscount.toFixed(2));
+        } else {
+            $('#discount').val(0);
+        }
         validatePaymentAmountAgainstRemaining();
     });
 
