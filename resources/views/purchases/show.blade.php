@@ -265,7 +265,14 @@
                                 <strong>Rs. {{ number_format($installment->installment_amount, 2) }}</strong>
                                 @if($installment->paid_amount > 0)
                                     <br><small class="text-success">Paid: Rs. {{ number_format($installment->paid_amount, 2) }}</small>
-                                    <br><small class="text-danger">Due: Rs. {{ number_format($installment->installment_amount - $installment->paid_amount - $installment->discount, 2) }}</small>
+                                    @php
+                                        $dueAmount = $installment->installment_amount - $installment->paid_amount - $installment->discount;
+                                    @endphp
+                                    @if($dueAmount < 0)
+                                        <br><small class="text-info">Rs. +{{ number_format(abs($dueAmount), 2) }}</small>
+                                    @else
+                                        <br><small class="text-danger">Due: Rs. {{ number_format($dueAmount, 2) }}</small>
+                                    @endif
                                 @endif
                             </td>
                             <td>
@@ -299,16 +306,29 @@
                             </td>
                             <td>{{ $installment->officer?->name ?? $installment->recovery_officer ?? '-' }}</td>
                             <td>
-                                @if(in_array($installment->status, ['pending', 'overdue', 'partial']))
+                                @if(in_array($installment->status, ['pending', 'overdue']))
                                     <button class="btn btn-sm btn-success process-payment-btn"
                                         data-installment-id="{{ $installment->id }}">
                                         <i class="fa fa-credit-card"></i> Pay
                                     </button>
+                                @elseif($installment->status == 'partial')
+                                    <div class="btn-group" role="group">
+                                        <button class="btn btn-sm btn-success process-payment-btn"
+                                            data-installment-id="{{ $installment->id }}">
+                                            <i class="fa fa-credit-card"></i> Pay
+                                        </button>
+                                        <a href="{{ route('installments.receipt', $installment->id) }}"
+                                        class="btn btn-sm btn-info"
+                                        target="_blank"
+                                        title="Print Receipt">
+                                            <i class="fa fa-print"></i> Print
+                                        </a>
+                                    </div>
                                 @elseif($installment->status == 'waived')
                                     <span class="text-muted"><i class="fa fa-minus-circle"></i> Waived</span>
                                 @else
                                     <div class="btn-group" role="group">
-                                        <span class="text-success">
+                                        <span class="text-success" style="margin-right: 5px; padding-top: 5px;">
                                             <i class="fa fa-check"></i> Paid
                                         </span>
                                         <a href="{{ route('installments.receipt', $installment->id) }}"

@@ -44,7 +44,14 @@
     <div class="receipt-header text-center">
         <div class="receipt-title">{{ getUserSetting('project_name') ?? 'Electronics Corporation' }}</div>
         <div class="d-flex justify-content-between">
-        <div class="mt-1 text-end"><small>PAYMENT RECEIPT</small></div>
+        <div class="mt-1 text-end">
+            <small>
+                PAYMENT RECEIPT
+                @if($installment->status == 'partial')
+                    <span class="badge bg-warning text-dark ms-1">PARTIAL PAID</span>
+                @endif
+            </small>
+        </div>
         <div class="mt-1 text-end"><small>{{ now()->format('M j ,Y & h:i A') ?? 'N/A' }}</small></div>
         <div class="mt-1 text-start"><small>Contact: 03008183092</small></div>
         </div>
@@ -167,6 +174,27 @@
                 <td class="text-end">{{ isset($installment->payment_method) ? ucfirst($installment->payment_method) : 'N/A' }}</td>
                 <th>Receipt No</th>
                 <td class="text-end"><strong>{{ $installment->receipt_no ?? 'N/A' }}</strong></td>
+            </tr>
+            <tr>
+                <th>Payment Status</th>
+                <td class="text-end">
+                    @if($installment->status == 'partial')
+                        <strong class="text-danger">Partial Paid</strong>
+                    @else
+                        <strong class="text-success">Fully Paid</strong>
+                    @endif
+                </td>
+                <th>Inst. Due Balance</th>
+                <td class="text-end">
+                    @php
+                        $instDue = $installment->installment_amount - $installment->paid_amount - $installment->discount;
+                    @endphp
+                    @if($instDue > 0)
+                        <strong class="text-danger">Rs.{{ number_format((float)$instDue, 2) }}</strong>
+                    @else
+                        <strong>Rs.0.00</strong>
+                    @endif
+                </td>
             </tr>
         </tbody>
     </table>

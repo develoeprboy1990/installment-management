@@ -488,9 +488,9 @@ class PurchaseController extends Controller
     {
         $installment = Installment::with(['customer', 'purchase.product', 'officer'])->findOrFail($installmentId);
 
-        // Check if installment is paid
-        if ($installment->status !== 'paid') {
-            return redirect()->back()->with('error', 'Receipt can only be printed for paid installments.');
+        // Check if installment is paid or partial
+        if (!in_array($installment->status, ['paid', 'partial'])) {
+            return redirect()->back()->with('error', 'Receipt can only be printed for paid or partial installments.');
         }
 
         return view('purchases.receipt', compact('installment'));
@@ -503,6 +503,15 @@ class PurchaseController extends Controller
         ]);
 
         $installment = Installment::findOrFail($id);
+
+        // Reset payment details if status is changed to pending
+        if ($request->status === 'pending' && in_array($installment->status, ['paid', 'partial', 'waived'])) {
+            $installment->paid_amount = 0;
+            $installment->discount = 0;
+            $installment->receipt_no = null;
+            $installment->date = null;
+        }
+
         $installment->status = $request->status;
         $installment->save();
 

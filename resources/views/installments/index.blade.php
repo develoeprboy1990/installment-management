@@ -171,7 +171,14 @@
                                         <strong>Rs. {{ number_format($installment->installment_amount, 2) }}</strong>
                                         @if($installment->paid_amount > 0)
                                             <br><small class="text-success">Paid: Rs. {{ number_format($installment->paid_amount, 2) }}</small>
-                                            <br><small class="text-danger">Due: Rs. {{ number_format($installment->installment_amount - $installment->paid_amount - $installment->discount, 2) }}</small>
+                                            @php
+                                                $dueAmount = $installment->installment_amount - $installment->paid_amount - $installment->discount;
+                                            @endphp
+                                            @if($dueAmount < 0)
+                                                <br><small class="text-info">Rs. +{{ number_format(abs($dueAmount), 2) }}</small>
+                                            @else
+                                                <br><small class="text-danger">Due: Rs. {{ number_format($dueAmount, 2) }}</small>
+                                            @endif
                                         @endif
                                     </td>
                                     <td>
@@ -196,6 +203,12 @@
                                                 <a href="{{ route('purchases.show', $installment->purchase_id) }}#installment-{{ $installment->id }}"
                                                     class="btn btn-sm btn-success" title="Process Payment">
                                                     <i class="fa fa-credit-card"></i>
+                                                </a>
+                                            @endif
+                                            @if (in_array($installment->status, ['paid', 'partial']))
+                                                <a href="{{ route('installments.receipt', $installment->id) }}"
+                                                    class="btn btn-sm btn-primary" target="_blank" title="Print Receipt">
+                                                    <i class="fa fa-print"></i>
                                                 </a>
                                             @endif
                                         @else
