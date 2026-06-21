@@ -195,15 +195,28 @@
                                     </label>
                                     <select class="form-control" name="installment_type"
                                             id="installment_type" required>
-                                        <option value="monthly" {{ old('installment_type','monthly') === 'monthly' ? 'selected' : '' }}>
-                                            Monthly
-                                        </option>
-                                        <option value="weekly" {{ old('installment_type') === 'weekly' ? 'selected' : '' }}>
-                                            Weekly
-                                        </option>
-                                        <option value="daily" {{ old('installment_type') === 'daily' ? 'selected' : '' }}>
-                                            Daily
-                                        </option>
+                                        <optgroup label="── Periodic Installments ──">
+                                            <option value="monthly" {{ old('installment_type','monthly') === 'monthly' ? 'selected' : '' }}>
+                                                Monthly
+                                            </option>
+                                            <option value="weekly" {{ old('installment_type') === 'weekly' ? 'selected' : '' }}>
+                                                Weekly
+                                            </option>
+                                            <option value="daily" {{ old('installment_type') === 'daily' ? 'selected' : '' }}>
+                                                Daily
+                                            </option>
+                                        </optgroup>
+                                        <optgroup label="── Fixed Duration Plans ──">
+                                            <option value="3months" {{ old('installment_type') === '3months' ? 'selected' : '' }}>
+                                                3 Months Plan (One Installment — After 3 Months)
+                                            </option>
+                                            <option value="6months" {{ old('installment_type') === '6months' ? 'selected' : '' }}>
+                                                6 Months Plan (One Installment — After 6 Months)
+                                            </option>
+                                            <option value="1year" {{ old('installment_type') === '1year' ? 'selected' : '' }}>
+                                                1 Year Plan (One Installment — After 1 Year)
+                                            </option>
+                                        </optgroup>
                                     </select>
                                 </div>
                             </div>
@@ -252,12 +265,57 @@
                             </div>
                         </div>
 
+                        {{-- Lump-sum plan info alert --}}
+                        <div id="lump_sum_alert" class="alert alert-warning" style="display:none;margin-bottom:0;">
+                            <i class="fa fa-clock-o"></i>
+                            <strong>Fixed Duration Plan Selected!</strong>
+                            Only <strong>1 installment</strong> will be generated — the entire remaining amount will be due after <span id="lump_sum_due_label">3 months</span>.
+                            Count and per-installment fields will be set automatically.
+                        </div>
+
                         {{-- Last installment adjustment alert --}}
                         <div id="last_installment_note" class="alert alert-info" style="display:none;margin-bottom:0;">
                             <i class="fa fa-info-circle"></i>
                             <span id="last_installment_note_text"></span>
                         </div>
 
+                    </div>
+                </div>
+
+                {{-- ── Panel 4: Partner Shares (Feature 2) ───────────────── --}}
+                <div class="ibox">
+                    <div class="ibox-title">
+                        <h5><i class="fa fa-handshake-o text-navy"></i> Partner Shares <small class="text-muted">(Optional)</small></h5>
+                        <div class="ibox-tools">
+                            <a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
+                        </div>
+                    </div>
+                    <div class="ibox-content" id="partnerSharesBody">
+                        <p class="text-muted" style="font-size:12px;">
+                            <i class="fa fa-info-circle"></i>
+                            If 2 or more partners have invested in this product, add their shares here.
+                            You can divide the total share amount as needed.
+                        </p>
+
+                        <div id="partner_rows">
+                            {{-- Dynamic rows added by JS --}}
+                        </div>
+
+                        <button type="button" class="btn btn-xs btn-default" id="add_partner_btn">
+                            <i class="fa fa-plus"></i> Add Partner
+                        </button>
+
+                        @if($partners->count() === 0)
+                            <p class="text-warning m-t-sm" style="font-size:12px;">
+                                <i class="fa fa-exclamation-triangle"></i>
+                                No partners found. Please add partners from the <a href="{{ route('partners.create') }}" target="_blank">Partners page</a> first.
+                            </p>
+                        @endif
+
+                        {{-- Partner options JSON for JS --}}
+                        <script>
+                        var partnerOptions = @json($partners->map(fn($p) => ['id' => $p->id, 'name' => $p->name]));
+                        </script>
                     </div>
                 </div>
 
@@ -378,14 +436,19 @@ $(document).ready(function () {
         return 'Rs. ' + parseFloat(n || 0).toLocaleString('en-PK', { minimumFractionDigits: 0 });
     }
 
-    const typeLabels = { daily: 'Daily', weekly: 'Weekly', monthly: 'Monthly' };
+    const typeLabels = { daily: 'Daily', weekly: 'Weekly', monthly: 'Monthly', '3months': '3 Months Plan', '6months': '6 Months Plan', '1year': '1 Year Plan' };
     const hints = { daily: 'e.g. 30 days', weekly: 'e.g. 52 weeks', monthly: 'e.g. 12 months' };
+    const lumpSumLabels = { '3months': '3 months', '6months': '6 months', '1year': '1 year' };
 
     let currentMode = 'by_count'; // default mode
 
     // ── Mode Toggle ────────────────────────────────────────────────────────
     $('input[name="calc_mode"]').on('change', function () {
         currentMode = $(this).val();
+        const type = $('#installment_type').val();
+        const isLump = ['3months','6months','1year'].includes(type);
+
+        if (isLump) { recalculate(); return; } // lump-sum ignores mode
 
         if (currentMode === 'by_count') {
             $('#field_count').show();
@@ -412,63 +475,90 @@ $(document).ready(function () {
         const type      = $('#installment_type').val();
         const firstDate = $('#first_installment_date').val();
         const remaining = Math.max(0, total - advance);
+        const isLump    = ['3months','6months','1year'].includes(type);
+
+        // ── Lump-sum plan logic ──────────────────────────────────────────
+        if (isLump) {
+            // Hide count/amount fields, show lump-sum alert
+            $('#field_count').hide();
+            $('#field_per_amount').hide();
+            $('#lump_sum_alert').show();
+            $('#last_installment_note').hide();
+            $('#lump_sum_due_label').text(lumpSumLabels[type] || type);
+            $('#installment_count').val(1);
+            $('#per_installment_override').val(remaining);
+
+            // Calculate single due date
+            let dueDate = '';
+            if (firstDate) {
+                const d = new Date(firstDate);
+                if (type === '3months') d.setMonth(d.getMonth() + 3);
+                else if (type === '6months') d.setMonth(d.getMonth() + 6);
+                else d.setFullYear(d.getFullYear() + 1);
+                dueDate = d.toISOString().split('T')[0];
+            }
+
+            $('#summary_remaining').text(numFmt(remaining));
+            $('#summary_per_installment').text(numFmt(remaining) + ' (One Time)');
+            $('#summary_first_date').text(dueDate ? formatDate(dueDate) : '—');
+            $('#summary_last_date').text(dueDate ? formatDate(dueDate) : '—');
+            $('#summary_count').text('1 installment (Lump Sum)');
+            $('#summary_type').text(typeLabels[type] || type);
+            $('#last_installment_date_preview').val(dueDate);
+            return;
+        }
+
+        // ── Normal periodic plan ─────────────────────────────────────────
+        $('#lump_sum_alert').hide();
+
+        // Restore mode fields visibility
+        if (currentMode === 'by_count') {
+            $('#field_count').show();
+            $('#field_per_amount').hide();
+        } else {
+            $('#field_count').hide();
+            $('#field_per_amount').show();
+        }
 
         let count = 0;
         let perInstallment = 0;
-        let lastInstallmentAmt = 0;
 
         if (currentMode === 'by_count') {
-            // Mode A: user enters count, we calc per amount
             count = parseInt($('#installment_count').val()) || 0;
             perInstallment = count > 0 ? Math.round((remaining / count) * 100) / 100 : 0;
             $('#last_installment_note').hide();
-            // Pass calculated per-installment to controller
             $('#per_installment_override').val(perInstallment);
-
         } else {
-            // Mode B: user enters per amount, we calc count
             const perAmt = parseFloat($('#per_installment_input').val()) || 0;
             if (perAmt > 0 && remaining > 0) {
-
                 const fullCount = Math.floor(remaining / perAmt);
-                // Floating point safe: round to 2 decimals
                 const lastAmt   = Math.round((remaining - (fullCount * perAmt)) * 100) / 100;
-
                 if (lastAmt > 0.01) {
-                    // Not evenly divisible
                     count = fullCount + 1;
                     perInstallment = perAmt;
-                    // Pass user-entered per-installment to controller
                     $('#per_installment_override').val(perAmt);
                     $('#last_installment_note').show();
                     $('#last_installment_note_text').html(
                         `Total <strong>${count} installments</strong> &mdash; ` +
                         `First <strong>${fullCount}</strong> installments = <strong>${numFmt(perAmt)}</strong> each &mdash; ` +
-                        `Last (<strong>${count}th</strong>) installment = <strong>${numFmt(lastAmt)}</strong> (baqi amount).`
+                        `Last (<strong>${count}th</strong>) installment = <strong>${numFmt(lastAmt)}</strong> (remaining balance).`
                     );
                 } else {
-                    // Evenly divisible
                     count = fullCount;
                     perInstallment = perAmt;
-                    // Pass user-entered per-installment to controller
                     $('#per_installment_override').val(perAmt);
                     $('#last_installment_note').show();
                     $('#last_installment_note_text').html(
                         `Total <strong>${count} installments</strong> of <strong>${numFmt(perAmt)}</strong> each &mdash; Balance evenly divides.`
                     );
                 }
-
             } else {
                 $('#last_installment_note').hide();
             }
-
-            // Auto-fill hidden installment_count for form submission
             $('#installment_count').val(count > 0 ? count : '');
         }
 
         const lastDate = addPeriod(firstDate, type, count);
-
-        // Update summary cards
         $('#summary_remaining').text(numFmt(remaining));
         $('#summary_per_installment').text(count > 0 ? numFmt(perInstallment) : 'Rs. 0');
         $('#summary_first_date').text(firstDate ? formatDate(firstDate) : '—');
@@ -492,6 +582,50 @@ $(document).ready(function () {
 
     // ── Init ───────────────────────────────────────────────────────────────
     recalculate();
+
+    // ── Feature 2: Partner Rows ────────────────────────────────────────────
+    let partnerRowIndex = 0;
+
+    function buildPartnerSelect(index, selectedId) {
+        let html = `<select class="form-control" name="partner_ids[${index}]" style="width:100%;">`;
+        html += '<option value="">— Select Partner —</option>';
+        (partnerOptions || []).forEach(function(p) {
+            const sel = (selectedId && selectedId == p.id) ? 'selected' : '';
+            html += `<option value="${p.id}" ${sel}>${p.name}</option>`;
+        });
+        html += '</select>';
+        return html;
+    }
+
+    $('#add_partner_btn').on('click', function() {
+        const idx = partnerRowIndex++;
+        const row = `
+        <div class="row partner-row" data-index="${idx}" style="margin-bottom:8px;align-items:center;">
+            <div class="col-md-5">
+                <div class="form-group m-b-none">
+                    ${buildPartnerSelect(idx, null)}
+                </div>
+            </div>
+            <div class="col-md-5">
+                <div class="form-group m-b-none">
+                    <div class="input-group">
+                        <span class="input-group-addon"><strong>Rs.</strong></span>
+                        <input type="number" class="form-control partner-amount" name="partner_amounts[${idx}]" step="1" min="0" placeholder="Share Amount">
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <button type="button" class="btn btn-xs btn-danger remove-partner-row" style="margin-top:4px;">
+                    <i class="fa fa-trash"></i>
+                </button>
+            </div>
+        </div>`;
+        $('#partner_rows').append(row);
+    });
+
+    $(document).on('click', '.remove-partner-row', function() {
+        $(this).closest('.partner-row').remove();
+    });
 });
 </script>
 @endpush

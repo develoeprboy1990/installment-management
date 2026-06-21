@@ -102,6 +102,11 @@
                                 class="nav-label">Recovery Officers</span></a>
                     </li>
 
+                    <li class="{{ request()->is('admin/partners*') ? 'active' : '' }}">
+                        <a href="{{ route('partners.index') }}"><i class="fa fa-handshake-o"></i> <span
+                                class="nav-label">Partners</span></a>
+                    </li>
+
                     <li class="{{ request()->is('admin/purchases*') ? 'active' : '' }}">
                         <a href="{{ route('purchases.index') }}"><i class="fa fa-shopping-cart"></i> <span
                                 class="nav-label">Purchases</span></a>

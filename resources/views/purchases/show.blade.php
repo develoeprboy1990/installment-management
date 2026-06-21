@@ -95,13 +95,20 @@
                         <tr>
                             <th>Installment Type:</th>
                             <td>
-                                @php
-                                    $typeColors = ['daily' => 'info', 'weekly' => 'warning', 'monthly' => 'primary'];
-                                    $typeColor  = $typeColors[$purchase->installment_type ?? 'monthly'] ?? 'primary';
-                                @endphp
-                                <span class="label label-{{ $typeColor }}">
-                                    {{ $purchase->getInstallmentTypeLabel() }}
-                                </span>
+                                 @php
+                                     $typeColors = [
+                                         'daily'   => 'info',
+                                         'weekly'  => 'warning',
+                                         'monthly' => 'primary',
+                                         '3months' => 'success',
+                                         '6months' => 'success',
+                                         '1year'   => 'danger',
+                                     ];
+                                     $typeColor  = $typeColors[$purchase->installment_type ?? 'monthly'] ?? 'primary';
+                                 @endphp
+                                 <span class="label label-{{ $typeColor }}">
+                                     {{ $purchase->getInstallmentTypeLabel() }}
+                                 </span>
                             </td>
                         </tr>
                         <tr>
@@ -357,6 +364,111 @@
     </div>
 </div>
 
+{{-- ═══════════════════════════════════════════════════════════════════
+     Feature 2: Partner Distribution Panel
+     ════════════════════════════════════════════════════════════════ --}}
+@php
+    $purchasePartners = $purchase->purchasePartners()->with('partner')->get();
+@endphp
+@if($purchasePartners->count() > 0)
+<div class="panel panel-default" style="margin-top:20px;">
+    <div class="panel-heading">
+        <h3 class="panel-title"><i class="fa fa-handshake-o"></i> Partner Distribution</h3>
+    </div>
+    <div class="panel-body">
+        <div class="table-responsive">
+            <table class="table table-hover table-condensed">
+                <thead>
+                    <tr>
+                        <th>Partner</th>
+                        <th class="text-right">Share Amount</th>
+                        <th class="text-right">Share %</th>
+                        <th class="text-right">Received</th>
+                        <th class="text-right">Pending</th>
+                        <th>Progress</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($purchasePartners as $pp)
+                    @php
+                        $received   = $pp->amount_received;
+                        $pending    = $pp->amount_pending;
+                        $ppProgress = $pp->share_amount > 0 ? min(100, ($received / $pp->share_amount) * 100) : 0;
+                    @endphp
+                    <tr>
+                        <td>
+                            <strong>{{ $pp->partner->name ?? 'Unknown' }}</strong>
+                            @if($pp->partner->phone)
+                                <br><small class="text-muted">{{ $pp->partner->phone }}</small>
+                            @endif
+                        </td>
+                        <td class="text-right">
+                            <strong>Rs. {{ number_format($pp->share_amount, 0) }}</strong>
+                        </td>
+                        <td class="text-right">
+                            <span class="label label-default">{{ $pp->share_percentage }}%</span>
+                        </td>
+                        <td class="text-right text-success">
+                            <strong>Rs. {{ number_format($received, 0) }}</strong>
+                        </td>
+                        <td class="text-right {{ $pending > 0 ? 'text-danger' : 'text-success' }}">
+                            <strong>Rs. {{ number_format($pending, 0) }}</strong>
+                        </td>
+                        <td style="min-width:120px;">
+                            <div class="progress" style="margin-bottom:3px;">
+                                <div class="progress-bar progress-bar-{{ $ppProgress >= 100 ? 'success' : 'info' }}"
+                                     style="width:{{ $ppProgress }}%">
+                                </div>
+                            </div>
+                            <small class="text-muted">{{ number_format($ppProgress, 0) }}%</small>
+                        </td>
+                    </tr>
+                    @endforeach
+                </tbody>
+                <tfoot>
+                    <tr style="background:#f8f9fa;">
+                        <td><strong>Total</strong></td>
+                        <td class="text-right"><strong>Rs. {{ number_format($purchasePartners->sum('share_amount'), 0) }}</strong></td>
+                        <td class="text-right"><strong>{{ $purchasePartners->sum('share_percentage') }}%</strong></td>
+                        <td class="text-right text-success"><strong>Rs. {{ number_format($purchasePartners->sum('amount_received'), 0) }}</strong></td>
+                        <td class="text-right text-danger"><strong>Rs. {{ number_format($purchasePartners->sum('amount_pending'), 0) }}</strong></td>
+                        <td></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+</div>
+@endif
+
+{{-- ═══════════════════════════════════════════════════════════════════
+     Feature 3: Extend Installment Period Button (shown when needed)
+     ════════════════════════════════════════════════════════════════ --}}
+@php
+    $hasPendingInstallments = $purchase->installments()->whereIn('status', ['pending','overdue'])->exists();
+    $showExtendBtn = $remainingBalance > 0 && !$hasPendingInstallments && $purchase->status !== 'completed';
+@endphp
+@if($showExtendBtn)
+<div class="alert alert-warning" style="margin-top:10px;">
+    <div class="row">
+        <div class="col-md-8">
+            <h4 style="margin-top:0;"><i class="fa fa-clock-o"></i> Installment Period Ended!</h4>
+            <p style="margin-bottom:0;">
+                All installment slots are completed but <strong>Rs. {{ number_format($remainingBalance, 2) }}</strong> remaining balance is still pending.
+                Add new installment slots so the customer can pay the remaining amount.
+            </p>
+        </div>
+        <div class="col-md-4 text-right" style="padding-top:10px;">
+            <button class="btn btn-warning btn-lg" data-toggle="modal" data-target="#extendModal">
+                <i class="fa fa-plus-circle"></i> Extend Installment Period
+            </button>
+        </div>
+    </div>
+</div>
+@endif
+
+<div id="purchases-container" style="margin-bottom: 60px;">
+
 <!-- Edit Installment Status Modal -->
 <div class="modal fade" id="editStatusModal" tabindex="-1" role="dialog" aria-labelledby="editStatusModalLabel">
     <div class="modal-dialog" role="document">
@@ -386,6 +498,83 @@
                 </div>
             </div>
         </form>
+    </div>
+</div>
+
+<!-- Feature 3: Extend Installments Modal -->
+<div class="modal fade" id="extendModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <form action="{{ route('purchases.extend', $purchase) }}" method="POST">
+                @csrf
+                <div class="modal-header" style="background:#856404;color:#fff;">
+                    <button type="button" class="close" data-dismiss="modal" style="color:#fff;">&times;</button>
+                    <h4 class="modal-title"><i class="fa fa-plus-circle"></i> Extend Installment Period</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info" style="font-size:13px;">
+                        <i class="fa fa-info-circle"></i>
+                        <strong>Remaining Balance:</strong> Rs. {{ number_format($remainingBalance, 2) }}
+                        &mdash; This balance will be divided into the new installments.
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>How Many New Installments? <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" name="extend_count"
+                                       id="extend_count" min="1" max="120" placeholder="e.g. 3" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Per Installment Amount <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <span class="input-group-addon"><strong>Rs.</strong></span>
+                                    <input type="number" class="form-control" name="extend_amount"
+                                           id="extend_amount" step="1" min="1"
+                                           value="{{ round($remainingBalance) }}" placeholder="e.g. 5000" required>
+                                </div>
+                                <small class="text-muted">Remaining amount auto-adjusts in the last installment.</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>First New Installment Date <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control" name="extend_start_date"
+                                       value="{{ date('Y-m-d') }}" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Recovery Officer <span class="text-danger">*</span></label>
+                                <select class="form-control" name="extend_recovery_officer" required>
+                                    <option value="">— Select Officer —</option>
+                                    @php $extendOfficers = \App\Models\RecoveryOfficer::where('is_active', true)->get(); @endphp
+                                    @foreach($extendOfficers as $eofficer)
+                                        <option value="{{ $eofficer->id }}">{{ $eofficer->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="extend_preview" class="alert alert-success" style="display:none;font-size:13px;">
+                        <i class="fa fa-calculator"></i>
+                        <span id="extend_preview_text"></span>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-warning">
+                        <i class="fa fa-plus-circle"></i> Add Installments
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
 

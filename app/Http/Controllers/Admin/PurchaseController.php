@@ -7,6 +7,8 @@ use App\Models\Purchase;
 use App\Models\Customer;
 use App\Models\Product;
 use App\Models\Installment;
+use App\Models\Partner;
+use App\Models\PurchasePartner;
 use App\Models\RecoveryOfficer;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
@@ -45,7 +47,8 @@ class PurchaseController extends Controller
         $customers = Customer::all();
         $products = Product::all();
         $recoveryOfficers = RecoveryOfficer::where('is_active', true)->get();
-        return view('purchases.create', compact('customers', 'products', 'recoveryOfficers'));
+        $partners = Partner::where('is_active', true)->get();
+        return view('purchases.create', compact('customers', 'products', 'recoveryOfficers', 'partners'));
     }
 
     public function store(Request $request)
@@ -56,14 +59,21 @@ class PurchaseController extends Controller
             'purchase_date'          => 'required|date',
             'total_price'            => 'required|numeric|min:0',
             'advance_payment'        => 'required|numeric|min:0',
-            'installment_type'       => 'required|in:daily,weekly,monthly',
-            'installment_count'      => 'required|integer|min:1',
+            'installment_type'       => 'required|in:daily,weekly,monthly,3months,6months,1year',
+            'installment_count'      => 'required_if:installment_type,daily,weekly,monthly|nullable|integer|min:1',
             'first_installment_date' => 'required|date|after_or_equal:purchase_date',
             'recovery_officer_id'    => 'required|exists:recovery_officers,id',
+            // Partner shares validation
+            'partner_ids'            => 'nullable|array',
+            'partner_ids.*'          => 'exists:partners,id',
+            'partner_amounts'        => 'nullable|array',
+            'partner_amounts.*'      => 'numeric|min:0',
         ]);
 
         $type            = $request->installment_type;
-        $count           = (int) $request->installment_count;
+        // For lump-sum plans, count is always 1
+        $isLumpSum = in_array($type, ['3months', '6months', '1year']);
+        $count     = $isLumpSum ? 1 : (int) $request->installment_count;
         $remainingBalance = $request->total_price - $request->advance_payment;
 
         // Use user-specified per-installment amount if provided (Mode B)
@@ -94,12 +104,15 @@ class PurchaseController extends Controller
             'installment_type'       => $type,
             'installment_count'      => $count,
             'installment_months'     => $count,
-            'monthly_installment'    => $installmentAmount,  // actual per-installment
+            'monthly_installment'    => $installmentAmount,
             'first_installment_date' => $request->first_installment_date,
             'last_installment_date'  => $lastInstallmentDate,
         ]);
 
         $this->createInstallmentSchedule($purchase, $request->recovery_officer_id);
+
+        // Save partner shares if provided
+        $this->syncPartnerShares($purchase, $request);
 
         return redirect()->route('purchases.index')->with('success', 'Purchase created successfully');
     }
@@ -115,13 +128,14 @@ class PurchaseController extends Controller
         return view('purchases.show', compact('purchase'));
     }
 
-     public function edit(Purchase $purchase)
+    public function edit(Purchase $purchase)
     {
         $customers = Customer::all();
         $products = Product::all();
         $recoveryOfficers = RecoveryOfficer::where('is_active', true)->get();
+        $partners = Partner::where('is_active', true)->get();
 
-        return view('purchases.edit', compact('purchase', 'customers', 'products', 'recoveryOfficers'));
+        return view('purchases.edit', compact('purchase', 'customers', 'products', 'recoveryOfficers', 'partners'));
     }
 
     public function update(Request $request, Purchase $purchase)
@@ -132,17 +146,22 @@ class PurchaseController extends Controller
             'purchase_date'          => 'required|date',
             'total_price'            => 'required|numeric|min:0',
             'advance_payment'        => 'required|numeric|min:0',
-            'installment_type'       => 'required|in:daily,weekly,monthly',
-            'installment_count'      => 'required|integer|min:1',
+            'installment_type'       => 'required|in:daily,weekly,monthly,3months,6months,1year',
+            'installment_count'      => 'required_if:installment_type,daily,weekly,monthly|nullable|integer|min:1',
             'first_installment_date' => 'required|date|after_or_equal:purchase_date',
             'recovery_officer_id'    => 'required|exists:recovery_officers,id',
+            'partner_ids'            => 'nullable|array',
+            'partner_ids.*'          => 'exists:partners,id',
+            'partner_amounts'        => 'nullable|array',
+            'partner_amounts.*'      => 'numeric|min:0',
         ]);
 
         try {
             \DB::beginTransaction();
 
             $type              = $request->installment_type;
-            $count             = (int) $request->installment_count;
+            $isLumpSum         = in_array($type, ['3months', '6months', '1year']);
+            $count             = $isLumpSum ? 1 : (int) $request->installment_count;
             $remainingBalance  = $request->total_price - $request->advance_payment;
             $installmentAmount = Purchase::calculateInstallmentAmount(
                 $request->total_price,
@@ -165,7 +184,6 @@ class PurchaseController extends Controller
                 'remaining_balance'      => $remainingBalance,
                 'installment_type'       => $type,
                 'installment_count'      => $count,
-                // Always populate — installment_months is NOT NULL in DB
                 'installment_months'     => $count,
                 'monthly_installment'    => $installmentAmount,
                 'first_installment_date' => $request->first_installment_date,
@@ -175,6 +193,7 @@ class PurchaseController extends Controller
 
             $purchase->installments()->delete();
             $this->createInstallmentSchedule($purchase, $request->recovery_officer_id);
+            $this->syncPartnerShares($purchase, $request);
 
             \DB::commit();
 
@@ -308,14 +327,18 @@ class PurchaseController extends Controller
 
     /**
      * Calculate the last installment date based on type and count.
+     * Lump-sum plans (3months/6months/1year) have a single due date.
      */
     private function calculateLastInstallmentDate(string $firstDate, string $type, int $count): Carbon
     {
         $start = Carbon::parse($firstDate);
         return match($type) {
-            'daily'  => $start->copy()->addDays($count - 1),
-            'weekly' => $start->copy()->addWeeks($count - 1),
-            default  => $start->copy()->addMonths($count - 1),
+            'daily'   => $start->copy()->addDays($count - 1),
+            'weekly'  => $start->copy()->addWeeks($count - 1),
+            '3months' => $start->copy()->addMonths(3),
+            '6months' => $start->copy()->addMonths(6),
+            '1year'   => $start->copy()->addYear(),
+            default   => $start->copy()->addMonths($count - 1),
         };
     }
 
@@ -516,5 +539,131 @@ class PurchaseController extends Controller
         $installment->save();
 
         return redirect()->back()->with('success', 'Installment status updated successfully.');
+    }
+
+    // ─── Feature 3: Extend Installment Period ────────────────────────────────
+
+    /**
+     * Add more installment slots when balance remains but all slots are exhausted.
+     */
+    public function extendInstallments(Request $request, Purchase $purchase)
+    {
+        $request->validate([
+            'extend_count'            => 'required|integer|min:1|max:120',
+            'extend_amount'           => 'required|numeric|min:1',
+            'extend_start_date'       => 'required|date',
+            'extend_recovery_officer' => 'required|exists:recovery_officers,id',
+        ]);
+
+        $remainingBalance = $purchase->getRemainingBalance();
+
+        if ($remainingBalance <= 0) {
+            return redirect()->back()->with('error', 'Koi remaining balance nahi hai — extension ki zaroorat nahi.');
+        }
+
+        try {
+            \DB::beginTransaction();
+
+            $count     = (int) $request->extend_count;
+            $amount    = (float) $request->extend_amount;
+            $startDate = Carbon::parse($request->extend_start_date);
+            $officerId = $request->extend_recovery_officer;
+
+            // Determine frequency type for extensions
+            $type = in_array($purchase->installment_type, ['daily', 'weekly'])
+                    ? $purchase->installment_type
+                    : 'monthly';
+
+            $existingCount = $purchase->installments()->count();
+
+            for ($i = 1; $i <= $count; $i++) {
+                $dueDate = match($type) {
+                    'daily'  => $startDate->copy()->addDays($i - 1),
+                    'weekly' => $startDate->copy()->addWeeks($i - 1),
+                    default  => $startDate->copy()->addMonths($i - 1),
+                };
+
+                if ($i === $count) {
+                    $thisAmount = round($remainingBalance, 2);
+                    $newBalance = 0;
+                } else {
+                    $thisAmount = min($amount, $remainingBalance);
+                    $newBalance = round($remainingBalance - $thisAmount, 2);
+                }
+
+                Installment::create([
+                    'customer_id'         => $purchase->customer_id,
+                    'purchase_id'         => $purchase->id,
+                    'date'                => null,
+                    'due_date'            => $dueDate,
+                    'receipt_no'          => null,
+                    'pre_balance'         => $remainingBalance,
+                    'installment_amount'  => $thisAmount,
+                    'discount'            => 0,
+                    'balance'             => $newBalance,
+                    'fine_amount'         => 0,
+                    'status'              => 'pending',
+                    'recovery_officer_id' => $officerId,
+                    'remarks'             => 'Extended: slot ' . ($existingCount + $i) . ' (added ' . now()->format('d/m/Y') . ')',
+                ]);
+
+                $remainingBalance = max(0, $newBalance);
+            }
+
+            // Update purchase dates and counts
+            $newLastDate = match($type) {
+                'daily'  => $startDate->copy()->addDays($count - 1),
+                'weekly' => $startDate->copy()->addWeeks($count - 1),
+                default  => $startDate->copy()->addMonths($count - 1),
+            };
+
+            $purchase->update([
+                'last_installment_date' => $newLastDate,
+                'installment_count'     => $existingCount + $count,
+                'installment_months'    => $existingCount + $count,
+                'status'                => 'active',
+            ]);
+
+            \DB::commit();
+
+            return redirect()->route('purchases.show', $purchase)
+                ->with('success', $count . ' nai installments kamiyabi se add ho gayi hain!');
+
+        } catch (\Exception $e) {
+            \DB::rollback();
+            return redirect()->back()->with('error', 'Error: ' . $e->getMessage());
+        }
+    }
+
+    // ─── Feature 2: Partner Shares Helper ────────────────────────────────────
+
+    /**
+     * Sync partner share rows for a purchase (called on store/update).
+     */
+    private function syncPartnerShares(Purchase $purchase, Request $request): void
+    {
+        $purchase->purchasePartners()->delete();
+
+        $partnerIds     = $request->input('partner_ids', []);
+        $partnerAmounts = $request->input('partner_amounts', []);
+
+        if (empty($partnerIds)) return;
+
+        $totalPrice = (float) $purchase->total_price;
+
+        foreach ($partnerIds as $index => $partnerId) {
+            if (empty($partnerId)) continue;
+            $amount = (float) ($partnerAmounts[$index] ?? 0);
+            if ($amount <= 0) continue;
+
+            $percentage = $totalPrice > 0 ? round(($amount / $totalPrice) * 100, 2) : 0;
+
+            PurchasePartner::create([
+                'purchase_id'      => $purchase->id,
+                'partner_id'       => $partnerId,
+                'share_amount'     => $amount,
+                'share_percentage' => $percentage,
+            ]);
+        }
     }
 }

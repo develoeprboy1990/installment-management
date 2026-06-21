@@ -189,6 +189,44 @@
                     @endif
 
                     {{-- ══════════════════════════════════════════════════════
+                         PARTNERS
+                    ═══════════════════════════════════════════════════════ --}}
+                    @php
+                        $purchasePartners = $purchase->purchasePartners()->with('partner')->get();
+                    @endphp
+                    @if($purchasePartners->count() > 0)
+                    <div class="stmt-partners" style="margin-bottom: 12px; overflow-x: auto;">
+                        <div class="stmt-card-title" style="background: #f0f0f0; border: 1px solid #000; border-bottom: none; font-size: 11px; font-weight: bold; padding: 4px 8px;">
+                            Partners / Investors
+                        </div>
+                        <table class="stmt-table">
+                            <thead>
+                                <tr>
+                                    <th>Partner Name</th>
+                                    <th>Phone</th>
+                                    <th>Share Amount</th>
+                                    <th>Share %</th>
+                                    <th>Amount Received</th>
+                                    <th>Pending Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($purchasePartners as $pp)
+                                <tr>
+                                    <td><strong>{{ $pp->partner->name ?? 'N/A' }}</strong></td>
+                                    <td>{{ $pp->partner->phone ?? 'N/A' }}</td>
+                                    <td>Rs. {{ number_format($pp->share_amount, 0) }}</td>
+                                    <td>{{ $pp->share_percentage }}%</td>
+                                    <td style="color:green;">Rs. {{ number_format($pp->amount_received, 0) }}</td>
+                                    <td style="color:red;">Rs. {{ number_format($pp->amount_pending, 0) }}</td>
+                                </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                    @endif
+
+                    {{-- ══════════════════════════════════════════════════════
                          PAID INSTALLMENTS TABLE
                     ═══════════════════════════════════════════════════════ --}}
                     @if($paidInst->count() > 0)

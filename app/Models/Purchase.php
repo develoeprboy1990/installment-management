@@ -18,7 +18,7 @@ class Purchase extends Model
         'total_price',
         'advance_payment',
         'remaining_balance',
-        'installment_type',      // 'daily' | 'weekly' | 'monthly'
+        'installment_type',      // 'daily' | 'weekly' | 'monthly' | '3months' | '6months' | '1year'
         'installment_count',     // total number of installments (generic)
         'installment_months',    // kept for backward compatibility (monthly)
         'monthly_installment',   // kept for backward compatibility (monthly)
@@ -61,6 +61,18 @@ class Purchase extends Model
     public function installments()
     {
         return $this->hasMany(Installment::class);
+    }
+
+    public function purchasePartners()
+    {
+        return $this->hasMany(PurchasePartner::class);
+    }
+
+    public function partners()
+    {
+        return $this->belongsToMany(Partner::class, 'purchase_partners')
+                    ->withPivot('share_amount', 'share_percentage', 'notes')
+                    ->withTimestamps();
     }
 
     public function getPaidInstallmentsCashAmountAttribute()
@@ -106,15 +118,27 @@ class Purchase extends Model
 
     /**
      * Return the effective total installment count regardless of type.
-     * - daily/weekly  → uses installment_count
-     * - monthly       → uses installment_months (backward compat)
+     * - daily/weekly       → uses installment_count
+     * - monthly            → uses installment_months (backward compat)
+     * - 3months/6months/1year → always 1 (single lump-sum payment)
      */
     public function getTotalInstallmentCount(): int
     {
+        if (in_array($this->installment_type, ['3months', '6months', '1year'])) {
+            return 1;
+        }
         if ($this->installment_type !== 'monthly' && $this->installment_count) {
             return (int) $this->installment_count;
         }
         return (int) $this->installment_months;
+    }
+
+    /**
+     * Check if this is a lump-sum / fixed-duration plan.
+     */
+    public function isLumpSumPlan(): bool
+    {
+        return in_array($this->installment_type, ['3months', '6months', '1year']);
     }
 
     /**
@@ -123,9 +147,12 @@ class Purchase extends Model
     public function getInstallmentTypeLabel(): string
     {
         return match($this->installment_type ?? 'monthly') {
-            'daily'  => 'Daily',
-            'weekly' => 'Weekly',
-            default  => 'Monthly',
+            'daily'   => 'Daily',
+            'weekly'  => 'Weekly',
+            '3months' => '3 Months Plan',
+            '6months' => '6 Months Plan',
+            '1year'   => '1 Year Plan',
+            default   => 'Monthly',
         };
     }
 

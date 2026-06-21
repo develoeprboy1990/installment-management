@@ -16,6 +16,7 @@ use App\Http\Controllers\Admin\InstallmentController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\ActivityController;
 use App\Http\Controllers\Admin\ExpenseController;
+use App\Http\Controllers\Admin\PartnerController;
 
 
 Route::group(['prefix' => 'admin', 'middleware' => ['auth.redirect','role:Admin|User']], function () {
@@ -60,6 +61,11 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth.redirect','role:Admin|
     Route::get('purchases/installment/{installmentId}/details', [PurchaseController::class, 'getInstallmentDetails'])->name('purchases.installment-details');
     Route::put('/installments/{id}/status', [PurchaseController::class, 'updateInstallStatus'])->name('installments.status');
     Route::get('purchases/{purchase}/statement', [PurchaseController::class, 'purchaseStatement'])->name('purchases.statement');
+    // Feature 3: Extend installment period
+    Route::post('purchases/{purchase}/extend', [PurchaseController::class, 'extendInstallments'])->name('purchases.extend');
+
+    // Feature 2: Partners
+    Route::resource('partners', PartnerController::class);
 
 
     //installments
