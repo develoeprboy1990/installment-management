@@ -25,8 +25,6 @@
     </div>
     @endif
 
-    <div class="row">
-        <div class="col-md-8 col-md-offset-2">
             <div class="ibox">
                 <div class="ibox-title">
                     <h5><i class="fa fa-handshake-o"></i> Partner Details</h5>
@@ -89,8 +87,6 @@
 
                     </form>
                 </div>
-            </div>
-        </div>
     </div>
 </div>
 @endsection

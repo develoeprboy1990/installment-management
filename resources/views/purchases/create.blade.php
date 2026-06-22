@@ -283,7 +283,7 @@
                 </div>
 
                 {{-- ── Panel 4: Partner Shares (Feature 2) ───────────────── --}}
-                <div class="ibox">
+                <div class="ibox" style="margin-bottom:60px;">
                     <div class="ibox-title">
                         <h5><i class="fa fa-handshake-o text-navy"></i> Partner Shares <small class="text-muted">(Optional)</small></h5>
                         <div class="ibox-tools">
