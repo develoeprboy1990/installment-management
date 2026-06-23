@@ -449,7 +449,7 @@
     $showExtendBtn = $remainingBalance > 0 && !$hasPendingInstallments && $purchase->status !== 'completed';
 @endphp
 @if($showExtendBtn)
-<div class="alert alert-warning" style="margin-top:10px;">
+<div class="alert alert-warning" style="margin-top:10px; padding-bottom:60px;">
     <div class="row">
         <div class="col-md-8">
             <h4 style="margin-top:0;"><i class="fa fa-clock-o"></i> Installment Period Ended!</h4>
