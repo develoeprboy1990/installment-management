@@ -18,18 +18,27 @@
                         $totalInstallments = $purchase->installments()->count();
                         $paidInstallmentCount = $purchase->installments()->where('status', 'paid')->count();
                         $waivedInstallmentCount = $purchase->installments()->where('status', 'waived')->count();
+                        $hasPendingInstallments = $purchase->installments()->whereIn('status', ['pending','overdue'])->exists();
+                        $showExtendBtn = $remainingBalance > 0 && !$hasPendingInstallments && $purchase->status !== 'completed';
             @endphp
-
             <!-- Edit Button -->
             {{-- <a href="{{ route('purchases.edit', $purchase) }}" class="btn btn-warning">
                 <i class="fa fa-edit"></i> Edit Purchase
             </a>--}}
 
-
-            <!-- Delete Button -->
+           <!-- Delete Button -->
             <button onclick="confirmDelete()" class="btn btn-danger">
                 <i class="fa fa-trash"></i> Delete Purchase
             </button>
+
+            @if($showExtendBtn)
+                <button class="btn btn-warning"
+                        data-toggle="modal"
+                        data-target="#extendModal">
+                    <i class="fa fa-plus-circle"></i>
+                    Extend Installment
+                </button>
+            @endif
 
             <a href="{{ route('purchases.index') }}" class="btn btn-default">
                 <i class="fa fa-arrow-left"></i> Back to List
@@ -436,32 +445,6 @@
                     </tr>
                 </tfoot>
             </table>
-        </div>
-    </div>
-</div>
-@endif
-
-{{-- ═══════════════════════════════════════════════════════════════════
-     Feature 3: Extend Installment Period Button (shown when needed)
-     ════════════════════════════════════════════════════════════════ --}}
-@php
-    $hasPendingInstallments = $purchase->installments()->whereIn('status', ['pending','overdue'])->exists();
-    $showExtendBtn = $remainingBalance > 0 && !$hasPendingInstallments && $purchase->status !== 'completed';
-@endphp
-@if($showExtendBtn)
-<div class="alert alert-warning" style="margin-top:10px; padding-bottom:60px;">
-    <div class="row">
-        <div class="col-md-8">
-            <h4 style="margin-top:0;"><i class="fa fa-clock-o"></i> Installment Period Ended!</h4>
-            <p style="margin-bottom:0;">
-                All installment slots are completed but <strong>Rs. {{ number_format($remainingBalance, 2) }}</strong> remaining balance is still pending.
-                Add new installment slots so the customer can pay the remaining amount.
-            </p>
-        </div>
-        <div class="col-md-4 text-right" style="padding-top:10px;">
-            <button class="btn btn-warning btn-lg" data-toggle="modal" data-target="#extendModal">
-                <i class="fa fa-plus-circle"></i> Extend Installment Period
-            </button>
         </div>
     </div>
 </div>
