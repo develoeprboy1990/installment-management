@@ -27,9 +27,9 @@
             </a>--}}
 
            <!-- Delete Button -->
-            <button onclick="confirmDelete()" class="btn btn-danger">
+            {{-- <button onclick="confirmDelete()" class="btn btn-danger">
                 <i class="fa fa-trash"></i> Delete Purchase
-            </button>
+            </button> --}}
 
             @if($showExtendBtn)
                 <button class="btn btn-warning"
