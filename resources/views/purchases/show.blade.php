@@ -339,6 +339,12 @@
                                         title="Print Receipt">
                                             <i class="fa fa-print"></i> Print
                                         </a>
+                                        <button class="btn btn-sm btn-default history-btn"
+                                            data-installment-id="{{ $installment->id }}"
+                                            data-installment-no="{{ $loop->iteration }}"
+                                            title="Payment History">
+                                            <i class="fa fa-history"></i>
+                                        </button>
                                     </div>
                                 @elseif($installment->status == 'waived')
                                     <span class="text-muted"><i class="fa fa-minus-circle"></i> Waived</span>
@@ -353,15 +359,21 @@
                                         title="Print Receipt">
                                             <i class="fa fa-print"></i> Print
                                         </a>
+                                        <button class="btn btn-sm btn-default history-btn"
+                                            data-installment-id="{{ $installment->id }}"
+                                            data-installment-no="{{ $loop->iteration }}"
+                                            title="Payment History">
+                                            <i class="fa fa-history"></i>
+                                        </button>
+                                        {{-- Edit button --}}
+                                        <button class="btn btn-sm btn-warning mt-1 edit-status-btn"
+                                             data-id="{{ $installment->id }}"
+                                             data-status="{{ $installment->status }}"
+                                             data-toggle="modal"
+                                             data-target="#editStatusModal">
+                                             <i class="fa fa-edit"></i> Edit
+                                        </button>
                                     </div>
-                                    {{-- Edit button --}}
-                                    <button class="btn btn-sm btn-warning mt-1 edit-status-btn"
-                                         data-id="{{ $installment->id }}"
-                                         data-status="{{ $installment->status }}"
-                                         data-toggle="modal"
-                                         data-target="#editStatusModal">
-                                         <i class="fa fa-edit"></i> Edit
-                                    </button>
                                 @endif
                             </td>
                         </tr>
@@ -586,6 +598,73 @@
                 <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
                 <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
                     <i class="fa fa-trash"></i> Delete Purchase
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- ═══════════════════════════════════════════════════════════════════
+     Payment History Modal
+     ════════════════════════════════════════════════════════════════ --}}
+<div class="modal fade" id="historyModal" tabindex="-1" role="dialog" aria-labelledby="historyModalLabel">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header" style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); color:#fff; border-radius: 4px 4px 0 0;">
+                <button type="button" class="close" data-dismiss="modal" style="color:#fff; opacity:1;"><span>&times;</span></button>
+                <h4 class="modal-title" id="historyModalLabel">
+                    <i class="fa fa-history"></i>
+                    Payment History — <span id="historyInstallmentLabel">Installment</span>
+                </h4>
+            </div>
+            <div class="modal-body" style="padding: 0;">
+
+                {{-- Summary bar --}}
+                <div id="historyInstallmentSummary" style="background:#f8f9fa; padding:14px 20px; border-bottom:1px solid #e0e0e0; display:flex; gap:30px; flex-wrap:wrap;">
+                    <div><small class="text-muted">Due Date</small><br><strong id="histSumDueDate">—</strong></div>
+                    <div><small class="text-muted">Installment Amount</small><br><strong id="histSumAmount">—</strong></div>
+                    <div><small class="text-muted">Status</small><br><span id="histSumStatus">—</span></div>
+                </div>
+
+                {{-- Loader --}}
+                <div id="historyLoader" style="text-align:center; padding:40px;">
+                    <i class="fa fa-spinner fa-spin fa-2x text-primary"></i>
+                    <p class="text-muted" style="margin-top:10px;">Loading history...</p>
+                </div>
+
+                {{-- No data --}}
+                <div id="historyEmpty" style="display:none; text-align:center; padding:40px;">
+                    <i class="fa fa-inbox fa-3x text-muted"></i>
+                    <p class="text-muted" style="margin-top:10px;">No payment transactions found for this installment.</p>
+                    <small class="text-muted">Payments made from now on will appear here.</small>
+                </div>
+
+                {{-- Transactions table --}}
+                <div id="historyTableWrapper" style="display:none; padding:15px;">
+                    <table class="table table-bordered table-hover" style="margin-bottom:0; font-size:13px;">
+                        <thead style="background:#0f3460; color:#fff;">
+                            <tr>
+                                <th>#</th>
+                                <th><i class="fa fa-calendar"></i> Paid On</th>
+                                <th><i class="fa fa-money"></i> Amount</th>
+                                <th><i class="fa fa-tag"></i> Discount</th>
+                                <th><i class="fa fa-exclamation-circle"></i> Fine</th>
+                                <th><i class="fa fa-check-circle"></i> Type</th>
+                                <th><i class="fa fa-credit-card"></i> Method</th>
+                                <th><i class="fa fa-file-text-o"></i> Receipt</th>
+                                <th><i class="fa fa-user"></i> Officer</th>
+                                <th><i class="fa fa-comment"></i> Remarks</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historyTableBody">
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+            <div class="modal-footer" style="background:#f8f9fa;">
+                <button type="button" class="btn btn-default" data-dismiss="modal">
+                    <i class="fa fa-times"></i> Close
                 </button>
             </div>
         </div>
@@ -827,6 +906,87 @@ $('#confirmDeleteBtn').on('click', function() {
             });
         });
     });
+
+    // ─── Payment History Modal Handler ──────────────────────────────────────────
+    $(document).on('click', '.history-btn', function () {
+        var installmentId  = $(this).data('installment-id');
+        var installmentNo  = $(this).data('installment-no');
+
+        // Reset modal state
+        $('#historyInstallmentLabel').text('Installment #' + installmentNo);
+        $('#histSumDueDate').text('—');
+        $('#histSumAmount').text('—');
+        $('#histSumStatus').html('—');
+        $('#historyLoader').show();
+        $('#historyEmpty').hide();
+        $('#historyTableWrapper').hide();
+        $('#historyTableBody').html('');
+
+        $('#historyModal').modal('show');
+
+        // Fetch history via AJAX
+        $.ajax({
+            url: '{{ url("admin/purchases/installment") }}/' + installmentId + '/history',
+            type: 'GET',
+            success: function (data) {
+                $('#historyLoader').hide();
+
+                // Fill summary bar
+                $('#histSumDueDate').text(data.due_date);
+                $('#histSumAmount').text('Rs. ' + data.installment_amount);
+
+                // Status badge
+                var statusBadgeMap = {
+                    'paid'    : '<span class="label label-success">Paid</span>',
+                    'partial' : '<span class="label label-warning">Partial Paid</span>',
+                    'pending' : '<span class="label label-default">Pending</span>',
+                    'overdue' : '<span class="label label-danger">Overdue</span>',
+                    'waived'  : '<span class="label label-info">Waived</span>',
+                };
+                $('#histSumStatus').html(statusBadgeMap[data.status] || data.status);
+
+                if (data.transactions.length === 0) {
+                    $('#historyEmpty').show();
+                    return;
+                }
+
+                // Build table rows
+                var rows = '';
+                $.each(data.transactions, function (i, txn) {
+                    var typeBadge = txn.payment_type_raw === 'full'
+                        ? '<span class="label label-success"><i class="fa fa-check"></i> Full Paid</span>'
+                        : '<span class="label label-warning"><i class="fa fa-adjust"></i> Partial</span>';
+
+                    rows += '<tr>'
+                        + '<td><strong>' + (i + 1) + '</strong></td>'
+                        + '<td>'
+                        +   '<strong>' + txn.paid_at + '</strong>'
+                        +   '<br><small class="text-muted"><i class="fa fa-calendar-o"></i> ' + txn.payment_date + '</small>'
+                        + '</td>'
+                        + '<td><strong class="text-success">Rs. ' + txn.amount_paid + '</strong></td>'
+                        + '<td>' + (parseFloat(txn.discount) > 0 ? '<span class="text-primary">Rs. ' + txn.discount + '</span>' : '<span class="text-muted">—</span>') + '</td>'
+                        + '<td>' + (parseFloat(txn.fine_amount) > 0 ? '<span class="text-danger">Rs. ' + txn.fine_amount + '</span>' : '<span class="text-muted">—</span>') + '</td>'
+                        + '<td>' + typeBadge + '</td>'
+                        + '<td><span class="label label-default">' + txn.payment_method + '</span></td>'
+                        + '<td><code>' + txn.receipt_no + '</code></td>'
+                        + '<td>' + txn.officer + '</td>'
+                        + '<td><small>' + txn.remarks + '</small></td>'
+                        + '</tr>';
+                });
+
+                $('#historyTableBody').html(rows);
+                $('#historyTableWrapper').show();
+            },
+            error: function () {
+                $('#historyLoader').hide();
+                $('#historyEmpty').html(
+                    '<i class="fa fa-exclamation-triangle fa-3x text-danger"></i>' +
+                    '<p class="text-danger" style="margin-top:10px;">Error loading history. Please try again.</p>'
+                ).show();
+            }
+        });
+    });
+    // ─────────────────────────────────────────────────────────────────────────────
 </script>
 @endpush
 @endsection

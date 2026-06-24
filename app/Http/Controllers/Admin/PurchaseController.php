@@ -10,6 +10,7 @@ use App\Models\Installment;
 use App\Models\Partner;
 use App\Models\PurchasePartner;
 use App\Models\RecoveryOfficer;
+use App\Models\PaymentTransaction;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 
@@ -430,6 +431,23 @@ class PurchaseController extends Controller
             'remarks' => $request->remarks,
         ]);
 
+        // ─── Log payment transaction for history ───────────────────────────────
+        PaymentTransaction::create([
+            'installment_id'      => $installment->id,
+            'purchase_id'         => $purchase->id,
+            'customer_id'         => $purchase->customer_id,
+            'recovery_officer_id' => $request->recovery_officer_id,
+            'receipt_no'          => $request->receipt_no,
+            'amount_paid'         => $request->payment_amount,
+            'discount'            => $request->discount ?? 0,
+            'fine_amount'         => $fine,
+            'payment_method'      => $request->payment_method,
+            'payment_type'        => ($status === 'paid') ? 'full' : 'partial',
+            'payment_date'        => $request->payment_date,
+            'remarks'             => $request->remarks,
+        ]);
+        // ──────────────────────────────────────────────────────────────────────
+
         // Update subsequent installments' pre_balance
         $this->updateSubsequentInstallments($purchase, $installment, $newBalance);
 
@@ -517,6 +535,44 @@ class PurchaseController extends Controller
         }
 
         return view('purchases.receipt', compact('installment'));
+    }
+
+    /**
+     * AJAX: Return payment transaction history for a specific installment.
+     * URL: GET /admin/purchases/installment/{installmentId}/history
+     */
+    public function getInstallmentHistory($installmentId)
+    {
+        $installment = Installment::with(['officer'])->findOrFail($installmentId);
+
+        $transactions = PaymentTransaction::with('officer')
+            ->where('installment_id', $installmentId)
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(function ($txn) {
+                return [
+                    'id'             => $txn->id,
+                    'receipt_no'     => $txn->receipt_no ?? '—',
+                    'amount_paid'    => number_format($txn->amount_paid, 2),
+                    'discount'       => number_format($txn->discount, 2),
+                    'fine_amount'    => number_format($txn->fine_amount, 2),
+                    'payment_method' => ucfirst($txn->payment_method ?? 'N/A'),
+                    'payment_type'   => $txn->payment_type === 'full' ? 'Full Paid' : 'Partial Paid',
+                    'payment_type_raw' => $txn->payment_type,
+                    'payment_date'   => $txn->payment_date ? $txn->payment_date->format('d M Y') : '—',
+                    'paid_at'        => $txn->created_at->format('d M Y, h:i A'),
+                    'officer'        => $txn->officer?->name ?? '—',
+                    'remarks'        => $txn->remarks ?? '—',
+                ];
+            });
+
+        return response()->json([
+            'installment_no'     => $installment->id,
+            'due_date'           => $installment->due_date?->format('d M Y') ?? '—',
+            'installment_amount' => number_format($installment->installment_amount, 2),
+            'status'             => $installment->status,
+            'transactions'       => $transactions,
+        ]);
     }
 
     public function updateInstallStatus(Request $request, $id)

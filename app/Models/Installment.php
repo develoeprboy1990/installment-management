@@ -69,6 +69,11 @@ class Installment extends Model
         return $this->belongsTo(RecoveryOfficer::class, 'recovery_officer_id');
     }
 
+    public function paymentTransactions()
+    {
+        return $this->hasMany(\App\Models\PaymentTransaction::class, 'installment_id');
+    }
+
     // Check if installment is overdue
     public function isOverdue()
     {
