@@ -52,7 +52,7 @@
                                         <i class="fa fa-user-circle-o"></i> Customer
                                         <span class="text-danger">*</span>
                                     </label>
-                                    <select class="form-control" name="customer_id" id="customer_id" required>
+                                    <select class="form-control select2-customer" name="customer_id" id="customer_id" required>
                                         <option value="">— Select Customer —</option>
                                         @foreach($customers as $customer)
                                             <option value="{{ $customer->id }}"
@@ -69,7 +69,7 @@
                                         <i class="fa fa-cube"></i> Product
                                         <span class="text-danger">*</span>
                                     </label>
-                                    <select class="form-control" name="product_id" id="product_id" required>
+                                    <select class="form-control select2-product" name="product_id" id="product_id" required>
                                         <option value="">— Select Product —</option>
                                         @foreach($products as $product)
                                             <option value="{{ $product->id }}"
@@ -102,7 +102,7 @@
                                         <i class="fa fa-id-badge"></i> Recovery Officer
                                         <span class="text-danger">*</span>
                                     </label>
-                                    <select class="form-control" name="recovery_officer_id"
+                                    <select class="form-control select2-officer" name="recovery_officer_id"
                                             id="recovery_officer_id" required>
                                         <option value="">— Select Officer —</option>
                                         @foreach($recoveryOfficers as $officer)
@@ -579,6 +579,31 @@ $(document).ready(function () {
     $('#installment_type').on('change', recalculate);
     $('#advance_payment, #installment_count, #first_installment_date').on('input change', recalculate);
     $('#per_installment_input').on('input', recalculate);
+
+    // ── Select2 searchable dropdowns ───────────────────────────────────────
+    $('#customer_id').select2({
+        placeholder: '— Search Customer —',
+        allowClear: true,
+        width: '100%',
+    });
+
+    $('#product_id').select2({
+        placeholder: '— Search Product —',
+        allowClear: true,
+        width: '100%',
+    });
+    // Re-fire price fill after Select2 change
+    $('#product_id').on('select2:select select2:clear', function () {
+        const price = $(this).find(':selected').data('price') || '';
+        $('#total_price').val(price);
+        recalculate();
+    });
+
+    $('#recovery_officer_id').select2({
+        placeholder: '— Search Recovery Officer —',
+        allowClear: true,
+        width: '100%',
+    });
 
     // ── Init ───────────────────────────────────────────────────────────────
     recalculate();
