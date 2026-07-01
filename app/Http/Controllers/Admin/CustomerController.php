@@ -129,7 +129,7 @@ class CustomerController extends Controller
             'mobile_2' => 'nullable|string|max:20',
             'nic' => 'required|string|max:20|unique:customers,nic',
             'gender' => 'nullable|in:male,female',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'image' => 'nullable|image|mimes:jpeg,jpg,png,webp|max:5120',
         ]);
 
         // Handle image upload
@@ -169,7 +169,7 @@ class CustomerController extends Controller
             'mobile_2' => 'nullable|string|max:20',
             'nic' => 'required|string|max:20|unique:customers,nic,' . $customer->id,
             'gender' => 'nullable|in:male,female',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'image' => 'nullable|image|mimes:jpeg,jpg,png,webp|max:5120',
         ]);
 
         // Handle image upload

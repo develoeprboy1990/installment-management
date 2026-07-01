@@ -34,7 +34,7 @@ class GuarantorController extends Controller
             'office_address' => 'nullable|string',
             'occupation' => 'nullable|string|max:255',
             'guarantor_no' => 'required|in:1,2,3,4',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'image' => 'nullable|image|mimes:jpeg,jpg,png,webp|max:5120',
         ]);
 
         $data = $request->all();
@@ -87,7 +87,7 @@ class GuarantorController extends Controller
             'office_address' => 'nullable|string',
             'occupation' => 'nullable|string|max:255',
             'guarantor_no' => 'required|in:1,2,3,4',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'image' => 'nullable|image|mimes:jpeg,jpg,png,webp|max:5120',
         ]);
 
         $data = $request->all();
