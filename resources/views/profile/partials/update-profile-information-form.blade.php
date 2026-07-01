@@ -36,7 +36,7 @@
                 @endif
                 <input id="avatar" name="avatar" type="file" accept="image/jpeg,image/png,image/webp" class="block" />
             </div>
-            <small class="text-gray-500">JPEG/PNG/WEBP up to 2 MB.</small>
+            <small class="text-gray-500">JPEG/PNG/WEBP up to 5 MB.</small>
             <x-input-error class="mt-2" :messages="$errors->get('avatar')" />
         </div>
 
