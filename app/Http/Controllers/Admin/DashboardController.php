@@ -85,46 +85,51 @@ class DashboardController extends Controller
                 ->selectRaw('COUNT(purchases.id) as sales_count')
                 ->selectRaw('COALESCE(SUM(purchases.total_price), 0) as total_revenue')
                 ->leftJoin('purchases', 'products.id', '=', 'purchases.product_id')
-                ->groupBy('products.id', 'products.company', 'products.model', 'products.serial_no', 'products.price')
+                ->groupBy('products.id', 'products.company', 'products.model', 'products.serial_no', 'products.cost_price', 'products.price')
                 ->orderBy('sales_count', 'desc')
                 ->limit(5)
                 ->get();
 
-            // ── Customer Distribution (calculated from actual payment data) ──
-            // A customer is COMPLETED if ALL their purchases are fully paid (remaining_balance = 0)
-            // A customer is DEFAULTED if they have any overdue pending installment
-            // A customer is ACTIVE otherwise (has remaining balance, no overdue)
+            // ── Customer Distribution (direct SQL — timezone-safe) ──
+            // DEFAULTED  : customer has ≥1 pending installment where due_date < today (SQL date compare)
+            // COMPLETED  : no overdue, and total_purchased - advance - paid - discount <= 0
+            // ACTIVE     : no overdue, and still has a positive remaining balance
 
-            $allCustomers = Customer::with([
-                'purchases',
-                'installments' => fn($q) => $q->select('id','customer_id','purchase_id','status','installment_amount','paid_amount','discount','due_date')
-            ])->get();
+            $todayStr = now()->toDateString(); // e.g. "2026-07-01" — always a date string, never timezone-shifted
+
+            // Step 1: Find all customer_ids that are defaulted (SQL-level date compare, no PHP cast issues)
+            $defaultedIds = Installment::where('status', 'pending')
+                ->whereDate('due_date', '<', $todayStr)
+                ->whereNotNull('customer_id')
+                ->distinct()
+                ->pluck('customer_id')
+                ->toArray();
+
+            $defaultedCount = count($defaultedIds);
+
+            // Step 2: For non-defaulted customers, calculate remaining balance per customer
+            //         Only load customers that actually have at least one purchase
+            $nonDefaultedCustomers = Customer::has('purchases')
+                ->when(!empty($defaultedIds), fn($q) => $q->whereNotIn('id', $defaultedIds))
+                ->with([
+                    'purchases:id,customer_id,total_price,advance_payment',
+                    'installments' => fn($q) => $q
+                        ->select('id', 'customer_id', 'purchase_id', 'status', 'paid_amount', 'discount')
+                        ->whereIn('status', ['paid', 'partial']),
+                ])
+                ->get();
 
             $activeCount    = 0;
             $completedCount = 0;
-            $defaultedCount = 0;
 
-            foreach ($allCustomers as $cust) {
-                if ($cust->purchases->isEmpty()) continue;
-
-                // Check overdue: any pending installment past due date
-                $hasOverdue = $cust->installments->contains(function($inst) {
-                    return $inst->status === 'pending' && $inst->due_date < now();
-                });
-
-                if ($hasOverdue) {
-                    $defaultedCount++;
-                    continue;
-                }
-
-                // Calculate remaining balance across all purchases
-                $totalPurchased = $cust->purchases->sum('total_price');
-                $totalAdvance   = $cust->purchases->sum('advance_payment');
-                $totalPaid      = $cust->installments->whereIn('status',['paid','partial'])->sum('paid_amount');
-                $totalDiscount  = $cust->installments->whereIn('status',['paid','partial'])->sum('discount');
+            foreach ($nonDefaultedCustomers as $cust) {
+                $totalPurchased = (float) $cust->purchases->sum('total_price');
+                $totalAdvance   = (float) $cust->purchases->sum('advance_payment');
+                $totalPaid      = (float) $cust->installments->sum('paid_amount');
+                $totalDiscount  = (float) $cust->installments->sum('discount');
                 $remaining      = $totalPurchased - $totalAdvance - $totalPaid - $totalDiscount;
 
-                if ($remaining <= 0) {
+                if ($remaining <= 0.01) { // 0.01 tolerance for floating point
                     $completedCount++;
                 } else {
                     $activeCount++;
@@ -187,9 +192,13 @@ class DashboardController extends Controller
             $data['last_month_profit'] = $lastMonthGrossProfit - $lastMonthDiscount;
 
         } catch (\Exception $e) {
-            // Log the error and return default values
-            \Log::error('Dashboard Error: ' . $e->getMessage());
-            // Data is already initialized with default values
+            // Log full error so live-server issues can be diagnosed from storage/logs/laravel.log
+            \Log::error('Dashboard/Report Error: ' . $e->getMessage(), [
+                'file'  => $e->getFile(),
+                'line'  => $e->getLine(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            // $data retains its default 0-values for any fields not yet set
         }
 
         return view('report', compact('data'));

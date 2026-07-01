@@ -65,13 +65,15 @@
                 </div>
                 <div class="col-md-4">
                     <label for="mobile_1">Mobile 1 <span class="text-danger">*</span></label>
-                    <input type="text" class="form-control" id="mobile_1" name="mobile_1"
-                        value="{{ $customer->mobile_1 }}" required>
+                    <input type="tel" class="form-control" id="mobile_1" name="mobile_1"
+                        value="{{ $customer->mobile_1 }}" required maxlength="12" placeholder="0340-9831511">
+                    <small class="text-muted">Format: 0XXX-XXXXXXX (11 digits)</small>
                 </div>
                 <div class="col-md-4">
                     <label for="mobile_2">Mobile 2</label>
-                    <input type="text" class="form-control" id="mobile_2" name="mobile_2"
-                        value="{{ $customer->mobile_2 }}">
+                    <input type="tel" class="form-control" id="mobile_2" name="mobile_2"
+                        value="{{ $customer->mobile_2 }}" maxlength="12" placeholder="0340-9831511">
+                    <small class="text-muted">Format: 0XXX-XXXXXXX (11 digits)</small>
                 </div>
 
             </div>
@@ -79,7 +81,9 @@
             <div class="row mt-3 field">
                 <div class="col-md-4">
                     <label for="nic">NIC</label>
-                    <input type="text" class="form-control" id="nic" name="nic" value="{{ $customer->nic }}">
+                    <input type="text" class="form-control" id="nic" name="nic" value="{{ $customer->nic }}"
+                        maxlength="15" placeholder="12101-7064571-7">
+                    <small class="text-muted">Format: XXXXX-XXXXXXX-X</small>
                 </div>
 
                 <div class="col-md-4">
@@ -132,3 +136,44 @@
     text-align: center;
 }
 </style>
+
+@push('script')
+<script>
+// Format NIC: XXXXX-XXXXXXX-X
+$('#nic').on('input', function() {
+    let raw = this.value.replace(/\D/g, '').substr(0, 13);
+    let formatted = raw;
+    if (raw.length > 5) formatted = raw.substr(0, 5) + '-' + raw.substr(5);
+    if (raw.length > 12) formatted = formatted.substr(0, 13) + '-' + raw.substr(12, 1);
+    this.value = formatted;
+});
+
+// Format mobile: 0XXX-XXXXXXX (max 11 digits, stored without dash but displayed with)
+function formatMobile(el) {
+    let raw = el.value.replace(/\D/g, '').substr(0, 11);
+    if (raw.length > 4) {
+        el.value = raw.substr(0, 4) + '-' + raw.substr(4);
+    } else {
+        el.value = raw;
+    }
+}
+
+$('#mobile_1, #mobile_2').on('input', function() {
+    formatMobile(this);
+});
+
+// On page load, format existing values
+$(document).ready(function() {
+    ['mobile_1', 'mobile_2'].forEach(function(id) {
+        var el = document.getElementById(id);
+        if (el && el.value) formatMobile(el);
+    });
+
+    var nicEl = document.getElementById('nic');
+    if (nicEl && nicEl.value) {
+        // re-trigger to ensure dashes are in place
+        $(nicEl).trigger('input');
+    }
+});
+</script>
+@endpush
