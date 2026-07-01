@@ -37,6 +37,7 @@
                                         <span class="mx-2">to</span>
                                         <input type="date" id="custom_end" class="form-control">
                                         <button id="applyCustom" class="btn btn-primary ml-2">Apply</button>
+                                        <button id="resetCustom" class="btn btn-default ml-1" title="Reset date filter"><i class="fa fa-times"></i> Reset</button>
                                     </form>
                                 </div>
                             </div>
@@ -980,7 +981,12 @@
                 var s = $("#custom_start").val();
                 var eDate = $("#custom_end").val();
                 if (!s || !eDate) {
-                    alert('Please select both start and end date');
+                    toastr.warning('Please select both start and end date');
+                    return;
+                }
+                if (eDate < s) {
+                    toastr.error('End date cannot be earlier than start date');
+                    $("#custom_end").focus();
                     return;
                 }
                 $("#rangeSwitcher button").removeClass('active');
@@ -990,7 +996,31 @@
                     end_date: eDate
                 });
             });
-        });
+
+            // Reset custom date filter
+            $("#resetCustom").on('click', function(e) {
+                e.preventDefault();
+                $("#custom_start").val('');
+                $("#custom_end").val('');
+                // Reactivate the "This Month" button and reload
+                $("#rangeSwitcher button").removeClass('active');
+                $("#rangeSwitcher button[data-range='month']").addClass('active');
+                $("#rangeLabel").text('Showing: This Month');
+                loadMetrics({ range: 'month' });
+            });
+
+            // When start date changes, set min for end date
+            $("#custom_start").on('change', function() {
+                var startVal = $(this).val();
+                $("#custom_end").attr('min', startVal);
+                // If end date is already set and is before start, clear it
+                if ($("#custom_end").val() && $("#custom_end").val() < startVal) {
+                    $("#custom_end").val('');
+                    toastr.warning('End date was reset because it was before the new start date');
+                }
+            });
+        }); // end $(document).ready
+
         document.addEventListener('DOMContentLoaded', function() {
             const filterDate = document.getElementById('filter_date');
             const clearFilter = document.getElementById('clear_filter');
