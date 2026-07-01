@@ -129,10 +129,21 @@
                 <td class="text-end">Rs.{{ number_format((float)($installment->discount ?? 0), 2) }}</td>
             </tr>
             <tr>
-                <th>Fine Amount</th>
-                <td class="text-end">Rs.{{ number_format((float)($installment->fine_amount ?? 0), 2) }}</td>
+                {{-- <th>Fine Amount</th>
+                <td class="text-end">Rs.{{ number_format((float)($installment->fine_amount ?? 0), 2) }}</td> --}}
                 <th>Total Reduction</th>
                 <td class="text-end"><strong>Rs.{{ number_format((float)(($installment->paid_amount ?? 0) + ($installment->discount ?? 0)), 2) }}</strong></td>
+                <th>Inst. Due Balance</th>
+                <td class="text-end">
+                    @php
+                        $instDue = $installment->installment_amount - $installment->paid_amount - $installment->discount;
+                    @endphp
+                    @if($instDue > 0)
+                        <strong class="text-danger">Rs.{{ number_format((float)$instDue, 2) }}</strong>
+                    @else
+                        <strong>Rs.0.00</strong>
+                    @endif
+                </td>
             </tr>
             <tr>
                 <th>Installment Type</th>
@@ -182,17 +193,6 @@
                         <strong class="text-danger">Partial Paid</strong>
                     @else
                         <strong class="text-success">Fully Paid</strong>
-                    @endif
-                </td>
-                <th>Inst. Due Balance</th>
-                <td class="text-end">
-                    @php
-                        $instDue = $installment->installment_amount - $installment->paid_amount - $installment->discount;
-                    @endphp
-                    @if($instDue > 0)
-                        <strong class="text-danger">Rs.{{ number_format((float)$instDue, 2) }}</strong>
-                    @else
-                        <strong>Rs.0.00</strong>
                     @endif
                 </td>
             </tr>
