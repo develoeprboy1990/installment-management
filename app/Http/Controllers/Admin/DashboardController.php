@@ -110,12 +110,15 @@ class DashboardController extends Controller
             // Step 2: For non-defaulted customers, calculate remaining balance per customer
             //         Only load customers that actually have at least one purchase
             $nonDefaultedCustomers = Customer::has('purchases')
-                ->when(!empty($defaultedIds), fn($q) => $q->whereNotIn('id', $defaultedIds))
+                ->when(!empty($defaultedIds), function ($q) use ($defaultedIds) {
+                    return $q->whereNotIn('id', $defaultedIds);
+                })
                 ->with([
                     'purchases:id,customer_id,total_price,advance_payment',
-                    'installments' => fn($q) => $q
-                        ->select('id', 'customer_id', 'purchase_id', 'status', 'paid_amount', 'discount')
-                        ->whereIn('status', ['paid', 'partial']),
+                    'installments' => function ($q) {
+                        $q->select('id', 'customer_id', 'purchase_id', 'status', 'paid_amount', 'discount')
+                          ->whereIn('status', ['paid', 'partial']);
+                    },
                 ])
                 ->get();
 
@@ -231,7 +234,9 @@ class DashboardController extends Controller
     $pending_revenue_all      = Installment::where('status','pending')->sum('installment_amount') ?? 0;
 
     // Customers (new in range) + total customers (all time)
-    $customers_count_in_range = Customer::when($start && $end, fn($q) => $q->whereBetween('created_at', [$start, $end]))->count();
+    $customers_count_in_range = Customer::when($start && $end, function ($q) use ($start, $end) {
+        return $q->whereBetween('created_at', [$start, $end]);
+    })->count();
     $total_customers          = Customer::count();
 
     // Total revenue (purchases in range) — using purchase_date if present, fallback to created_at
@@ -363,7 +368,9 @@ private function collectionsSeries(?Carbon $start, ?Carbon $end, string $groupBy
                   ->groupBy('d')
                   ->orderBy('d')
                   ->get();
-        return $rows->map(fn($r) => [ (string)$r->d, (float)$r->total ])->all();
+        return $rows->map(function ($r) {
+            return [(string) $r->d, (float) $r->total];
+        })->all();
     }
 
     // month grouping
@@ -372,7 +379,9 @@ private function collectionsSeries(?Carbon $start, ?Carbon $end, string $groupBy
               ->orderBy('m')
               ->get();
 
-    return $rows->map(fn($r) => [ (string)$r->m, (float)$r->total ])->all();
+    return $rows->map(function ($r) {
+        return [(string) $r->m, (float) $r->total];
+    })->all();
 }
 
 }
