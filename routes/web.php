@@ -54,6 +54,9 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth.redirect','role:Admin|
     // recovery-officers
     Route::resource('recovery-officers', RecoveryOfficerController::class);
     Route::put('/recovery-officers/{recoveryOfficer}', [RecoveryOfficerController::class, 'update'])->name('recoveryOfficer.update');
+    Route::post('recovery-officers/{recoveryOfficer}/assign-customers', [RecoveryOfficerController::class, 'assignCustomers'])->name('recovery-officers.assign-customers');
+    Route::delete('recovery-officers/{recoveryOfficer}/remove-customer/{customer}', [RecoveryOfficerController::class, 'removeCustomer'])->name('recovery-officers.remove-customer');
+
 
     //purchases
     Route::resource('purchases', PurchaseController::class);

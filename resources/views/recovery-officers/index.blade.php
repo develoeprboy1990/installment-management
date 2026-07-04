@@ -30,7 +30,7 @@
                                         <th>Employee ID</th>
                                         <th>Name</th>
                                         <th>Phone</th>
-                                        <th>Email</th>
+                                        <th>Customers</th>
                                         <th>Total Collected</th>
                                         <th>Collections</th>
                                         <th>Status</th>
@@ -44,7 +44,7 @@
                                             <td><code>{{ $officer->employee_id }}</code></td>
                                             <td>{{ $officer->name }}</td>
                                             <td>{{ $officer->phone ?? '-' }}</td>
-                                            <td>{{ $officer->email ?? '-' }}</td>
+                                            <td><span class="badge badge-primary">{{ $officer->customers_count ?? 0 }}</span></td>
                                             <td>Rs. {{ number_format($officer->getTotalCollected(), 2) }}</td>
                                             <td><span class="badge badge-info">{{ $officer->getInstallmentsCount() }}</span>
                                             </td>

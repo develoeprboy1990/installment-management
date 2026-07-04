@@ -28,6 +28,13 @@ class RecoveryOfficer extends Model
         return $this->hasMany(Installment::class);
     }
 
+    public function customers()
+    {
+        return $this->belongsToMany(Customer::class, 'officer_customers')
+                    ->withPivot('assigned_at')
+                    ->withTimestamps();
+    }
+
     // Get active recovery officers
     public static function active()
     {

@@ -42,6 +42,13 @@ class Customer extends Model
         return $this->hasMany(Purchase::class);
     }
 
+    public function recoveryOfficers()
+    {
+        return $this->belongsToMany(RecoveryOfficer::class, 'officer_customers')
+                    ->withPivot('assigned_at')
+                    ->withTimestamps();
+    }
+
     public function getTotalInstallmentCashPaidAttribute()
     {
         return (float) $this->installments()
