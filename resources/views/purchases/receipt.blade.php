@@ -41,6 +41,13 @@
 
 <div class="receipt-container">
     {{-- Header --}}
+   <div class="text-center m-0 p-0">
+    <img
+        alt="image"
+        src="{{ Auth::user()->avatar ? getSettingAssetUrl(Auth::user()->avatar) : asset('backend/img/profile_small.jpg') }}"
+        style="width: 190px; height: 60px; object-fit: fill;"
+    />
+</div>
     <div class="receipt-header text-center">
         <div class="receipt-title">{{ getUserSetting('project_name') ?? 'Electronics Corporation' }}</div>
         <div class="d-flex justify-content-between">

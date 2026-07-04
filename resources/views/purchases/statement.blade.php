@@ -44,6 +44,13 @@
                     {{-- ══════════════════════════════════════════════════════
                          COMPANY HEADER
                     ═══════════════════════════════════════════════════════ --}}
+                    <div class="text-center m-0 p-0">
+    <img
+        alt="image"
+        src="{{ Auth::user()->avatar ? getSettingAssetUrl(Auth::user()->avatar) : asset('backend/img/profile_small.jpg') }}"
+        style="width: 190px; height: 60px; object-fit: fill;"
+    />
+</div>
                     <div class="stmt-header">
                         <h3>{{ getUserSetting('project_name') ?? 'Electronics Corporation' }}</h3>
                         <div class="stmt-meta">
