@@ -19,7 +19,7 @@
                         $paidInstallmentCount = $purchase->installments()->where('status', 'paid')->count();
                         $waivedInstallmentCount = $purchase->installments()->where('status', 'waived')->count();
                         $hasPendingInstallments = $purchase->installments()->whereIn('status', ['pending','overdue'])->exists();
-                        $showExtendBtn = $remainingBalance > 0 && !$hasPendingInstallments && $purchase->status !== 'completed';
+                        $showExtendBtn = $remainingBalance > 0 || !$hasPendingInstallments && $purchase->status !== 'completed';
             @endphp
             <!-- Edit Button -->
             {{-- <a href="{{ route('purchases.edit', $purchase) }}" class="btn btn-warning">
