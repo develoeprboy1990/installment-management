@@ -80,7 +80,7 @@ h5 {
   margin-right: 40px;
 }
 .body-small .navbar-top-links li:last-child {
-  margin-right: 0;
+  margin-right: 25px;
 }
 .navbar-top-links li a {
   padding: 20px 10px;
@@ -168,7 +168,7 @@ h5 {
   font-size: 12px;
 }
 .nav-header {
-  padding: 33px 25px;
+  padding: 25px;
   background-color: #2f4050;
   background-image: url("patterns/header-profile.png");
 }
@@ -412,7 +412,7 @@ body.canvas-menu .logo-element {
   display: none;
 }
 body.mini-navbar .nav-header {
-  padding: 0;
+  padding: 20px 25px 20px 25px;
   background-color: #1ab394;
 }
 body.canvas-menu .nav-header {
@@ -8432,8 +8432,10 @@ body.md-skin {
   }
   .navbar-static-side {
     z-index: 2001;
-    position: absolute;
+    position: fixed;
+    height: 100%;
     width: 220px;
+    overflow: scroll;
   }
   .navbar-top-links .dropdown-messages,
   .navbar-top-links .dropdown-tasks,
@@ -8551,3 +8553,120 @@ body.md-skin {
     margin: 0;
   }
 }
+
+
+
+
+
+
+   .sidebar-close-btn{
+       display: none;
+    position: absolute;
+    top: 2px;
+    right: 1px;
+    width: 30px;
+    height: 30px;
+    /* border: none; */
+    /* border-radius: 50%; */
+    background: #fff;
+    color: #333;
+    font-size: 27px;
+    line-height: 0px;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, .2);
+    z-index: 10000;
+    }
+
+
+
+body.mini-navbar .navbar-static-side {
+    position: fixed !important;
+    height: 100% !important;
+    overflow: scroll !important;
+}
+.navbar-static-side::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+    display: none;
+}
+
+.nav-header .profile-element img{
+  object-fit: cover !important;
+  height: 95px !important;
+  border-radius: 7px !important;
+}
+
+@media (max-width:768px) {
+
+  body.mini-navbar #page-wrapper {
+  margin: 0 0 0 220px !important;
+}
+    body.mini-navbar .sidebar-close-btn{
+        display: block;
+    }
+
+body.mini-navbar .profile-element,
+body.mini-navbar .nav-label,
+body.mini-navbar .navbar-default .nav li a span {
+  display: block !important;
+}
+
+body.mini-navbar .navbar-static-side {
+    width: 220px !important;
+}
+.sidebar-collapse ul li a {
+  display: flex;
+}
+.dropdown-toggle{
+  display: none !important;
+}
+.logo-element{
+  display: none !important;
+}
+body.mini-navbar .navbar-default .nav > li > a {
+    font-size: 14px !important;
+}
+}
+
+.navbar-static-side{
+  background-color: #2f4050;
+}
+
+
+
+@media (max-width: 768px) {
+
+    /* Content hamesha full width rahe */
+    #page-wrapper {
+        margin-left: 0 !important;
+    }
+
+    body.mini-navbar #page-wrapper {
+        margin-left: 0 !important;
+    }
+
+    /* Sidebar overlay */
+    .navbar-static-side {
+        position: fixed;
+        left: -220px;
+        top: 0;
+        width: 220px;
+        height: 100vh;
+        z-index: 9999;
+        transition: all .3s ease;
+    }
+
+    body.mini-navbar .navbar-static-side {
+        left: 0;
+    }
+    .metismenu .arrow{
+      margin-left: auto !important;
+    }
+}
+
+
+
+
+
+
+

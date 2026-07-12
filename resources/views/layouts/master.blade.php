@@ -43,6 +43,9 @@
     <div id="wrapper">
         <nav class="navbar-default navbar-static-side" role="navigation">
             <div class="sidebar-collapse">
+                <button class="sidebar-close-btn">
+                    &times;
+                </button>
                 <ul class="nav metismenu" id="side-menu">
                     <li class="nav-header">
                         <div class="dropdown profile-element" style="text-align: center;">
@@ -452,6 +455,41 @@
         @endif
     </script>
     @stack('script')
+
+
+    <script>
+   document.addEventListener("DOMContentLoaded", function () {
+
+    const body = document.body;
+    const sidebar = document.querySelector(".navbar-static-side");
+    const menuBtn = document.querySelector(".navbar-minimalize");
+    const closeBtn = document.querySelector(".sidebar-close-btn");
+
+    // Body click => Close Sidebar
+    document.addEventListener("click", function (e) {
+
+        if (window.innerWidth > 768) return;
+
+        if (
+            sidebar.contains(e.target) ||
+            (menuBtn && menuBtn.contains(e.target))
+        ) {
+            return;
+        }
+
+        body.classList.remove("mini-navbar");
+    });
+
+    // Close Button
+    if (closeBtn) {
+        closeBtn.addEventListener("click", function (e) {
+            e.stopPropagation();
+            body.classList.remove("mini-navbar");
+        });
+    }
+
+});
+    </script>
 </body>
 
 </html>
