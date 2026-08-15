@@ -16,6 +16,7 @@
     <title>
         {{ (getUserSetting('project_name') ?? config('app.name')) . ' - ' . (getUserSetting('project_tagline') ?? '') }}
     </title>
+    @include('layouts.partials.pwa')
     @if (getUserSetting('favicon'))
         <link rel="icon" href="{{ getSettingAssetUrl(getUserSetting('favicon')) }}">
         <link rel="shortcut icon" href="{{ getSettingAssetUrl(getUserSetting('favicon')) }}">
@@ -455,6 +456,7 @@
         @endif
     </script>
     @stack('script')
+    @include('layouts.partials.pwa-service-worker')
 
 
     <script>

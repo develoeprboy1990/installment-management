@@ -7,6 +7,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <title>{{ (getUserSetting('project_name') ?? config('app.name')) }} - Login</title>
+    @include('layouts.partials.pwa')
 
     @if (getUserSetting('favicon'))
         <link rel="icon" href="{{ getSettingAssetUrl(getUserSetting('favicon')) }}">
@@ -215,5 +216,6 @@
 
     <script src="{{ asset('backend/js/jquery/jquery-3.1.1.min.js') }}"></script>
     <script src="{{ asset('backend/js/bootstrap/bootstrap.min.js') }}"></script>
+    @include('layouts.partials.pwa-service-worker')
 </body>
 </html>
