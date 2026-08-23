@@ -28,10 +28,10 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: 22
           cache: npm
@@ -43,7 +43,7 @@ jobs:
         run: npm run build
 
       - name: Upload built assets
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: public-build
           path: public/build
@@ -71,7 +71,7 @@ jobs:
     steps:
       - name: Download built assets
         if: ${{ github.event_name == 'push' || inputs.target == 'all' || inputs.target == matrix.project }}
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: public-build
           path: public-build
