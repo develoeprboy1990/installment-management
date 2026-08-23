@@ -1,4 +1,4 @@
-<link rel="manifest" href="{{ asset('manifest.json') }}">
+<link rel="manifest" href="{{ url('/manifest.webmanifest') }}">
 <meta name="theme-color" content="#1ab394">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">

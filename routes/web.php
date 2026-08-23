@@ -19,6 +19,56 @@ use App\Http\Controllers\Admin\ExpenseController;
 use App\Http\Controllers\Admin\PartnerController;
 
 
+Route::get('/manifest.webmanifest', function () {
+    $host = request()->getHost();
+    $origin = request()->getSchemeAndHttpHost();
+    $names = [
+        'talalandniaziinstallment.mcqsmind.com' => ['Talal and Niazi Installment', 'Talal Niazi'],
+        'irfanelectronics.mcqsmind.com' => ['Irfan Electronics', 'Irfan'],
+        'babaelectronics.mcqsmind.com' => ['Baba Electronics', 'Baba'],
+        'ziaelectronics.mcqsmind.com' => ['Zia Electronics', 'Zia'],
+
+    ];
+    [$name, $shortName] = $names[$host] ?? [getUserSetting('project_name') ?? 'Installment Management', 'Installments'];
+
+    return response()->json([
+        'id' => $origin . '/',
+        'name' => $name,
+        'short_name' => $shortName,
+        'description' => $name,
+        'start_url' => $origin . '/login',
+        'scope' => $origin . '/',
+        'display' => 'standalone',
+        'orientation' => 'portrait-primary',
+        'background_color' => '#ffffff',
+        'theme_color' => '#1ab394',
+        'icons' => [
+            [
+                'src' => $origin . '/icons/icon-192.png',
+                'sizes' => '192x192',
+                'type' => 'image/png',
+            ],
+            [
+                'src' => $origin . '/icons/icon-512.png',
+                'sizes' => '512x512',
+                'type' => 'image/png',
+            ],
+            [
+                'src' => $origin . '/icons/maskable-192.png',
+                'sizes' => '192x192',
+                'type' => 'image/png',
+                'purpose' => 'maskable',
+            ],
+            [
+                'src' => $origin . '/icons/maskable-512.png',
+                'sizes' => '512x512',
+                'type' => 'image/png',
+                'purpose' => 'maskable',
+            ],
+        ],
+    ])->header('Content-Type', 'application/manifest+json');
+});
+
 Route::group(['prefix' => 'admin', 'middleware' => ['auth.redirect','role:Admin|User']], function () {
     // activities
     Route::get('activities', [ActivityController::class, 'index'])->name('activities.index');
