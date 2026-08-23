@@ -1,0 +1,81 @@
+name: Deploy Laravel
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      target:
+        description: "Which project folder to deploy"
+        required: false
+        default: "all"
+        type: string
+      run_migrations:
+        description: "Run php artisan migrate --force"
+        required: false
+        default: false
+        type: boolean
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: Deploy ${{ matrix.project }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - project: installment
+            path: /home/u136558562/domains/mcqsmind.com/public_html/installment
+          - project: installment-management
+            path: /home/u136558562/domains/mcqsmind.com/public_html/installment-management
+          - project: installment-zia
+            path: /home/u136558562/domains/mcqsmind.com/public_html/installment-zia
+          - project: installment-demo
+            path: /home/u136558562/domains/mcqsmind.com/public_html/installment-demo
+          - project: installment-baba
+            path: /home/u136558562/domains/mcqsmind.com/public_html/installment-baba
+
+    steps:
+      - name: Deploy over SSH
+        if: ${{ github.event_name == 'push' || inputs.target == 'all' || inputs.target == matrix.project }}
+        uses: appleboy/ssh-action@v1.2.0
+        env:
+          DEPLOY_PATH: ${{ matrix.path }}
+          RUN_MIGRATIONS: ${{ inputs.run_migrations == true }}
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          password: ${{ secrets.SSH_PASSWORD }}
+          port: ${{ secrets.SSH_PORT || 22 }}
+          envs: DEPLOY_PATH,RUN_MIGRATIONS
+          script_stop: true
+          script: |
+            cd "$DEPLOY_PATH"
+
+            git fetch --all --prune
+            git reset --hard origin/main
+
+            composer install --no-dev --prefer-dist --optimize-autoloader --no-interaction
+            npm ci
+            npm run build
+
+            php artisan down || true
+            trap 'php artisan up || true' EXIT
+
+            php artisan storage:link || true
+            php artisan config:clear
+            php artisan route:clear
+            php artisan view:clear
+
+            if [ "$RUN_MIGRATIONS" = "true" ]; then
+              php artisan migrate --force
+            fi
+
+            php artisan optimize
+            php artisan up
+            trap - EXIT
