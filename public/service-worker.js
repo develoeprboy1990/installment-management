@@ -6,6 +6,6 @@ self.addEventListener('activate', function (event) {
     event.waitUntil(self.clients.claim());
 });
 
-self.addEventListener('fetch', function () {
-    // Keep server-rendered business data fresh. The service worker exists for PWA install support.
+self.addEventListener('fetch', function (event) {
+    event.respondWith(fetch(event.request));
 });
