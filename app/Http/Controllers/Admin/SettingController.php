@@ -38,7 +38,7 @@ class SettingController extends Controller
         // Handle favicon upload (optional)
         if ($request->hasFile('favicon')) {
             $request->validate([
-                'favicon' => 'nullable|file|mimes:png,ico,svg,gif,jpg,jpeg,webp|max:1024',
+                'favicon' => 'nullable|file|mimes:png,ico,svg,gif,jpg,jpeg,webp|max:5120',
             ]);
 
             // Delete old favicon if exists

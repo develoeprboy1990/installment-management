@@ -16,7 +16,58 @@ use App\Http\Controllers\Admin\InstallmentController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\ActivityController;
 use App\Http\Controllers\Admin\ExpenseController;
+use App\Http\Controllers\Admin\PartnerController;
 
+
+Route::get('/manifest.webmanifest', function () {
+    $host = request()->getHost();
+    $origin = request()->getSchemeAndHttpHost();
+    $names = [
+        'talalandniaziinstallment.mcqsmind.com' => ['Talal and Niazi Installment', 'Talal Niazi'],
+        'irfanelectronics.mcqsmind.com' => ['Irfan Electronics', 'Irfan'],
+        'babaelectronics.mcqsmind.com' => ['Baba Electronics', 'Baba'],
+        'ziaelectronics.mcqsmind.com' => ['Zia Electronics', 'Zia'],
+
+    ];
+    [$name, $shortName] = $names[$host] ?? [getUserSetting('project_name') ?? 'Installment Management', 'Installments'];
+
+    return response()->json([
+        'id' => $origin . '/',
+        'name' => $name,
+        'short_name' => $shortName,
+        'description' => $name,
+        'start_url' => $origin . '/login',
+        'scope' => $origin . '/',
+        'display' => 'standalone',
+        'orientation' => 'portrait-primary',
+        'background_color' => '#ffffff',
+        'theme_color' => '#1ab394',
+        'icons' => [
+            [
+                'src' => $origin . '/icons/icon-192.png',
+                'sizes' => '192x192',
+                'type' => 'image/png',
+            ],
+            [
+                'src' => $origin . '/icons/icon-512.png',
+                'sizes' => '512x512',
+                'type' => 'image/png',
+            ],
+            [
+                'src' => $origin . '/icons/maskable-192.png',
+                'sizes' => '192x192',
+                'type' => 'image/png',
+                'purpose' => 'maskable',
+            ],
+            [
+                'src' => $origin . '/icons/maskable-512.png',
+                'sizes' => '512x512',
+                'type' => 'image/png',
+                'purpose' => 'maskable',
+            ],
+        ],
+    ])->header('Content-Type', 'application/manifest+json');
+});
 
 Route::group(['prefix' => 'admin', 'middleware' => ['auth.redirect','role:Admin|User']], function () {
     // activities
@@ -32,6 +83,8 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth.redirect','role:Admin|
 
     //customers
     Route::resource('customers', CustomerController::class);
+    // POST route for shared hosting where DELETE method is blocked
+    Route::post('customers/{customer}/delete', [CustomerController::class, 'destroy'])->name('customers.delete.post');
     Route::get('customers/{customer}/statement', [CustomerController::class, 'statement'])->name('customers.statement');
 
 
@@ -56,11 +109,19 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth.redirect','role:Admin|
     Route::resource('purchases', PurchaseController::class);
     Route::post('purchases/{purchase}/process-payment', [PurchaseController::class, 'processPayment'])->name('purchases.process-payment');
     Route::get('purchases/installment/{installmentId}/details', [PurchaseController::class, 'getInstallmentDetails'])->name('purchases.installment-details');
+    Route::get('purchases/installment/{installmentId}/history', [PurchaseController::class, 'getInstallmentHistory'])->name('purchases.installment-history');
     Route::put('/installments/{id}/status', [PurchaseController::class, 'updateInstallStatus'])->name('installments.status');
+    Route::get('purchases/{purchase}/statement', [PurchaseController::class, 'purchaseStatement'])->name('purchases.statement');
+    // Feature 3: Extend installment period
+    Route::post('purchases/{purchase}/extend', [PurchaseController::class, 'extendInstallments'])->name('purchases.extend');
+
+    // Feature 2: Partners
+    Route::resource('partners', PartnerController::class);
 
 
     //installments
     Route::get('installments', [InstallmentController::class, 'index'])->name('installments.index');
+    Route::get('installments/monthly-schedule', [InstallmentController::class, 'monthlySchedule'])->name('installments.monthly_schedule');
     Route::get('installments/{installment}/edit', [InstallmentController::class, 'edit'])->name('installments.edit');
     Route::put('installments/{installment}', [InstallmentController::class, 'update'])->name('installments.update');
     Route::delete('installments/{installment}', [InstallmentController::class, 'destroy'])->name('installments.destroy');

@@ -134,7 +134,7 @@
                                 @endphp
                                 <tr>
                                     <td>{{ $loop->iteration }}</td>
-                                    <td>{{ $purchase->purchase_date->format('d/m/Y') }}</td>
+                                    <td>{{ $purchase->purchase_date->toDisplayDate() }}</td>
                                     <td>
                                         <strong>{{ $purchase->customer->name }}</strong><br>
                                         <small class="text-muted">{{ $purchase->customer->account_no }}</small>

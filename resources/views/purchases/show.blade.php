@@ -14,21 +14,31 @@
                         // Cap display paid to total price to avoid showing overpayment as progress > 100%
                         $totalPaid = min($totalPaidRaw, $purchase->total_price);
                         $remainingBalance = $purchase->getRemainingBalance();
-                        $overdueInstallments = $purchase->installments()->where('due_date', '<', now())->where('status', '!=', 'paid')->count();
+                        $overdueInstallments = $purchase->installments()->whereIn('status', ['pending','overdue'])->where('due_date', '<', now())->count();
                         $totalInstallments = $purchase->installments()->count();
                         $paidInstallmentCount = $purchase->installments()->where('status', 'paid')->count();
+                        $waivedInstallmentCount = $purchase->installments()->where('status', 'waived')->count();
+                        $hasPendingInstallments = $purchase->installments()->whereIn('status', ['pending','overdue'])->exists();
+                        $showExtendBtn = $remainingBalance > 0 || !$hasPendingInstallments && $purchase->status !== 'completed';
             @endphp
-
             <!-- Edit Button -->
             {{-- <a href="{{ route('purchases.edit', $purchase) }}" class="btn btn-warning">
                 <i class="fa fa-edit"></i> Edit Purchase
             </a>--}}
 
-
-            <!-- Delete Button -->
-            {{-- <button onclick="confirmDelete()" class="btn btn-danger">
+           <!-- Delete Button -->
+            <button onclick="confirmDelete()" class="btn btn-danger">
                 <i class="fa fa-trash"></i> Delete Purchase
-            </button> --}}
+            </button> 
+
+            @if($showExtendBtn)
+                <button class="btn btn-warning"
+                        data-toggle="modal"
+                        data-target="#extendModal">
+                    <i class="fa fa-plus-circle"></i>
+                    Extend Installment
+                </button>
+            @endif
 
             <a href="{{ route('purchases.index') }}" class="btn btn-default">
                 <i class="fa fa-arrow-left"></i> Back to List
@@ -49,7 +59,7 @@
                     <table class="table table-condensed">
                         <tr>
                             <th width="40%">Purchase Date:</th>
-                            <td>{{ $purchase->purchase_date->format('d/m/Y') }}</td>
+                            <td>{{ $purchase->purchase_date->toDisplayDate() }}</td>
                         </tr>
                         <tr>
                             <th>Account Number:</th>
@@ -92,20 +102,39 @@
                             <td><strong>Rs. {{ number_format($remainingBalance, 2) }}</strong></td>
                         </tr>
                         <tr>
-                            <th>Monthly Installment:</th>
-                            <td>Rs. {{ number_format($purchase->monthly_installment, 2) }}</td>
+                            <th>Installment Type:</th>
+                            <td>
+                                 @php
+                                     $typeColors = [
+                                         'daily'   => 'info',
+                                         'weekly'  => 'warning',
+                                         'monthly' => 'primary',
+                                         '3months' => 'success',
+                                         '6months' => 'success',
+                                         '1year'   => 'danger',
+                                     ];
+                                     $typeColor  = $typeColors[$purchase->installment_type ?? 'monthly'] ?? 'primary';
+                                 @endphp
+                                 <span class="label label-{{ $typeColor }}">
+                                     {{ $purchase->getInstallmentTypeLabel() }}
+                                 </span>
+                            </td>
                         </tr>
                         <tr>
-                            <th>Installment Period:</th>
-                            <td>{{ $purchase->installment_months }} months</td>
+                            <th>Per Installment:</th>
+                            <td>Rs. {{ number_format($purchase->monthly_installment ?? ($purchase->total_price - $purchase->advance_payment) / max(1, $purchase->getTotalInstallmentCount()), 2) }}</td>
+                        </tr>
+                        <tr>
+                            <th>Total Installments:</th>
+                            <td>{{ $purchase->getTotalInstallmentCount() }} {{ $purchase->getInstallmentTypeLabel() }}</td>
                         </tr>
                         <tr>
                             <th>First Installment:</th>
-                            <td>{{ $purchase->first_installment_date->format('d/m/Y') }}</td>
+                            <td>{{ $purchase->first_installment_date->toDisplayDate() }}</td>
                         </tr>
                         <tr>
                             <th>Last Installment:</th>
-                            <td>{{ $purchase->last_installment_date->format('d/m/Y') }}</td>
+                            <td>{{ $purchase->last_installment_date->toDisplayDate() }}</td>
                         </tr>
                         <tr>
                             <th>Status:</th>
@@ -165,7 +194,12 @@
                                         {{ number_format($percentage, 1) }}%
                                     </div>
                                 </div>
-                                <small class="text-muted">{{ $paidInstallmentCount }}/{{ $totalInstallments }} installments paid</small>
+                                <small class="text-muted">
+                                    {{ $paidInstallmentCount }}/{{ $totalInstallments }} paid
+                                    @if($waivedInstallmentCount > 0)
+                                        &nbsp;· <span class="text-info">{{ $waivedInstallmentCount }} waived</span>
+                                    @endif
+                                </small>
                             </td>
                         </tr>
                         <tr>
@@ -190,7 +224,7 @@
                                         ->first();
                                 @endphp
                                 @if($nextInstallment)
-                                    {{ $nextInstallment->due_date->format('d/m/Y') }}
+                                    {{ $nextInstallment->due_date->toDisplayDate() }}
                                     @if($nextInstallment->due_date < now())
                                         <span class="text-danger">(Overdue)</span>
                                     @endif
@@ -235,7 +269,7 @@
                         <tr class="{{ $isOverdue ? 'danger' : '' }}" id="installment-{{ $installment->id }}">
                             <td><strong>#{{ $installmentNumber }}</strong></td>
                             <td>
-                                {{ $installment->due_date->format('d/m/Y') }}
+                                {{ $installment->due_date->toDisplayDate() }}
                                 @if($isOverdue)
                                     <br><small class="text-danger">
                                         <i class="fa fa-exclamation-triangle"></i>
@@ -243,14 +277,34 @@
                                     </small>
                                 @endif
                             </td>
-                            <td>Rs. {{ number_format($installment->installment_amount, 2) }}</td>
                             <td>
-                                <span class="label label-{{ $installment->status == 'paid' ? 'success' : ($isOverdue ? 'danger' : 'warning') }}">
-                                    {{ ucfirst($installment->status) }}
-                                    @if($isOverdue) (Overdue) @endif
-                                </span>
+                                <strong>Rs. {{ number_format($installment->installment_amount, 2) }}</strong>
+                                @if($installment->paid_amount > 0)
+                                    <br><small class="text-success">Paid: Rs. {{ number_format($installment->paid_amount, 2) }}</small>
+                                    @php
+                                        $dueAmount = $installment->installment_amount - $installment->paid_amount - $installment->discount;
+                                    @endphp
+                                    @if($dueAmount < 0)
+                                        <br><small class="text-info">Rs. +{{ number_format(abs($dueAmount), 2) }}</small>
+                                    @else
+                                        <br><small class="text-danger">Due: Rs. {{ number_format($dueAmount, 2) }}</small>
+                                    @endif
+                                @endif
                             </td>
-                            <td>{{ $installment->date ? $installment->date->format('d/m/Y') : '-' }}</td>
+                            <td>
+                                @if($installment->status == 'paid')
+                                    <span class="label label-success">Paid</span>
+                                @elseif($installment->status == 'waived')
+                                    <span class="label label-default" title="Balance zero hua isliye yeh installment waived ho gayi">Waived</span>
+                                @elseif($installment->status == 'partial')
+                                    <span class="label label-warning" style="background-color: #f0ad4e;">Partial Paid</span>
+                                @elseif($isOverdue)
+                                    <span class="label label-danger">Pending (Overdue)</span>
+                                @else
+                                    <span class="label label-warning">Pending</span>
+                                @endif
+                            </td>
+                            <td>{{ $installment->date ? $installment->date->toDisplayDate() : '-' }}</td>
                             <td>{{ $installment->receipt_no ?? '-' }}</td>
                             <td>
                                 @if($installment->fine_amount > 0)
@@ -268,14 +322,35 @@
                             </td>
                             <td>{{ $installment->officer?->name ?? $installment->recovery_officer ?? '-' }}</td>
                             <td>
-                                @if($installment->status == 'pending')
+                                @if(in_array($installment->status, ['pending', 'overdue']))
                                     <button class="btn btn-sm btn-success process-payment-btn"
                                         data-installment-id="{{ $installment->id }}">
                                         <i class="fa fa-credit-card"></i> Pay
                                     </button>
+                                @elseif($installment->status == 'partial')
+                                    <div class="btn-group" role="group">
+                                        <button class="btn btn-sm btn-success process-payment-btn"
+                                            data-installment-id="{{ $installment->id }}">
+                                            <i class="fa fa-credit-card"></i> Pay
+                                        </button>
+                                        <a href="{{ route('installments.receipt', $installment->id) }}"
+                                        class="btn btn-sm btn-info"
+                                        target="_blank"
+                                        title="Print Receipt">
+                                            <i class="fa fa-print"></i> Print
+                                        </a>
+                                        <button class="btn btn-sm btn-default history-btn"
+                                            data-installment-id="{{ $installment->id }}"
+                                            data-installment-no="{{ $loop->iteration }}"
+                                            title="Payment History">
+                                            <i class="fa fa-history"></i>
+                                        </button>
+                                    </div>
+                                @elseif($installment->status == 'waived')
+                                    <span class="text-muted"><i class="fa fa-minus-circle"></i> Waived</span>
                                 @else
                                     <div class="btn-group" role="group">
-                                        <span class="text-success">
+                                        <span class="text-success" style="margin-right: 5px; padding-top: 5px;">
                                             <i class="fa fa-check"></i> Paid
                                         </span>
                                         <a href="{{ route('installments.receipt', $installment->id) }}"
@@ -284,15 +359,21 @@
                                         title="Print Receipt">
                                             <i class="fa fa-print"></i> Print
                                         </a>
+                                        <button class="btn btn-sm btn-default history-btn"
+                                            data-installment-id="{{ $installment->id }}"
+                                            data-installment-no="{{ $loop->iteration }}"
+                                            title="Payment History">
+                                            <i class="fa fa-history"></i>
+                                        </button>
+                                        {{-- Edit button --}}
+                                        <button class="btn btn-sm btn-warning mt-1 edit-status-btn"
+                                             data-id="{{ $installment->id }}"
+                                             data-status="{{ $installment->status }}"
+                                             data-toggle="modal"
+                                             data-target="#editStatusModal">
+                                             <i class="fa fa-edit"></i> Edit
+                                        </button>
                                     </div>
-                                         {{-- New Edit button to trigger modal --}}
-                                    <button class="btn btn-sm btn-warning mt-1 edit-status-btn"
-                                         data-id="{{ $installment->id }}"
-                                         data-status="{{ $installment->status }}"
-                                         data-toggle="modal"
-                                         data-target="#editStatusModal">
-                                         <i class="fa fa-edit"></i> Edit
-                                    </button>
                                 @endif
                             </td>
                         </tr>
@@ -303,6 +384,85 @@
         </div>
     </div>
 </div>
+
+{{-- ═══════════════════════════════════════════════════════════════════
+     Feature 2: Partner Distribution Panel
+     ════════════════════════════════════════════════════════════════ --}}
+@php
+    $purchasePartners = $purchase->purchasePartners()->with('partner')->get();
+@endphp
+@if($purchasePartners->count() > 0)
+<div class="panel panel-default" style="margin-top:20px;">
+    <div class="panel-heading">
+        <h3 class="panel-title"><i class="fa fa-handshake-o"></i> Partner Distribution</h3>
+    </div>
+    <div class="panel-body">
+        <div class="table-responsive">
+            <table class="table table-hover table-condensed">
+                <thead>
+                    <tr>
+                        <th>Partner</th>
+                        <th class="text-right">Share Amount</th>
+                        <th class="text-right">Share %</th>
+                        <th class="text-right">Received</th>
+                        <th class="text-right">Pending</th>
+                        <th>Progress</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($purchasePartners as $pp)
+                    @php
+                        $received   = $pp->amount_received;
+                        $pending    = $pp->amount_pending;
+                        $ppProgress = $pp->share_amount > 0 ? min(100, ($received / $pp->share_amount) * 100) : 0;
+                    @endphp
+                    <tr>
+                        <td>
+                            <strong>{{ $pp->partner->name ?? 'Unknown' }}</strong>
+                            @if($pp->partner->phone)
+                                <br><small class="text-muted">{{ $pp->partner->phone }}</small>
+                            @endif
+                        </td>
+                        <td class="text-right">
+                            <strong>Rs. {{ number_format($pp->share_amount, 0) }}</strong>
+                        </td>
+                        <td class="text-right">
+                            <span class="label label-default">{{ $pp->share_percentage }}%</span>
+                        </td>
+                        <td class="text-right text-success">
+                            <strong>Rs. {{ number_format($received, 0) }}</strong>
+                        </td>
+                        <td class="text-right {{ $pending > 0 ? 'text-danger' : 'text-success' }}">
+                            <strong>Rs. {{ number_format($pending, 0) }}</strong>
+                        </td>
+                        <td style="min-width:120px;">
+                            <div class="progress" style="margin-bottom:3px;">
+                                <div class="progress-bar progress-bar-{{ $ppProgress >= 100 ? 'success' : 'info' }}"
+                                     style="width:{{ $ppProgress }}%">
+                                </div>
+                            </div>
+                            <small class="text-muted">{{ number_format($ppProgress, 0) }}%</small>
+                        </td>
+                    </tr>
+                    @endforeach
+                </tbody>
+                <tfoot>
+                    <tr style="background:#f8f9fa;">
+                        <td><strong>Total</strong></td>
+                        <td class="text-right"><strong>Rs. {{ number_format($purchasePartners->sum('share_amount'), 0) }}</strong></td>
+                        <td class="text-right"><strong>{{ $purchasePartners->sum('share_percentage') }}%</strong></td>
+                        <td class="text-right text-success"><strong>Rs. {{ number_format($purchasePartners->sum('amount_received'), 0) }}</strong></td>
+                        <td class="text-right text-danger"><strong>Rs. {{ number_format($purchasePartners->sum('amount_pending'), 0) }}</strong></td>
+                        <td></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+</div>
+@endif
+
+<div id="purchases-container" style="margin-bottom: 60px;">
 
 <!-- Edit Installment Status Modal -->
 <div class="modal fade" id="editStatusModal" tabindex="-1" role="dialog" aria-labelledby="editStatusModalLabel">
@@ -323,6 +483,7 @@
                         <select class="form-control" name="status" id="installmentStatus" required>
                             <option value="pending">Pending</option>
                             <option value="paid">Paid</option>
+                            <option value="waived">Waived (Balance Settled)</option>
                         </select>
                     </div>
                 </div>
@@ -332,6 +493,83 @@
                 </div>
             </div>
         </form>
+    </div>
+</div>
+
+<!-- Feature 3: Extend Installments Modal -->
+<div class="modal fade" id="extendModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <form action="{{ route('purchases.extend', $purchase) }}" method="POST">
+                @csrf
+                <div class="modal-header" style="background:#856404;color:#fff;">
+                    <button type="button" class="close" data-dismiss="modal" style="color:#fff;">&times;</button>
+                    <h4 class="modal-title"><i class="fa fa-plus-circle"></i> Extend Installment Period</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info" style="font-size:13px;">
+                        <i class="fa fa-info-circle"></i>
+                        <strong>Remaining Balance:</strong> Rs. {{ number_format($remainingBalance, 2) }}
+                        &mdash; This balance will be divided into the new installments.
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>How Many New Installments? <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" name="extend_count"
+                                       id="extend_count" min="1" max="120" placeholder="e.g. 3" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Per Installment Amount <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <span class="input-group-addon"><strong>Rs.</strong></span>
+                                    <input type="number" class="form-control" name="extend_amount"
+                                           id="extend_amount" step="1" min="1"
+                                           value="{{ round($remainingBalance) }}" placeholder="e.g. 5000" required>
+                                </div>
+                                <small class="text-muted">Remaining amount auto-adjusts in the last installment.</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>First New Installment Date <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control" name="extend_start_date"
+                                       value="{{ date('Y-m-d') }}" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Recovery Officer <span class="text-danger">*</span></label>
+                                <select class="form-control" name="extend_recovery_officer" required>
+                                    <option value="">— Select Officer —</option>
+                                    @php $extendOfficers = \App\Models\RecoveryOfficer::where('is_active', true)->get(); @endphp
+                                    @foreach($extendOfficers as $eofficer)
+                                        <option value="{{ $eofficer->id }}">{{ $eofficer->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="extend_preview" class="alert alert-success" style="display:none;font-size:13px;">
+                        <i class="fa fa-calculator"></i>
+                        <span id="extend_preview_text"></span>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-warning">
+                        <i class="fa fa-plus-circle"></i> Add Installments
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
 
@@ -366,6 +604,73 @@
     </div>
 </div>
 
+{{-- ═══════════════════════════════════════════════════════════════════
+     Payment History Modal
+     ════════════════════════════════════════════════════════════════ --}}
+<div class="modal fade" id="historyModal" tabindex="-1" role="dialog" aria-labelledby="historyModalLabel">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header" style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); color:#fff; border-radius: 4px 4px 0 0;">
+                <button type="button" class="close" data-dismiss="modal" style="color:#fff; opacity:1;"><span>&times;</span></button>
+                <h4 class="modal-title" id="historyModalLabel">
+                    <i class="fa fa-history"></i>
+                    Payment History — <span id="historyInstallmentLabel">Installment</span>
+                </h4>
+            </div>
+            <div class="modal-body" style="padding: 0;">
+
+                {{-- Summary bar --}}
+                <div id="historyInstallmentSummary" style="background:#f8f9fa; padding:14px 20px; border-bottom:1px solid #e0e0e0; display:flex; gap:30px; flex-wrap:wrap;">
+                    <div><small class="text-muted">Due Date</small><br><strong id="histSumDueDate">—</strong></div>
+                    <div><small class="text-muted">Installment Amount</small><br><strong id="histSumAmount">—</strong></div>
+                    <div><small class="text-muted">Status</small><br><span id="histSumStatus">—</span></div>
+                </div>
+
+                {{-- Loader --}}
+                <div id="historyLoader" style="text-align:center; padding:40px;">
+                    <i class="fa fa-spinner fa-spin fa-2x text-primary"></i>
+                    <p class="text-muted" style="margin-top:10px;">Loading history...</p>
+                </div>
+
+                {{-- No data --}}
+                <div id="historyEmpty" style="display:none; text-align:center; padding:40px;">
+                    <i class="fa fa-inbox fa-3x text-muted"></i>
+                    <p class="text-muted" style="margin-top:10px;">No payment transactions found for this installment.</p>
+                    <small class="text-muted">Payments made from now on will appear here.</small>
+                </div>
+
+                {{-- Transactions table --}}
+                <div id="historyTableWrapper" style="display:none; padding:15px;">
+                    <table class="table table-bordered table-hover" style="margin-bottom:0; font-size:13px;">
+                        <thead style="background:#0f3460; color:#fff;">
+                            <tr>
+                                <th>#</th>
+                                <th><i class="fa fa-calendar"></i> Paid On</th>
+                                <th><i class="fa fa-money"></i> Amount</th>
+                                <th><i class="fa fa-tag"></i> Discount</th>
+                                <th><i class="fa fa-exclamation-circle"></i> Fine</th>
+                                <th><i class="fa fa-check-circle"></i> Type</th>
+                                <th><i class="fa fa-credit-card"></i> Method</th>
+                                <th><i class="fa fa-file-text-o"></i> Receipt</th>
+                                <th><i class="fa fa-user"></i> Officer</th>
+                                <th><i class="fa fa-comment"></i> Remarks</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historyTableBody">
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+            <div class="modal-footer" style="background:#f8f9fa;">
+                <button type="button" class="btn btn-default" data-dismiss="modal">
+                    <i class="fa fa-times"></i> Close
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Payment Modal -->
 <div class="modal fade" id="paymentModal" tabindex="-1" role="dialog">
     <div class="modal-dialog" role="document">
@@ -394,7 +699,7 @@
                     <div class="form-group">
                         <label>Payment Amount <span class="text-danger">*</span></label>
                         <input type="number" class="form-control" name="payment_amount" id="payment_amount" step="0.01" required>
-                        <small class="text-muted">Pre-filled with scheduled installment amount</small>
+                        <small class="text-muted">Pre-filled with payable amount</small>
                         <div id="payment_amount_error" class="text-danger" style="display:none; margin-top:5px;"></div>
                     </div>
 
@@ -460,11 +765,12 @@ $(document).ready(function() {
             success: function(response) {
                 // Populate modal with fetched data
                 $('#installment_id').val(installmentId);
-                $('#original_amount').val(response.installment_amount); // Store the scheduled amount
+                $('#original_amount').val(response.installment_amount); // Store the payable amount
                 $('#receipt_no').val(response.receipt_no);
                 $('#payment_amount').val(response.installment_amount);
                 $('#discount').val(0); // Reset discount to 0
                 $('#remarks').val(response.remarks);
+                remainingBalanceForValidation = parseFloat(response.remaining_balance) || remainingBalanceForValidation;
                 
                 // Validate initial value against remaining
                 validatePaymentAmountAgainstRemaining();
@@ -498,7 +804,7 @@ $(document).ready(function() {
     }
 
     // ---- Runtime validation against remaining balance ----
-    const remainingBalanceForValidation = parseFloat('{{ number_format($purchase->getRemainingBalance(), 2, '.', '') }}') || 0;
+    let remainingBalanceForValidation = parseFloat('{{ number_format($purchase->getRemainingBalance(), 2, '.', '') }}') || 0;
 
     function setPayError(msg) {
         if (msg) {
@@ -533,26 +839,11 @@ $(document).ready(function() {
         }
     }
 
-    // Auto-calculate logic: 
-    // If you enter a discount, reduce the cash payment
     $(document).on('input', '#discount', function() {
-        const original = parseFloat($('#original_amount').val()) || 0;
-        const discount = parseFloat($(this).val()) || 0;
-        const newPayment = Math.max(0, original - discount);
-        $('#payment_amount').val(newPayment.toFixed(2));
         validatePaymentAmountAgainstRemaining();
     });
 
-    // If you enter a cash payment, adjust the discount to make it "Full Payment"
     $(document).on('input', '#payment_amount', function() {
-        const original = parseFloat($('#original_amount').val()) || 0;
-        const payment = parseFloat($(this).val()) || 0;
-        if (payment < original) {
-            const newDiscount = original - payment;
-            $('#discount').val(newDiscount.toFixed(2));
-        } else {
-            $('#discount').val(0);
-        }
         validatePaymentAmountAgainstRemaining();
     });
 
@@ -615,6 +906,87 @@ $('#confirmDeleteBtn').on('click', function() {
             });
         });
     });
+
+    // ─── Payment History Modal Handler ──────────────────────────────────────────
+    $(document).on('click', '.history-btn', function () {
+        var installmentId  = $(this).data('installment-id');
+        var installmentNo  = $(this).data('installment-no');
+
+        // Reset modal state
+        $('#historyInstallmentLabel').text('Installment #' + installmentNo);
+        $('#histSumDueDate').text('—');
+        $('#histSumAmount').text('—');
+        $('#histSumStatus').html('—');
+        $('#historyLoader').show();
+        $('#historyEmpty').hide();
+        $('#historyTableWrapper').hide();
+        $('#historyTableBody').html('');
+
+        $('#historyModal').modal('show');
+
+        // Fetch history via AJAX
+        $.ajax({
+            url: '{{ url("admin/purchases/installment") }}/' + installmentId + '/history',
+            type: 'GET',
+            success: function (data) {
+                $('#historyLoader').hide();
+
+                // Fill summary bar
+                $('#histSumDueDate').text(data.due_date);
+                $('#histSumAmount').text('Rs. ' + data.installment_amount);
+
+                // Status badge
+                var statusBadgeMap = {
+                    'paid'    : '<span class="label label-success">Paid</span>',
+                    'partial' : '<span class="label label-warning">Partial Paid</span>',
+                    'pending' : '<span class="label label-default">Pending</span>',
+                    'overdue' : '<span class="label label-danger">Overdue</span>',
+                    'waived'  : '<span class="label label-info">Waived</span>',
+                };
+                $('#histSumStatus').html(statusBadgeMap[data.status] || data.status);
+
+                if (data.transactions.length === 0) {
+                    $('#historyEmpty').show();
+                    return;
+                }
+
+                // Build table rows
+                var rows = '';
+                $.each(data.transactions, function (i, txn) {
+                    var typeBadge = txn.payment_type_raw === 'full'
+                        ? '<span class="label label-success"><i class="fa fa-check"></i> Full Paid</span>'
+                        : '<span class="label label-warning"><i class="fa fa-adjust"></i> Partial</span>';
+
+                    rows += '<tr>'
+                        + '<td><strong>' + (i + 1) + '</strong></td>'
+                        + '<td>'
+                        +   '<strong>' + txn.paid_at + '</strong>'
+                        +   '<br><small class="text-muted"><i class="fa fa-calendar-o"></i> ' + txn.payment_date + '</small>'
+                        + '</td>'
+                        + '<td><strong class="text-success">Rs. ' + txn.amount_paid + '</strong></td>'
+                        + '<td>' + (parseFloat(txn.discount) > 0 ? '<span class="text-primary">Rs. ' + txn.discount + '</span>' : '<span class="text-muted">—</span>') + '</td>'
+                        + '<td>' + (parseFloat(txn.fine_amount) > 0 ? '<span class="text-danger">Rs. ' + txn.fine_amount + '</span>' : '<span class="text-muted">—</span>') + '</td>'
+                        + '<td>' + typeBadge + '</td>'
+                        + '<td><span class="label label-default">' + txn.payment_method + '</span></td>'
+                        + '<td><code>' + txn.receipt_no + '</code></td>'
+                        + '<td>' + txn.officer + '</td>'
+                        + '<td><small>' + txn.remarks + '</small></td>'
+                        + '</tr>';
+                });
+
+                $('#historyTableBody').html(rows);
+                $('#historyTableWrapper').show();
+            },
+            error: function () {
+                $('#historyLoader').hide();
+                $('#historyEmpty').html(
+                    '<i class="fa fa-exclamation-triangle fa-3x text-danger"></i>' +
+                    '<p class="text-danger" style="margin-top:10px;">Error loading history. Please try again.</p>'
+                ).show();
+            }
+        });
+    });
+    // ─────────────────────────────────────────────────────────────────────────────
 </script>
 @endpush
 @endsection

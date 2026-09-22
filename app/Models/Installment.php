@@ -20,6 +20,7 @@ class Installment extends Model
         'receipt_no',
         'pre_balance',
         'installment_amount',
+        'paid_amount',
         'discount',
         'balance',
         'fine_amount',
@@ -66,6 +67,11 @@ class Installment extends Model
     public function officer()
     {
         return $this->belongsTo(RecoveryOfficer::class, 'recovery_officer_id');
+    }
+
+    public function paymentTransactions()
+    {
+        return $this->hasMany(\App\Models\PaymentTransaction::class, 'installment_id');
     }
 
     // Check if installment is overdue

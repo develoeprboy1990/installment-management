@@ -97,7 +97,7 @@
                                                     <input type="file" name="favicon"
                                                         accept="image/png,image/x-icon,image/svg+xml,image/jpeg,image/webp"
                                                         class="form-control" />
-                                                    <p class="help-block">PNG/ICO/SVG/JPG/WEBP up to 1 MB. Recommended size
+                                                    <p class="help-block">PNG/ICO/SVG/JPG/WEBP up to 5 MB. Recommended size
                                                         64x64 or 32x32.</p>
                                                     @error('favicon')
                                                         <div class="text-danger" style="margin-top: 8px;">{{ $message }}</div>

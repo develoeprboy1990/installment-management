@@ -16,6 +16,7 @@
     <title>
         {{ (getUserSetting('project_name') ?? config('app.name')) . ' - ' . (getUserSetting('project_tagline') ?? '') }}
     </title>
+    @include('layouts.partials.pwa')
     @if (getUserSetting('favicon'))
         <link rel="icon" href="{{ getSettingAssetUrl(getUserSetting('favicon')) }}">
         <link rel="shortcut icon" href="{{ getSettingAssetUrl(getUserSetting('favicon')) }}">
@@ -43,13 +44,19 @@
     <div id="wrapper">
         <nav class="navbar-default navbar-static-side" role="navigation">
             <div class="sidebar-collapse">
+                <button class="sidebar-close-btn">
+                    &times;
+                </button>
                 <ul class="nav metismenu" id="side-menu">
                     <li class="nav-header">
                         <div class="dropdown profile-element" style="text-align: center;">
                             <span>
-                                <img alt="image" class="img-circle"
+                                {{-- <img alt="image" class="img-circle"
                                     src="{{ Auth::user()->avatar ? getSettingAssetUrl(Auth::user()->avatar) : asset('backend/img/profile_small.jpg') }}"
-                                    style="width: 60px; height: 60px; border-radius: 50%;" />
+                                    style="width: 60px; height: 60px; border-radius: 50%;" /> --}}
+                            <img alt="image"
+                                src="{{ Auth::user()->avatar ? getSettingAssetUrl(Auth::user()->avatar) : asset('backend/img/profile_small.jpg') }}"
+                                style="width: 150px; height: 80px; object-fit: contain;" />
                             </span>
                             <a data-toggle="dropdown" class="dropdown-toggle" href="#">
                                 <span class="clear">
@@ -70,10 +77,12 @@
                         </div>
                     </li>
 
+                    @can('view-dashboard')
                     <li class="{{ request()->is('dashboard') ? 'active' : '' }}">
                         <a href="{{ route('dashboard') }}"><i class="fa fa-dashboard"></i> <span
                                 class="nav-label">Dashboard</span></a>
                     </li>
+                    @endcan
 
                     <li class="{{ request()->is('admin/customers*') ? 'active' : '' }}">
                         <a href="{{ route('customers.index') }}"><i class="fa fa-users"></i> <span
@@ -104,11 +113,26 @@
 
                     @can('view-installments')
                         <li class="{{ request()->is('admin/installments*') ? 'active' : '' }}">
-                            <a href="{{ route('installments.index') }}"><i class="fa fa-credit-card"></i> <span
-                                    class="nav-label">Installments</span></a>
+                            <a href="#"><i class="fa fa-credit-card"></i> <span class="nav-label">Installments</span> <span class="fa arrow"></span></a>
+                            <ul class="nav nav-second-level {{ request()->is('admin/installments*') ? '' : 'collapse' }}">
+                                <li class="{{ request()->routeIs('installments.index') ? 'active' : '' }}">
+                                    <a href="{{ route('installments.index') }}">All Installments</a>
+                                </li>
+                                <li class="{{ request()->routeIs('installments.monthly_schedule') ? 'active' : '' }}">
+                                    <a href="{{ route('installments.monthly_schedule') }}">Monthly Schedule</a>
+                                </li>
+                            </ul>
                         </li>
                     @endcan
 
+                    @can('view-expenses')
+                        <li class="{{ request()->is('admin/expenses*') ? 'active' : '' }}">
+                            <a href="{{ route('expenses.index') }}"><i class="fa fa-money"></i> <span
+                                    class="nav-label">Expenses</span></a>
+                        </li>
+                    @endcan
+
+                    {{-- Settings --}}
                     @can('view-profile')
                         <!-- User Management section with better icons -->
                         <li class="{{ request()->is('profile') || request()->routeIs('admin.settings') ? 'active' : '' }}">
@@ -127,14 +151,8 @@
                         </li>
                     @endcan
 
-                    @can('view-expenses')
-                        <li class="{{ request()->is('admin/expenses*') ? 'active' : '' }}">
-                            <a href="{{ route('expenses.index') }}"><i class="fa fa-money"></i> <span
-                                    class="nav-label">Expenses</span></a>
-                        </li>
-                    @endcan
-
                     <!-- Settings section with better icons -->
+                    @can('view-system-settings')
                     <li
                         class="{{ request()->routeIs('admin.users') || request()->routeIs('admin.roles') || request()->routeIs('role-assignment') || request()->routeIs('permissions') ? 'active' : '' }}">
                         <a href="#"><i class="fa fa-cog"></i> <span class="nav-label">System Settings</span>
@@ -155,6 +173,12 @@
                                 <a href="{{ route('permissions') }}"><i class="fa fa-lock"></i> Permissions</a>
                             </li>
                         </ul>
+                    </li>
+                    @endcan
+
+                    <li class="{{ request()->is('admin/partners*') ? 'active' : '' }}">
+                        <a href="{{ route('partners.index') }}"><i class="fa fa-handshake-o"></i> <span
+                                class="nav-label">Partners</span></a>
                     </li>
 
                     <li>
@@ -261,14 +285,13 @@
 
 
 
-    <!-- jQuery (required for toastr) -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- jQuery (single instance - must be loaded once only) -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 
     <!-- Toastr JS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
 
     <!-- Mainly scripts -->
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="{{ asset('backend/js/bootstrap.min.js') }}"></script>
     <script src="{{ asset('backend/js/plugins/metisMenu/jquery.metisMenu.js') }}"></script>
     <script src="{{ asset('backend/js/plugins/slimscroll/jquery.slimscroll.min.js') }}"></script>
@@ -433,6 +456,42 @@
         @endif
     </script>
     @stack('script')
+    @include('layouts.partials.pwa-service-worker')
+
+
+    <script>
+   document.addEventListener("DOMContentLoaded", function () {
+
+    const body = document.body;
+    const sidebar = document.querySelector(".navbar-static-side");
+    const menuBtn = document.querySelector(".navbar-minimalize");
+    const closeBtn = document.querySelector(".sidebar-close-btn");
+
+    // Body click => Close Sidebar
+    document.addEventListener("click", function (e) {
+
+        if (window.innerWidth > 768) return;
+
+        if (
+            sidebar.contains(e.target) ||
+            (menuBtn && menuBtn.contains(e.target))
+        ) {
+            return;
+        }
+
+        body.classList.remove("mini-navbar");
+    });
+
+    // Close Button
+    if (closeBtn) {
+        closeBtn.addEventListener("click", function (e) {
+            e.stopPropagation();
+            body.classList.remove("mini-navbar");
+        });
+    }
+
+});
+    </script>
 </body>
 
 </html>

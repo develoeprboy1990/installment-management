@@ -47,11 +47,11 @@ class DashboardController extends Controller
 
             // Revenue Statistics
             $data['total_revenue'] = Purchase::sum('total_price') ?? 0;
-            $data['collected_this_month'] = Installment::where('status', 'paid')
+            $data['collected_this_month'] = Installment::whereIn('status', ['paid', 'partial'])
                 ->whereMonth('date', now()->month)
                 ->whereYear('date', now()->year)
-                ->sum('installment_amount') ?? 0;
-            $data['discount_this_month'] = Installment::where('status', 'paid')
+                ->sum('paid_amount') ?? 0;
+            $data['discount_this_month'] = Installment::whereIn('status', ['paid', 'partial'])
                 ->whereMonth('date', now()->month)
                 ->whereYear('date', now()->year)
                 ->sum('discount') ?? 0;
@@ -67,7 +67,7 @@ class DashboardController extends Controller
             }
 
             // Recent Payments (last 5)
-            $data['recent_payments'] = Installment::where('status', 'paid')
+            $data['recent_payments'] = Installment::whereIn('status', ['paid', 'partial'])
                 ->with('customer')
                 ->orderBy('date', 'desc')
                 ->limit(100)
@@ -85,30 +85,74 @@ class DashboardController extends Controller
                 ->selectRaw('COUNT(purchases.id) as sales_count')
                 ->selectRaw('COALESCE(SUM(purchases.total_price), 0) as total_revenue')
                 ->leftJoin('purchases', 'products.id', '=', 'purchases.product_id')
-                ->groupBy('products.id', 'products.company', 'products.model', 'products.serial_no', 'products.price')
+                ->groupBy('products.id', 'products.company', 'products.model', 'products.serial_no', 'products.cost_price', 'products.price')
                 ->orderBy('sales_count', 'desc')
                 ->limit(5)
                 ->get();
 
-            // Customer Distribution
-            $data['active_customers'] = Customer::whereHas('purchases', function($query) {
-                $query->where('status', 'active');
-            })->count();
+            // ── Customer Distribution (direct SQL — timezone-safe) ──
+            // DEFAULTED  : customer has ≥1 pending installment where due_date < today (SQL date compare)
+            // COMPLETED  : no overdue, and total_purchased - advance - paid - discount <= 0
+            // ACTIVE     : no overdue, and still has a positive remaining balance
 
-            $data['completed_customers'] = Customer::whereDoesntHave('purchases', function($query) {
-                $query->where('status', 'active');
-            })->where('is_defaulter', false)->count();
+            $todayStr = now()->toDateString(); // e.g. "2026-07-01" — always a date string, never timezone-shifted
+
+            // Step 1: Find all customer_ids that are defaulted (SQL-level date compare, no PHP cast issues)
+            $defaultedIds = Installment::where('status', 'pending')
+                ->whereDate('due_date', '<', $todayStr)
+                ->whereNotNull('customer_id')
+                ->distinct()
+                ->pluck('customer_id')
+                ->toArray();
+
+            $defaultedCount = count($defaultedIds);
+
+            // Step 2: For non-defaulted customers, calculate remaining balance per customer
+            //         Only load customers that actually have at least one purchase
+            $nonDefaultedCustomers = Customer::has('purchases')
+                ->when(!empty($defaultedIds), function ($q) use ($defaultedIds) {
+                    return $q->whereNotIn('id', $defaultedIds);
+                })
+                ->with([
+                    'purchases:id,customer_id,total_price,advance_payment',
+                    'installments' => function ($q) {
+                        $q->select('id', 'customer_id', 'purchase_id', 'status', 'paid_amount', 'discount')
+                          ->whereIn('status', ['paid', 'partial']);
+                    },
+                ])
+                ->get();
+
+            $activeCount    = 0;
+            $completedCount = 0;
+
+            foreach ($nonDefaultedCustomers as $cust) {
+                $totalPurchased = (float) $cust->purchases->sum('total_price');
+                $totalAdvance   = (float) $cust->purchases->sum('advance_payment');
+                $totalPaid      = (float) $cust->installments->sum('paid_amount');
+                $totalDiscount  = (float) $cust->installments->sum('discount');
+                $remaining      = $totalPurchased - $totalAdvance - $totalPaid - $totalDiscount;
+
+                if ($remaining <= 0.01) { // 0.01 tolerance for floating point
+                    $completedCount++;
+                } else {
+                    $activeCount++;
+                }
+            }
+
+            $data['active_customers']    = $activeCount;
+            $data['completed_customers'] = $completedCount;
+            $data['defaulters_count']    = $defaultedCount;
 
             // Monthly Collections for chart (last 6 months)
-            $data['monthly_collections'] = Installment::where('status', 'paid')
+            $data['monthly_collections'] = Installment::whereIn('status', ['paid', 'partial'])
                 ->where('date', '>=', now()->subMonths(6))
                 ->selectRaw('DATE_FORMAT(date, "%Y-%m") as month')
-                ->selectRaw('COALESCE(SUM(installment_amount), 0) as total')
+                ->selectRaw('COALESCE(SUM(paid_amount), 0) as total')
                 ->groupBy('month')
                 ->orderBy('month')
                 ->pluck('total', 'month');
 
-            $grossProfit = Installment::where('status', 'paid')
+            $grossProfit = Installment::whereIn('status', ['paid', 'partial'])
                 ->with('purchase.product')
                 ->get()
                 ->reduce(function($carry, $inst) {
@@ -125,10 +169,10 @@ class DashboardController extends Controller
                     return $carry + $profitPerInst;
                 }, 0);
 
-            $totalDiscountAllTime = Installment::where('status', 'paid')->sum('discount') ?? 0;
+            $totalDiscountAllTime = Installment::whereIn('status', ['paid', 'partial'])->sum('discount') ?? 0;
             $data['total_profit'] = $grossProfit - $totalDiscountAllTime;
 
-            $lastMonthGrossProfit = Installment::where('status','paid')
+            $lastMonthGrossProfit = Installment::whereIn('status',['paid','partial'])
                 ->whereYear('date', now()->subMonth()->year)
                 ->whereMonth('date', now()->subMonth()->month)
                 ->with('purchase.product')
@@ -144,16 +188,20 @@ class DashboardController extends Controller
 
                     return $carry + $profitPerInst;
                 }, 0);
-            $lastMonthDiscount = Installment::where('status','paid')
+            $lastMonthDiscount = Installment::whereIn('status',['paid','partial'])
                 ->whereYear('date', now()->subMonth()->year)
                 ->whereMonth('date', now()->subMonth()->month)
                 ->sum('discount') ?? 0;
             $data['last_month_profit'] = $lastMonthGrossProfit - $lastMonthDiscount;
 
         } catch (\Exception $e) {
-            // Log the error and return default values
-            \Log::error('Dashboard Error: ' . $e->getMessage());
-            // Data is already initialized with default values
+            // Log full error so live-server issues can be diagnosed from storage/logs/laravel.log
+            \Log::error('Dashboard/Report Error: ' . $e->getMessage(), [
+                'file'  => $e->getFile(),
+                'line'  => $e->getLine(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            // $data retains its default 0-values for any fields not yet set
         }
 
         return view('report', compact('data'));
@@ -169,12 +217,12 @@ class DashboardController extends Controller
     [$start, $end, $groupBy] = $this->resolveRange($range, $startDate, $endDate);
 
     // Paid installments (count + sum)
-    $paidBase = Installment::where('status', 'paid');
+    $paidBase = Installment::whereIn('status', ['paid', 'partial']);
     if ($start && $end) {
         $paidBase->whereBetween('date', [$start, $end]);
     }
     $paid_installments_count = (clone $paidBase)->count();
-    $collected_amount        = (clone $paidBase)->sum('installment_amount') ?? 0;
+    $collected_amount        = (clone $paidBase)->sum('paid_amount') ?? 0;
     $discount_amount         = (clone $paidBase)->sum('discount') ?? 0;
 
     // Pending revenue (due in range) and all-time pending
@@ -186,7 +234,9 @@ class DashboardController extends Controller
     $pending_revenue_all      = Installment::where('status','pending')->sum('installment_amount') ?? 0;
 
     // Customers (new in range) + total customers (all time)
-    $customers_count_in_range = Customer::when($start && $end, fn($q) => $q->whereBetween('created_at', [$start, $end]))->count();
+    $customers_count_in_range = Customer::when($start && $end, function ($q) use ($start, $end) {
+        return $q->whereBetween('created_at', [$start, $end]);
+    })->count();
     $total_customers          = Customer::count();
 
     // Total revenue (purchases in range) — using purchase_date if present, fallback to created_at
@@ -205,7 +255,7 @@ class DashboardController extends Controller
     $profitQuery = Installment::query()
         ->join('purchases', 'installments.purchase_id', '=', 'purchases.id')
         ->join('products', 'products.id', '=', 'purchases.product_id')
-        ->where('installments.status', 'paid');
+        ->whereIn('installments.status', ['paid', 'partial']);
 
     if ($start && $end) {
         $profitQuery->whereBetween('installments.date', [$start, $end]);
@@ -307,27 +357,31 @@ private function resolveRange(string $range, $startDate = null, $endDate = null)
  */
 private function collectionsSeries(?Carbon $start, ?Carbon $end, string $groupBy): array
 {
-    $q = Installment::where('status', 'paid');
+    $q = Installment::whereIn('status', ['paid', 'partial']);
 
     if ($start && $end) {
         $q->whereBetween('date', [$start, $end]);
     }
 
     if ($groupBy === 'day') {
-        $rows = $q->selectRaw('DATE(date) as d, COALESCE(SUM(installment_amount),0) as total')
+        $rows = $q->selectRaw('DATE(date) as d, COALESCE(SUM(paid_amount),0) as total')
                   ->groupBy('d')
                   ->orderBy('d')
                   ->get();
-        return $rows->map(fn($r) => [ (string)$r->d, (float)$r->total ])->all();
+        return $rows->map(function ($r) {
+            return [(string) $r->d, (float) $r->total];
+        })->all();
     }
 
     // month grouping
-    $rows = $q->selectRaw('DATE_FORMAT(date, "%Y-%m") as m, COALESCE(SUM(installment_amount),0) as total')
+    $rows = $q->selectRaw('DATE_FORMAT(date, "%Y-%m") as m, COALESCE(SUM(paid_amount),0) as total')
               ->groupBy('m')
               ->orderBy('m')
               ->get();
 
-    return $rows->map(fn($r) => [ (string)$r->m, (float)$r->total ])->all();
+    return $rows->map(function ($r) {
+        return [(string) $r->m, (float) $r->total];
+    })->all();
 }
 
 }
